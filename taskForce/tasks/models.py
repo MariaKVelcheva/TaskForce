@@ -1,10 +1,12 @@
 from django.db import models
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from taskForce.tasks.manager import TaskManager
 
 User = get_user_model()
+
 
 
 class Task(models.Model):
@@ -22,6 +24,15 @@ class Task(models.Model):
         max_length=100,
     )
 
+    assigned_to = models.ForeignKey(
+        to=User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='assigned_tasks',
+        verbose_name=_('assigned to'),
+    )
+
     user = models.ForeignKey(
         to=User,
         on_delete=models.CASCADE,
@@ -36,7 +47,7 @@ class Task(models.Model):
 
     created_at = models.DateTimeField(
         auto_now_add=True,
-        verbose_name=_('created at'),
+        verbose_name=_('created at')
     )
 
     type = models.CharField(
@@ -108,6 +119,18 @@ class Task(models.Model):
     )
 
     objects = TaskManager()
+
+    def complete(self, user):
+        if self.is_done:
+            return
+
+        self.assigned_to = user
+        self.is_done = True
+        self.accomplished_at = timezone.now()
+        self.save()
+
+        user.avatar.points += self.appointed_points
+        user.avatar.save()
 
     class Meta:
         verbose_name = _('task')

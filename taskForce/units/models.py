@@ -10,6 +10,7 @@ User = get_user_model()
 class Unit(models.Model):
     users = models.ManyToManyField(
         to=User,
+        through='Membership',
         related_name='units',
         verbose_name=_('users'),
     )

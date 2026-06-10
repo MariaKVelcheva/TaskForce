@@ -30,8 +30,6 @@ class Avatar(models.Model):
 
     attire = models.ManyToManyField(
         to='attires.Attire',
-        null=True,
-        blank=True,
         related_name='avatars',
         verbose_name=_('Attire'),
     )
