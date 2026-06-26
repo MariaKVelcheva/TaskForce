@@ -1,0 +1,47 @@
+{% extends 'common/base.html' %}
+
+{% block title %}Enlist — Task: Force!{% endblock %}
+
+{% block content %}
+
+<div style="max-width: 420px; margin: 0 auto;">
+
+    <div style="margin-bottom: 2rem; text-align: center;">
+        <h1 style="font-family: 'Barlow Condensed', sans-serif; font-size: 1.8rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--khaki);">Enlist</h1>
+        <p style="font-family: 'Share Tech Mono', monospace; font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-top: 0.4rem;">Create your operative profile</p>
+    </div>
+
+    <div class="panel">
+        <div class="panel-header">// New operative registration</div>
+
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            {% for field in form %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                <ul class="errorlist">
+                    {% for error in field.errors %}<li>{{ error }}</li>{% endfor %}
+                </ul>
+                {% endif %}
+                {% if field.help_text %}
+                <p style="font-size: 0.73rem; color: var(--muted); margin-top: 0.3rem; font-family: 'Share Tech Mono', monospace;">{{ field.help_text }}</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+
+            <div style="margin-top: 1.75rem;">
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Deploy operative</button>
+            </div>
+        </form>
+    </div>
+
+    <p class="text-center mt-1" style="font-size: 0.83rem; color: var(--muted);">
+        Already enlisted? <a href="{% url 'login' %}" style="color: var(--khaki); text-decoration: none;">Log in</a>
+    </p>
+
+</div>
+
+{% endblock %}

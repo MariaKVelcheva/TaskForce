@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Task: Force!{% endblock %}</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@400;500;700&family=Barlow+Condensed:wght@700&display=swap');
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --khaki:        #c8b97a;
+            --khaki-dark:   #a89a5e;
+            --khaki-muted:  #7a6f4a;
+            --olive:        #4a5240;
+            --olive-dark:   #2e3228;
+            --olive-mid:    #3a4030;
+            --rust:         #b85c38;
+            --rust-light:   #d4704a;
+            --cream:        #f0e8d0;
+            --cream-dark:   #d8ceb0;
+            --ink:          #1a1c18;
+            --muted:        #6a7060;
+            --radius-sm:    3px;
+            --radius:       5px;
+        }
+
+        body {
+            font-family: 'Barlow', sans-serif;
+            background-color: var(--olive-dark);
+            color: var(--cream);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-image:
+                repeating-linear-gradient(
+                    0deg,
+                    transparent,
+                    transparent 2px,
+                    rgba(0,0,0,0.03) 2px,
+                    rgba(0,0,0,0.03) 4px
+                );
+        }
+
+        /* NAV */
+        nav {
+            background: var(--olive-dark);
+            border-bottom: 2px solid var(--khaki-dark);
+            padding: 0 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 56px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-brand {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            color: var(--khaki);
+            text-decoration: none;
+            text-transform: uppercase;
+        }
+
+        .nav-brand span {
+            color: var(--rust-light);
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.78rem;
+            letter-spacing: 0.06em;
+            color: var(--cream-dark);
+            text-decoration: none;
+            text-transform: uppercase;
+            padding: 0.3rem 0;
+            border-bottom: 2px solid transparent;
+            transition: color 0.15s, border-color 0.15s;
+        }
+
+        .nav-links a:hover {
+            color: var(--khaki);
+            border-bottom-color: var(--khaki);
+        }
+
+        .nav-badge {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.7rem;
+            background: var(--olive-mid);
+            border: 1px solid var(--khaki-dark);
+            color: var(--khaki);
+            padding: 0.2rem 0.6rem;
+            border-radius: var(--radius-sm);
+            letter-spacing: 0.04em;
+        }
+
+        /* MAIN */
+        main {
+            flex: 1;
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2.5rem 1.5rem;
+        }
+
+        /* PANELS */
+        .panel {
+            background: var(--olive-mid);
+            border: 1px solid var(--khaki-dark);
+            border-radius: var(--radius);
+            padding: 2rem;
+        }
+
+        .panel-header {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 0.7rem;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--khaki-muted);
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--olive);
+        }
+
+        /* FORMS */
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        label {
+            display: block;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.72rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--khaki-muted);
+            margin-bottom: 0.4rem;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="password"] {
+            width: 100%;
+            background: var(--olive-dark);
+            border: 1px solid var(--khaki-dark);
+            border-radius: var(--radius-sm);
+            padding: 0.6rem 0.85rem;
+            color: var(--cream);
+            font-family: 'Barlow', sans-serif;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+
+        input:focus {
+            border-color: var(--khaki);
+        }
+
+        .errorlist {
+            list-style: none;
+            margin-top: 0.35rem;
+        }
+
+        .errorlist li {
+            font-size: 0.8rem;
+            color: var(--rust-light);
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        /* BUTTONS */
+        .btn {
+            display: inline-block;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            text-decoration: none;
+            padding: 0.6rem 1.6rem;
+            border-radius: var(--radius-sm);
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s, border-color 0.15s;
+        }
+
+        .btn-primary {
+            background: var(--khaki);
+            color: var(--ink);
+            border-color: var(--khaki);
+        }
+
+        .btn-primary:hover {
+            background: var(--khaki-dark);
+            border-color: var(--khaki-dark);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--khaki);
+            border-color: var(--khaki-dark);
+        }
+
+        .btn-ghost:hover {
+            background: var(--olive);
+            border-color: var(--khaki);
+        }
+
+        .btn-danger {
+            background: transparent;
+            color: var(--rust-light);
+            border-color: var(--rust);
+        }
+
+        .btn-danger:hover {
+            background: var(--rust);
+            color: var(--cream);
+        }
+
+        /* MESSAGES */
+        .messages {
+            list-style: none;
+            margin-bottom: 1.5rem;
+        }
+
+        .messages li {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+            padding: 0.6rem 1rem;
+            border-radius: var(--radius-sm);
+            margin-bottom: 0.5rem;
+            border-left: 3px solid;
+        }
+
+        .messages .success { border-color: #7aab6a; background: rgba(122,171,106,0.1); color: #9dc98d; }
+        .messages .error   { border-color: var(--rust); background: rgba(184,92,56,0.1); color: var(--rust-light); }
+        .messages .info    { border-color: var(--khaki); background: rgba(200,185,122,0.1); color: var(--khaki); }
+
+        /* FOOTER */
+        footer {
+            border-top: 1px solid var(--olive-mid);
+            padding: 1rem 2rem;
+            text-align: center;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.68rem;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+            text-transform: uppercase;
+        }
+
+        /* UTILS */
+        .text-muted { color: var(--muted); }
+        .text-mono  { font-family: 'Share Tech Mono', monospace; }
+        .mt-1 { margin-top: 1rem; }
+        .mt-2 { margin-top: 2rem; }
+        .text-center { text-align: center; }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+<nav>
+    <a href="{% url 'index' %}" class="nav-brand">Task<span>:</span> Force!</a>
+    <ul class="nav-links">
+        {% if user.is_authenticated %}
+            <li><span class="nav-badge">{{ user.username }}</span></li>
+            <li><a href="{% url 'details-profile' %}">Profile</a></li>
+            <li><a href="{% url 'logout' %}">Log out</a></li>
+        {% else %}
+            <li><a href="{% url 'login' %}">Log in</a></li>
+            <li><a href="{% url 'register' %}">Register</a></li>
+        {% endif %}
+    </ul>
+</nav>
+
+<main>
+    {% if messages %}
+    <ul class="messages">
+        {% for message in messages %}
+        <li class="{{ message.tags }}">{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    {% block content %}{% endblock %}
+</main>
+
+<footer>
+    Task: Force! &mdash; Operative systems online
+</footer>
+
+{% block extra_js %}{% endblock %}
+</body>
+</html>

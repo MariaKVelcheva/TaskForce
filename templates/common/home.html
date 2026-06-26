@@ -1,0 +1,128 @@
+{% extends 'common/base.html' %}
+
+{% block title %}HQ — Task: Force!{% endblock %}
+
+{% block extra_css %}
+<style>
+    .home-header {
+        margin-bottom: 2.5rem;
+    }
+
+    .home-title {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 2rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--khaki);
+    }
+
+    .home-subtitle {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.78rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-top: 0.4rem;
+    }
+
+    .placeholder-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1rem;
+        margin-top: 1.5rem;
+    }
+
+    .placeholder-card {
+        background: var(--olive-mid);
+        border: 1px dashed var(--khaki-dark);
+        border-radius: var(--radius);
+        padding: 1.5rem;
+        opacity: 0.6;
+    }
+
+    .placeholder-card-label {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.68rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--khaki-muted);
+        margin-bottom: 0.5rem;
+    }
+
+    .placeholder-card-title {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 1rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--cream-dark);
+    }
+
+    .status-bar {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        padding: 0.75rem 1rem;
+        background: var(--olive-mid);
+        border: 1px solid var(--khaki-dark);
+        border-radius: var(--radius-sm);
+        margin-bottom: 2rem;
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.72rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--khaki-muted);
+    }
+
+    .status-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #7aab6a;
+        flex-shrink: 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="home-header">
+    <h1 class="home-title">
+        {% if request.GET.mode == 'report' %}
+            Debrief — task report
+        {% else %}
+            Headquarters
+        {% endif %}
+    </h1>
+    <p class="home-subtitle">
+        Operative: {{ user.username }} &mdash;
+        {% if request.GET.mode == 'report' %}
+            report mode active
+        {% else %}
+            field mode active
+        {% endif %}
+    </p>
+</div>
+
+<div class="status-bar">
+    <span class="status-dot"></span>
+    Systems online &mdash; awaiting orders
+</div>
+
+<div class="placeholder-grid">
+    <div class="placeholder-card">
+        <div class="placeholder-card-label">Sector</div>
+        <div class="placeholder-card-title">Active missions</div>
+    </div>
+    <div class="placeholder-card">
+        <div class="placeholder-card-label">Unit</div>
+        <div class="placeholder-card-title">Your unit</div>
+    </div>
+    <div class="placeholder-card">
+        <div class="placeholder-card-label">Comms</div>
+        <div class="placeholder-card-title">Messages</div>
+    </div>
+</div>
+
+{% endblock %}

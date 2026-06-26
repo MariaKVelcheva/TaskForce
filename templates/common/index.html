@@ -1,0 +1,150 @@
+{% extends 'common/base.html' %}
+
+{% block title %}Task: Force! — Choose your mode{% endblock %}
+
+{% block extra_css %}
+<style>
+    .index-wrap {
+        min-height: 70vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        gap: 3rem;
+    }
+
+    .index-heading {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: clamp(2.2rem, 6vw, 3.8rem);
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--khaki);
+        line-height: 1.1;
+    }
+
+    .index-heading span {
+        color: var(--rust-light);
+    }
+
+    .index-sub {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.82rem;
+        letter-spacing: 0.12em;
+        color: var(--muted);
+        text-transform: uppercase;
+        margin-top: 0.75rem;
+    }
+
+    .choice-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.25rem;
+        width: 100%;
+        max-width: 640px;
+    }
+
+    .choice-card {
+        background: var(--olive-mid);
+        border: 1px solid var(--khaki-dark);
+        border-radius: var(--radius);
+        padding: 2rem 1.5rem;
+        text-decoration: none;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+        transition: border-color 0.15s, background 0.15s;
+        cursor: pointer;
+    }
+
+    .choice-card:hover {
+        border-color: var(--khaki);
+        background: var(--olive);
+    }
+
+    .choice-card.primary:hover {
+        border-color: var(--rust-light);
+    }
+
+    .choice-icon {
+        font-size: 2.2rem;
+        line-height: 1;
+    }
+
+    .choice-label {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 1.1rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--khaki);
+    }
+
+    .choice-card.primary .choice-label {
+        color: var(--rust-light);
+    }
+
+    .choice-desc {
+        font-size: 0.82rem;
+        color: var(--muted);
+        line-height: 1.5;
+    }
+
+    .choice-tag {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.65rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.2rem 0.6rem;
+        border-radius: var(--radius-sm);
+        border: 1px solid;
+    }
+
+    .choice-card.primary .choice-tag {
+        color: var(--rust-light);
+        border-color: var(--rust);
+        background: rgba(184,92,56,0.1);
+    }
+
+    .choice-card.secondary .choice-tag {
+        color: var(--khaki-muted);
+        border-color: var(--khaki-dark);
+        background: rgba(200,185,122,0.08);
+    }
+
+    @media (max-width: 520px) {
+        .choice-grid { grid-template-columns: 1fr; max-width: 340px; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="index-wrap">
+
+    <div>
+        <h1 class="index-heading">Ready for your<br>next <span>mission</span>?</h1>
+        <p class="index-sub">Select operational mode to proceed</p>
+    </div>
+
+    <div class="choice-grid">
+
+        <a href="{% url 'home' %}?mode=mission" class="choice-card primary">
+            <div class="choice-icon">🎖</div>
+            <div class="choice-tag">Field mode</div>
+            <div class="choice-label">Deploy</div>
+            <p class="choice-desc">Enter your HQ. Move your operative, interact with sectors, manage missions on the ground.</p>
+        </a>
+
+        <a href="{% url 'home' %}?mode=report" class="choice-card secondary">
+            <div class="choice-icon">📋</div>
+            <div class="choice-tag">Report mode</div>
+            <div class="choice-label">Debrief</div>
+            <p class="choice-desc">Skip the theatrics. View and manage your tasks in a clean, no-frills list format.</p>
+        </a>
+
+    </div>
+
+</div>
+{% endblock %}
