@@ -49,7 +49,7 @@ class DeleteUserView(LoginRequiredMixin, DeleteView):
     template_name = "accounts/delete-user.html"
     success_url = reverse_lazy("home")
 
-    def post(self, request, *args, **kwargs):
+    def delete(self, request, *args, **kwargs):
         user = request.user
         logout(request)
         user.delete()
@@ -72,6 +72,7 @@ class UpdateAvatarView(LoginRequiredMixin, UpdateView):
 class ProfileDetailsView(LoginRequiredMixin, DetailView):
     model = Avatar
     template_name = "accounts/details-profile.html"
+    context_object_name = "profile"
 
     def get_object(self, queryset=None):
         return self.request.user

@@ -9,7 +9,7 @@
     <div style="margin-bottom: 2rem; display: flex; align-items: baseline; justify-content: space-between;">
         <div>
             <h1 style="font-family: 'Barlow Condensed', sans-serif; font-size: 1.8rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--khaki);">Operative file</h1>
-            <p style="font-family: 'Share Tech Mono', monospace; font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-top: 0.3rem;">{{ user.username }}</p>
+            <p style="font-family: 'Share Tech Mono', monospace; font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-top: 0.3rem;">{{ profile.user.username }}</p>
         </div>
         <a href="{% url 'update-profile' %}" class="btn btn-ghost" style="font-size: 0.8rem;">Edit profile</a>
     </div>
@@ -21,22 +21,22 @@
 
             <div>
                 <div style="font-family: 'Share Tech Mono', monospace; font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.3rem;">Species</div>
-                <div style="font-size: 0.95rem; color: var(--cream);">{{ object.species|default:"—" }}</div>
+                <div style="font-size: 0.95rem; color: var(--cream);">{{ profile.species|default:"—" }}</div>
             </div>
 
             <div>
                 <div style="font-family: 'Share Tech Mono', monospace; font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.3rem;">Hair color</div>
-                <div style="font-size: 0.95rem; color: var(--cream);">{{ object.hair_color|default:"—" }}</div>
+                <div style="font-size: 0.95rem; color: var(--cream);">{{ profile.hair_color|default:"—" }}</div>
             </div>
 
             <div>
                 <div style="font-family: 'Share Tech Mono', monospace; font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.3rem;">Glasses</div>
-                <div style="font-size: 0.95rem; color: var(--cream);">{% if object.glasses %}Yes{% else %}No{% endif %}</div>
+                <div style="font-size: 0.95rem; color: var(--cream);">{% if profile.glasses %}Yes{% else %}No{% endif %}</div>
             </div>
 
             <div>
                 <div style="font-family: 'Share Tech Mono', monospace; font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.3rem;">Intel points</div>
-                <div style="font-family: 'Barlow Condensed', sans-serif; font-size: 1.4rem; font-weight: 700; color: var(--khaki); letter-spacing: 0.06em;">{{ object.points }}</div>
+                <div style="font-family: 'Barlow Condensed', sans-serif; font-size: 1.4rem; font-weight: 700; color: var(--khaki); letter-spacing: 0.06em;">{{ profile.points }}</div>
             </div>
 
         </div>
