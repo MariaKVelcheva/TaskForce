@@ -8,7 +8,6 @@ from taskForce.tasks.manager import TaskManager
 User = get_user_model()
 
 
-
 class Task(models.Model):
     TYPE_CHOICES = (
         ("groceries", "Groceries"),
@@ -74,13 +73,6 @@ class Task(models.Model):
         blank=True,
         related_name='tasks',
         verbose_name=_('unit'),
-    )
-
-    brand = models.CharField(
-        max_length=200,
-        verbose_name=_('brand'),
-        null=True,
-        blank=True,
     )
 
     appointed_points = models.PositiveSmallIntegerField(
