@@ -205,34 +205,52 @@
 
 </div>
 
-{% if object.timer_duration and not object.is_done %}
+{% if task.timer_duration and not task.is_done %}
 <div class="timer-section">
     <div class="timer-label">// Mission timer</div>
-    <div class="timer-display" id="timer-display">{{ object.timer_duration }}</div>
+    <div class="timer-display" id="timer-display">{{ task.timer_duration }}</div>
 </div>
 {% endif %}
 
-{% if not object.is_done %}
-<form method="post" action="{% url 'complete-task' object.pk %}">
+{% if not task.is_done %}
+<form method="post" action="{% url 'complete-task' task.pk %}">
     {% csrf_token %}
     <button type="submit" class="btn btn-primary">Mark complete</button>
 </form>
 {% endif %}
 
 <div class="danger-zone">
-    <a href="{% url 'delete-task' object.pk %}" class="btn btn-danger" style="font-size: 0.82rem;">Delete mission</a>
+    <a href="{% url 'delete-task' task.pk %}" class="btn btn-danger" style="font-size: 0.82rem;">Delete mission</a>
     <a href="{% url 'all-tasks' %}" class="btn btn-ghost" style="font-size: 0.82rem;">Back to log</a>
 </div>
 
 {% endblock %}
 
 {% block extra_js %}
-{% if object.timer_duration and not object.is_done %}
+{% if task.timer_duration and not task.is_done %}
 <script>
-    {#  JS timer goes here — you'll write this one  #}
-    {#  Hint: parse object.timer_duration into seconds, then count down with setInterval  #}
-    {#  Update #timer-display every second  #}
-    {#  When it hits 0, show a "time's up" message  #}
+    const timerDisplayElement = document.getElementById("timer-display");
+    const parts = timerDisplayElement.textContent.trim().split(":");
+    let totalSeconds = parseInt(parts[0]) * 3600 + parseInt(parts[1]) * 60 + parseInt(parts[2]);
+    const pad = n => String(n).padStart(2, "0");
+
+    const interval = setInterval(() => {
+        totalSeconds -= 1;
+        let currentSeconds = totalSeconds;
+
+        let totalHours = Math.floor(currentSeconds / 3600);
+        currentSeconds -= totalHours * 3600;
+
+        let totalMinutes = Math.floor(currentSeconds / 60);
+        currentSeconds -= totalMinutes * 60;
+        timerDisplayElement.textContent = `${pad(totalHours)}:${pad(totalMinutes)}:${pad(currentSeconds)}`;
+
+        if (totalSeconds <= 0) {
+            clearInterval(interval);
+            timerDisplayElement.textContent = "Mission over!";
+        }
+    }, 1000);
+
 </script>
 {% endif %}
 {% endblock %}

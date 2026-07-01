@@ -25,6 +25,7 @@ class CreateTaskView(LoginRequiredMixin, CreateView):
 class DetailTaskView(LoginRequiredMixin, DetailView):
     model = Task
     template_name = "tasks/details-task.html"
+    context_object_name = "task"
 
     def get_queryset(self, *args, **kwargs):
         return Task.objects.filter(user=self.request.user)
