@@ -1,0 +1,35 @@
+{% extends 'common/base.html' %}
+
+{% block title %}Abort mission — Task: Force!{% endblock %}
+
+{% block content %}
+
+<div style="max-width: 420px; margin: 0 auto;">
+
+    <div style="margin-bottom: 2rem; text-align: center;">
+        <h1 style="font-family: 'Barlow Condensed', sans-serif; font-size: 1.8rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--rust-light);">Abort mission</h1>
+        <p style="font-family: 'Share Tech Mono', monospace; font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-top: 0.4rem;">This action cannot be undone</p>
+    </div>
+
+    <div class="panel" style="border-color: var(--rust);">
+        <div class="panel-header" style="color: var(--rust-light); border-color: rgba(184,92,56,0.3);">// Confirm abort</div>
+
+        <p style="font-size: 0.92rem; color: var(--cream-dark); line-height: 1.6; margin-bottom: 1.5rem;">
+            Mission <strong style="color: var(--cream);">{{ object.name }}</strong> will be permanently removed from the log.
+            {% if object.appointed_points %}
+            {{ object.appointed_points }} intel point{% if object.appointed_points != 1 %}s{% endif %} will be lost.
+            {% endif %}
+        </p>
+
+        <form method="post">
+            {% csrf_token %}
+            <div style="display: flex; gap: 0.75rem;">
+                <button type="submit" class="btn btn-danger">Confirm abort</button>
+                <a href="{% url 'details-task' object.pk %}" class="btn btn-ghost">Stand down</a>
+            </div>
+        </form>
+    </div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,238 @@
+{% extends 'common/base.html' %}
+
+{% block title %}{{ object.name }} — Task: Force!{% endblock %}
+
+{% block extra_css %}
+<style>
+    .detail-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .detail-title {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 1.8rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--khaki);
+        line-height: 1.1;
+    }
+
+    .detail-title.done {
+        text-decoration: line-through;
+        color: var(--khaki-muted);
+    }
+
+    .detail-actions {
+        display: flex;
+        gap: 0.5rem;
+        flex-shrink: 0;
+    }
+
+    .detail-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .detail-field {
+        background: var(--olive-mid);
+        border: 1px solid var(--khaki-dark);
+        border-radius: var(--radius-sm);
+        padding: 0.85rem 1rem;
+    }
+
+    .detail-field-label {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.65rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 0.35rem;
+    }
+
+    .detail-field-value {
+        font-size: 0.95rem;
+        color: var(--cream);
+    }
+
+    .detail-field-value.points {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--khaki);
+        letter-spacing: 0.06em;
+    }
+
+    .status-badge {
+        display: inline-block;
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.68rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.2rem 0.7rem;
+        border-radius: var(--radius-sm);
+        border: 1px solid;
+    }
+
+    .status-badge.pending {
+        color: var(--khaki);
+        border-color: var(--khaki-dark);
+        background: rgba(200,185,122,0.08);
+    }
+
+    .status-badge.done {
+        color: #7aab6a;
+        border-color: #4a7a3a;
+        background: rgba(122,171,106,0.1);
+    }
+
+    .timer-section {
+        background: var(--olive-mid);
+        border: 1px solid var(--khaki-dark);
+        border-radius: var(--radius-sm);
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .timer-label {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.65rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 0.5rem;
+    }
+
+    .timer-display {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 1.6rem;
+        color: var(--khaki);
+        letter-spacing: 0.08em;
+    }
+
+    .danger-zone {
+        margin-top: 2.5rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--olive-mid);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="detail-header">
+    <div>
+        <h1 class="detail-title {% if object.is_done %}done{% endif %}">{{ object.name }}</h1>
+        <p style="font-family: 'Share Tech Mono', monospace; font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-top: 0.4rem;">
+            Added {{ object.created_at|date:"d M Y" }}
+        </p>
+    </div>
+    <div class="detail-actions">
+        {% if not object.is_done %}
+        <a href="{% url 'update-task' object.pk %}" class="btn btn-ghost" style="font-size: 0.8rem; padding: 0.45rem 1rem;">Edit</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="detail-grid">
+
+    <div class="detail-field">
+        <div class="detail-field-label">Status</div>
+        <div class="detail-field-value">
+            {% if object.is_done %}
+            <span class="status-badge done">Complete</span>
+            {% else %}
+            <span class="status-badge pending">Pending</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="detail-field">
+        <div class="detail-field-label">Intel points</div>
+        <div class="detail-field-value points">{{ object.appointed_points }}</div>
+    </div>
+
+    {% if object.zone %}
+    <div class="detail-field">
+        <div class="detail-field-label">Sector</div>
+        <div class="detail-field-value">{{ object.zone.name }}</div>
+    </div>
+    {% endif %}
+
+    {% if object.type %}
+    <div class="detail-field">
+        <div class="detail-field-label">Type</div>
+        <div class="detail-field-value">{{ object.get_type_display }}</div>
+    </div>
+    {% endif %}
+
+    {% if object.unit %}
+    <div class="detail-field">
+        <div class="detail-field-label">Unit</div>
+        <div class="detail-field-value">{{ object.unit.name }}</div>
+    </div>
+    {% endif %}
+
+    {% if object.assigned_to %}
+    <div class="detail-field">
+        <div class="detail-field-label">Assigned to</div>
+        <div class="detail-field-value">{{ object.assigned_to.username }}</div>
+    </div>
+    {% endif %}
+
+    {% if object.due_date %}
+    <div class="detail-field">
+        <div class="detail-field-label">Due date</div>
+        <div class="detail-field-value">{{ object.due_date|date:"d M Y, H:i" }}</div>
+    </div>
+    {% endif %}
+
+    {% if object.accomplished_at %}
+    <div class="detail-field">
+        <div class="detail-field-label">Completed</div>
+        <div class="detail-field-value">{{ object.accomplished_at|date:"d M Y, H:i" }}</div>
+    </div>
+    {% endif %}
+
+</div>
+
+{% if object.timer_duration and not object.is_done %}
+<div class="timer-section">
+    <div class="timer-label">// Mission timer</div>
+    <div class="timer-display" id="timer-display">{{ object.timer_duration }}</div>
+</div>
+{% endif %}
+
+{% if not object.is_done %}
+<form method="post" action="{% url 'complete-task' object.pk %}">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-primary">Mark complete</button>
+</form>
+{% endif %}
+
+<div class="danger-zone">
+    <a href="{% url 'delete-task' object.pk %}" class="btn btn-danger" style="font-size: 0.82rem;">Delete mission</a>
+    <a href="{% url 'all-tasks' %}" class="btn btn-ghost" style="font-size: 0.82rem;">Back to log</a>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+{% if object.timer_duration and not object.is_done %}
+<script>
+    {#  JS timer goes here — you'll write this one  #}
+    {#  Hint: parse object.timer_duration into seconds, then count down with setInterval  #}
+    {#  Update #timer-display every second  #}
+    {#  When it hits 0, show a "time's up" message  #}
+</script>
+{% endif %}
+{% endblock %}

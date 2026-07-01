@@ -1,0 +1,175 @@
+{% extends 'common/base.html' %}
+
+{% block title %}Missions — Task: Force!{% endblock %}
+
+{% block extra_css %}
+<style>
+    .catalogue-header {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        margin-bottom: 2rem;
+    }
+
+    .catalogue-title {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 1.8rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--khaki);
+    }
+
+    .catalogue-count {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.72rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-top: 0.3rem;
+    }
+
+    .task-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+    }
+
+    .task-row {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        background: var(--olive-mid);
+        border: 1px solid var(--khaki-dark);
+        border-radius: var(--radius-sm);
+        padding: 0.85rem 1.1rem;
+        text-decoration: none;
+        transition: border-color 0.15s, background 0.15s;
+    }
+
+    .task-row:hover {
+        border-color: var(--khaki);
+        background: var(--olive);
+    }
+
+    .task-row.done {
+        opacity: 0.5;
+        border-style: dashed;
+    }
+
+    .task-status {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        border: 2px solid var(--khaki-dark);
+        flex-shrink: 0;
+    }
+
+    .task-status.done {
+        background: var(--khaki-dark);
+        border-color: var(--khaki-dark);
+    }
+
+    .task-name {
+        flex: 1;
+        font-size: 0.95rem;
+        color: var(--cream);
+    }
+
+    .task-row.done .task-name {
+        text-decoration: line-through;
+        color: var(--muted);
+    }
+
+    .task-meta {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+    }
+
+    .task-tag {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.65rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 0.15rem 0.5rem;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--khaki-dark);
+        color: var(--khaki-muted);
+    }
+
+    .task-points {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.7rem;
+        color: var(--khaki);
+        min-width: 3rem;
+        text-align: right;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: var(--muted);
+    }
+
+    .empty-state-title {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 1.2rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--khaki-muted);
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-state-sub {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.75rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin-bottom: 1.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="catalogue-header">
+    <div>
+        <h1 class="catalogue-title">Mission log</h1>
+        <p class="catalogue-count">{{ tasks.count }} mission{{ tasks.count|pluralize }} on record</p>
+    </div>
+    <a href="{% url 'add-task' %}" class="btn btn-primary">+ New mission</a>
+</div>
+
+{% if tasks %}
+<div class="task-list">
+    {% for task in tasks %}
+    <a href="{% url 'details-task' task.pk %}" class="task-row {% if task.is_done %}done{% endif %}">
+        <div class="task-status {% if task.is_done %}done{% endif %}"></div>
+        <span class="task-name">{{ task.name }}</span>
+        <div class="task-meta">
+            {% if task.zone %}
+            <span class="task-tag">{{ task.zone.name }}</span>
+            {% endif %}
+            {% if task.type %}
+            <span class="task-tag">{{ task.get_type_display }}</span>
+            {% endif %}
+            {% if task.unit %}
+            <span class="task-tag">{{ task.unit.name }}</span>
+            {% endif %}
+        </div>
+        <span class="task-points">{{ task.appointed_points }} pt{% if task.appointed_points != 1 %}s{% endif %}</span>
+    </a>
+    {% endfor %}
+</div>
+
+{% else %}
+<div class="empty-state">
+    <div class="empty-state-title">No missions on record</div>
+    <p class="empty-state-sub">The field is quiet. Too quiet.</p>
+    <a href="{% url 'add-task' %}" class="btn btn-ghost">Deploy first mission</a>
+</div>
+{% endif %}
+
+{% endblock %}

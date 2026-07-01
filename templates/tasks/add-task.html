@@ -1,0 +1,174 @@
+{% extends 'common/base.html' %}
+
+{% block title %}New mission — Task: Force!{% endblock %}
+
+{% block extra_css %}
+<style>
+    select,
+    input[type="number"],
+    input[type="date"],
+    input[type="datetime-local"],
+    input[type="time"],
+    textarea {
+        width: 100%;
+        background: var(--olive-dark);
+        border: 1px solid var(--khaki-dark);
+        border-radius: var(--radius-sm);
+        padding: 0.6rem 0.85rem;
+        color: var(--cream);
+        font-family: 'Barlow', sans-serif;
+        font-size: 0.95rem;
+        outline: none;
+        transition: border-color 0.15s;
+    }
+
+    select:focus,
+    input[type="number"]:focus,
+    input[type="date"]:focus,
+    input[type="datetime-local"]:focus,
+    textarea:focus {
+        border-color: var(--khaki);
+    }
+
+    select option {
+        background: var(--olive-dark);
+        color: var(--cream);
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+
+    .form-section {
+        margin-top: 1.5rem;
+        padding-top: 1.25rem;
+        border-top: 1px solid var(--olive);
+    }
+
+    .form-section-label {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.65rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 1rem;
+    }
+
+    .checkbox-row {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+    }
+
+    .checkbox-row input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        accent-color: var(--khaki);
+        cursor: pointer;
+    }
+
+    .checkbox-row label {
+        margin-bottom: 0;
+        cursor: pointer;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div style="max-width: 600px; margin: 0 auto;">
+
+    <div style="margin-bottom: 2rem;">
+        <h1 style="font-family: 'Barlow Condensed', sans-serif; font-size: 1.8rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--khaki);">New mission</h1>
+        <p style="font-family: 'Share Tech Mono', monospace; font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-top: 0.3rem;">Define your objective</p>
+    </div>
+
+    <div class="panel">
+        <div class="panel-header">// Mission briefing</div>
+
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+                {{ form.name }}
+                {% if form.name.errors %}
+                <ul class="errorlist">{% for e in form.name.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+                {% endif %}
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="{{ form.zone.id_for_label }}">{{ form.zone.label }}</label>
+                    {{ form.zone }}
+                    {% if form.zone.errors %}
+                    <ul class="errorlist">{% for e in form.zone.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.type.id_for_label }}">{{ form.type.label }}</label>
+                    {{ form.type }}
+                    {% if form.type.errors %}
+                    <ul class="errorlist">{% for e in form.type.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="{{ form.unit.id_for_label }}">{{ form.unit.label }}</label>
+                    {{ form.unit }}
+                    {% if form.unit.errors %}
+                    <ul class="errorlist">{% for e in form.unit.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.appointed_points.id_for_label }}">{{ form.appointed_points.label }}</label>
+                    {{ form.appointed_points }}
+                    {% if form.appointed_points.errors %}
+                    <ul class="errorlist">{% for e in form.appointed_points.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="form-section">
+                <div class="form-section-label">// Scheduling</div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="{{ form.due_date.id_for_label }}">{{ form.due_date.label }}</label>
+                        {{ form.due_date }}
+                        {% if form.due_date.errors %}
+                        <ul class="errorlist">{% for e in form.due_date.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+                        {% endif %}
+                    </div>
+                    <div class="form-group">
+                        <label for="{{ form.alarm_at.id_for_label }}">{{ form.alarm_at.label }}</label>
+                        {{ form.alarm_at }}
+                        {% if form.alarm_at.errors %}
+                        <ul class="errorlist">{% for e in form.alarm_at.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.timer_duration.id_for_label }}">{{ form.timer_duration.label }}</label>
+                    {{ form.timer_duration }}
+                    {% if form.timer_duration.errors %}
+                    <ul class="errorlist">{% for e in form.timer_duration.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+                    {% endif %}
+                    <p style="font-size: 0.72rem; color: var(--muted); margin-top: 0.3rem; font-family: 'Share Tech Mono', monospace;">Format: HH:MM:SS</p>
+                </div>
+            </div>
+
+            <div style="margin-top: 1.75rem; display: flex; gap: 0.75rem;">
+                <button type="submit" class="btn btn-primary">Deploy mission</button>
+                <a href="{% url 'all-tasks' %}" class="btn btn-ghost">Cancel</a>
+            </div>
+
+        </form>
+    </div>
+
+</div>
+
+{% endblock %}
