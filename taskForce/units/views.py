@@ -1,3 +1,17 @@
-from django.shortcuts import render
+from django.views.generic import CreateView, UpdateView, DeleteView, DetailView
 
-# Create your views here.
+
+class CreateUnitView(CreateView):
+    pass
+
+
+class UpdateUnitView(UpdateView):
+    pass
+
+
+class DeleteUnitView(DeleteView):
+    pass
+
+
+class DetailUnitView(DetailView):
+    pass
