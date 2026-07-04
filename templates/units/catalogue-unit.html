@@ -1,0 +1,165 @@
+{% extends 'common/base.html' %}
+
+{% block title %}Units — Task: Force!{% endblock %}
+
+{% block extra_css %}
+<style>
+    .catalogue-header {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        margin-bottom: 2rem;
+    }
+
+    .catalogue-title {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 1.8rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--khaki);
+    }
+
+    .catalogue-count {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.72rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-top: 0.3rem;
+    }
+
+    .unit-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 1rem;
+    }
+
+    .unit-card {
+        background: var(--olive-mid);
+        border: 1px solid var(--khaki-dark);
+        border-radius: var(--radius);
+        padding: 1.25rem 1.4rem;
+        text-decoration: none;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        transition: border-color 0.15s, background 0.15s;
+    }
+
+    .unit-card:hover {
+        border-color: var(--khaki);
+        background: var(--olive);
+    }
+
+    .unit-card-name {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 1.15rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--khaki);
+    }
+
+    .unit-card-meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .unit-card-members {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.7rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+    }
+
+    .unit-role-badge {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.63rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.15rem 0.5rem;
+        border-radius: var(--radius-sm);
+        border: 1px solid;
+    }
+
+    .unit-role-badge.commander {
+        color: var(--khaki);
+        border-color: var(--khaki-dark);
+        background: rgba(200,185,122,0.1);
+    }
+
+    .unit-role-badge.operative {
+        color: var(--muted);
+        border-color: var(--olive);
+        background: transparent;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+    }
+
+    .empty-state-title {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 1.2rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--khaki-muted);
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-state-sub {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.75rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 1.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="catalogue-header">
+    <div>
+        <h1 class="catalogue-title">Your units</h1>
+        <p class="catalogue-count">{{ units|length }} unit{{ units|length|pluralize }} active</p>
+    </div>
+    <a href="{% url 'create-unit' %}" class="btn btn-primary">+ Form unit</a>
+</div>
+
+{% if units %}
+<div class="unit-grid">
+    {% for unit in units %}
+    <a href="{% url 'details-unit' unit.pk %}" class="unit-card">
+        <div class="unit-card-name">{{ unit.name }}</div>
+        <div class="unit-card-meta">
+            <span class="unit-card-members">
+                {{ unit.users.count }} operative{{ unit.users.count|pluralize }}
+            </span>
+            {% with membership=unit.memberships.all %}
+            {% for m in membership %}
+                {% if m.user == request.user %}
+                <span class="unit-role-badge {{ m.role }}">{{ m.role }}</span>
+                {% endif %}
+            {% endfor %}
+            {% endwith %}
+        </div>
+    </a>
+    {% endfor %}
+</div>
+
+{% else %}
+<div class="empty-state">
+    <div class="empty-state-title">No units on record</div>
+    <p class="empty-state-sub">Form a unit or wait for a clearance code.</p>
+    <a href="{% url 'create-unit' %}" class="btn btn-ghost">Form first unit</a>
+</div>
+{% endif %}
+
+{% endblock %}

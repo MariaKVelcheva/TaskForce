@@ -20,6 +20,14 @@ class Unit(models.Model):
         max_length=55,
     )
 
+    created_by = models.ForeignKey(
+        to=User,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='created_units',
+        verbose_name=_('created by'),
+    )
+
     invite_code = models.UUIDField(
         default=uuid.uuid4,
         verbose_name=_('invite code'),

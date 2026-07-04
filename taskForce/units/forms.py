@@ -7,11 +7,10 @@ from taskForce.units.models import Unit
 class BaseUnitForm(forms.ModelForm):
     class Meta:
         model = Unit
-        exclude = ("users", )
+        exclude = ("users", "invite_code", )
 
         labels = {
             "name": _("Name"),
-            "invite_code": _("Invite Code"),
         }
 
         widgets = {

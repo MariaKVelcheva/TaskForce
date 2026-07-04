@@ -1,0 +1,254 @@
+{% extends 'common/base.html' %}
+
+{% block title %}{{ object.name }} — Task: Force!{% endblock %}
+
+{% block extra_css %}
+<style>
+    .detail-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .detail-title {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 1.8rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--khaki);
+    }
+
+    .detail-actions {
+        display: flex;
+        gap: 0.5rem;
+        flex-shrink: 0;
+    }
+
+    .section-label {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.65rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 0.75rem;
+    }
+
+    .member-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .member-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: var(--olive-mid);
+        border: 1px solid var(--khaki-dark);
+        border-radius: var(--radius-sm);
+        padding: 0.7rem 1rem;
+    }
+
+    .member-name {
+        font-size: 0.92rem;
+        color: var(--cream);
+    }
+
+    .member-role {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.63rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.15rem 0.5rem;
+        border-radius: var(--radius-sm);
+        border: 1px solid;
+    }
+
+    .member-role.commander {
+        color: var(--khaki);
+        border-color: var(--khaki-dark);
+        background: rgba(200,185,122,0.1);
+    }
+
+    .member-role.operative {
+        color: var(--muted);
+        border-color: var(--olive);
+    }
+
+    .clearance-box {
+        background: var(--olive-mid);
+        border: 1px solid var(--khaki-dark);
+        border-radius: var(--radius-sm);
+        padding: 1rem 1.25rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .clearance-label {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.65rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 0.3rem;
+    }
+
+    .clearance-code {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.85rem;
+        color: var(--khaki);
+        letter-spacing: 0.06em;
+        word-break: break-all;
+    }
+
+    .copy-btn {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.68rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        background: transparent;
+        border: 1px solid var(--khaki-dark);
+        border-radius: var(--radius-sm);
+        color: var(--khaki-muted);
+        padding: 0.35rem 0.75rem;
+        cursor: pointer;
+        flex-shrink: 0;
+        transition: border-color 0.15s, color 0.15s;
+    }
+
+    .copy-btn:hover {
+        border-color: var(--khaki);
+        color: var(--khaki);
+    }
+
+    .task-preview-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .task-preview-row {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.6rem 0.9rem;
+        background: var(--olive-mid);
+        border: 1px solid var(--khaki-dark);
+        border-radius: var(--radius-sm);
+        text-decoration: none;
+        transition: border-color 0.15s;
+    }
+
+    .task-preview-row:hover {
+        border-color: var(--khaki);
+    }
+
+    .task-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        border: 2px solid var(--khaki-dark);
+        flex-shrink: 0;
+    }
+
+    .task-dot.done {
+        background: var(--khaki-dark);
+    }
+
+    .task-preview-name {
+        flex: 1;
+        font-size: 0.88rem;
+        color: var(--cream);
+    }
+
+    .task-preview-name.done {
+        text-decoration: line-through;
+        color: var(--muted);
+    }
+
+    .danger-zone {
+        margin-top: 2.5rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--olive-mid);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="detail-header">
+    <div>
+        <h1 class="detail-title">{{ object.name }}</h1>
+        <p style="font-family: 'Share Tech Mono', monospace; font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-top: 0.4rem;">
+            {{ object.users.count }} operative{{ object.users.count|pluralize }}
+        </p>
+    </div>
+    {% if is_commander %}
+    <div class="detail-actions">
+        <a href="{% url 'update-unit' object.pk %}" class="btn btn-ghost" style="font-size: 0.8rem; padding: 0.45rem 1rem;">Edit</a>
+    </div>
+    {% endif %}
+</div>
+
+<div class="section-label">// Clearance code</div>
+<div class="clearance-box">
+    <div>
+        <div class="clearance-label">Share to recruit operatives</div>
+        <div class="clearance-code" id="invite-code">{{ object.invite_code }}</div>
+    </div>
+    <button class="copy-btn" onclick="copyCode()">Copy</button>
+</div>
+
+<div class="section-label">// Operatives</div>
+<div class="member-list">
+    {% for membership in object.memberships.all %}
+    <div class="member-row">
+        <span class="member-name">{{ membership.user.username }}</span>
+        <span class="member-role {{ membership.role }}">{{ membership.role }}</span>
+    </div>
+    {% endfor %}
+</div>
+
+{% if unit_tasks %}
+<div class="section-label">// Active missions</div>
+<div class="task-preview-list">
+    {% for task in unit_tasks %}
+    <a href="{% url 'details-task' task.pk %}" class="task-preview-row">
+        <div class="task-dot {% if task.is_done %}done{% endif %}"></div>
+        <span class="task-preview-name {% if task.is_done %}done{% endif %}">{{ task.name }}</span>
+        <span style="font-family: 'Share Tech Mono', monospace; font-size: 0.7rem; color: var(--muted);">{{ task.appointed_points }} pts</span>
+    </a>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if is_commander %}
+<div class="danger-zone">
+    <div style="font-family: 'Share Tech Mono', monospace; font-size: 0.65rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 1rem;">Danger zone</div>
+    <a href="{% url 'delete-unit' object.pk %}" class="btn btn-danger" style="font-size: 0.82rem;">Dissolve unit</a>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function copyCode() {
+        const code = document.getElementById("invite-code").textContent.trim();
+        navigator.clipboard.writeText(code).then(() => {
+            const btn = document.querySelector(".copy-btn");
+            const original = btn.textContent;
+            btn.textContent = "Copied";
+            setTimeout(() => btn.textContent = original, 2000);
+        });
+    }
+</script>
+{% endblock %}
