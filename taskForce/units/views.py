@@ -13,7 +13,7 @@ class CreateUnitView(LoginRequiredMixin, CreateView):
     template_name = "units/create-unit.html"
 
     def get_success_url(self):
-        return reverse_lazy("unit-details", kwargs={"pk": self.object.pk})
+        return reverse_lazy("details-unit", kwargs={"pk": self.object.pk})
 
     def form_valid(self, form):
         form.instance.created_by = self.request.user
@@ -33,14 +33,26 @@ class UpdateUnitView(LoginRequiredMixin, UpdateView):
     form_class = UpdateUnitForm
     template_name = "units/update-unit.html"
 
+    def get_queryset(self):
+        return Unit.objects.filter(
+            memberships__user=self.request.user,
+            memberships__role="commander",
+        )
+
     def get_success_url(self):
-        return reverse_lazy("unit-details", kwargs={"pk": self.object.pk})
+        return reverse_lazy("details-unit", kwargs={"pk": self.object.pk})
 
 
 class DeleteUnitView(LoginRequiredMixin, DeleteView):
     model = Unit
     template_name = "units/delete-unit.html"
     success_url = reverse_lazy("home")
+
+    def get_queryset(self):
+        return Unit.objects.filter(
+            memberships__user=self.request.user,
+            memberships__role="commander",
+        )
 
 
 class DetailUnitView(LoginRequiredMixin, DetailView):
@@ -50,10 +62,14 @@ class DetailUnitView(LoginRequiredMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        unit_tasks = self.object.tasks.all()
 
-        context["active_tasks"] = self.get_queryset().filter(is_done=False)
-        context["finished_tasks"] = self.get_queryset().filter(is_done=True)
-       # context["is_commander"] = self.object.memberships.filter(role="commander").exists()
+        context["is_commander"] = self.object.memberships.filter(
+            user=self.request.user,
+            role="commander").exists()
+        context["unit_tasks"] = unit_tasks
+        context["active_tasks"] = unit_tasks.filter(is_done=False)
+        context["finished_tasks"] = unit_tasks.filter(is_done=False)
 
         return context
 
@@ -64,7 +80,7 @@ class CatalogueUnitView(LoginRequiredMixin, ListView):
     context_object_name = "units"
 
     def get_queryset(self):
-        return Unit.objects.filter(membership__user=self.request.user)
+        return Unit.objects.filter(memberships__user=self.request.user)
 
 
 
