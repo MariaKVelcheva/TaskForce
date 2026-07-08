@@ -1,0 +1,36 @@
+{% extends 'common/base.html' %}
+
+{% block title %}Join {{ unit.name }} — Task: Force!{% endblock %}
+
+{% block content %}
+
+<div style="max-width: 420px; margin: 0 auto;">
+
+    <div style="margin-bottom: 2rem; text-align: center;">
+        <h1 style="font-family: 'Barlow Condensed', sans-serif; font-size: 1.8rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--khaki);">Join unit</h1>
+        <p style="font-family: 'Share Tech Mono', monospace; font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-top: 0.4rem;">Clearance code verified</p>
+    </div>
+
+    <div class="panel">
+        <div class="panel-header">// Confirm enlistment</div>
+
+        <p style="font-size: 0.92rem; color: var(--cream-dark); line-height: 1.6; margin-bottom: 0.75rem;">
+            You are about to join <strong style="color: var(--cream);">{{ unit.name }}</strong> as an <strong style="color: var(--cream);">Operative</strong>.
+        </p>
+
+        <p style="font-family: 'Share Tech Mono', monospace; font-size: 0.75rem; color: var(--muted); line-height: 1.6; margin-bottom: 1.5rem;">
+            {{ unit.users.count }} operative{{ unit.users.count|pluralize }} already enlisted.
+        </p>
+
+        <form method="post">
+            {% csrf_token %}
+            <div style="display: flex; gap: 0.75rem;">
+                <button type="submit" class="btn btn-primary">Confirm enlistment</button>
+                <a href="{% url 'all-units' %}" class="btn btn-ghost">Stand down</a>
+            </div>
+        </form>
+    </div>
+
+</div>
+
+{% endblock %}

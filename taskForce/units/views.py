@@ -1,10 +1,16 @@
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http import Http404
+from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, UpdateView, DeleteView, DetailView, ListView
-
-from taskForce.tasks.models import Task
+from django.contrib.auth import get_user_model
+from django.utils.translation import gettext_lazy as _
 from taskForce.units.forms import CreateUnitForm, UpdateUnitForm
 from taskForce.units.models import Unit, Membership
+
+TaskUser = get_user_model()
 
 
 class CreateUnitView(LoginRequiredMixin, CreateView):
@@ -83,5 +89,36 @@ class CatalogueUnitView(LoginRequiredMixin, ListView):
         return Unit.objects.filter(memberships__user=self.request.user)
 
 
+@login_required
+def join_unit(request, invite_code):
+    unit = Unit.objects.filter(
+        invite_code=invite_code,
+    ).first()
 
+    if not unit:
+        raise Http404(_("Unit does not exist"))
+
+    user = request.user
+
+    if unit.memberships.filter(user=user).exists():
+        messages.info(request, _("You are already a member of this unit."))
+        return redirect("details-unit", pk=unit.pk)
+
+    if request.method == "POST":
+        Membership.objects.create(
+            user=user,
+            role="operative",
+            unit=unit,
+        )
+        messages.success(request,
+                         f"You have successfully joined {unit.name}")
+        return redirect("details-unit", pk=unit.pk)
+
+    context = {
+        "user": user,
+        "invite_code": invite_code,
+        "unit": unit
+    }
+
+    return render(request, "units/join-unit.html", context)
 
