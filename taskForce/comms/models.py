@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
 
 
-User = get_user_model()
+TaskUser = get_user_model()
 
 
 class Message(models.Model):
@@ -12,7 +12,7 @@ class Message(models.Model):
     )
 
     sender = models.ForeignKey(
-        to=User,
+        to=TaskUser,
         on_delete=models.SET_NULL,
         verbose_name=_('Sender'),
         related_name='sent_messages',
@@ -21,7 +21,7 @@ class Message(models.Model):
     )
 
     recipients = models.ManyToManyField(
-        to=User,
+        to=TaskUser,
         verbose_name=_('Recipients'),
         related_name='received_messages',
     )
@@ -38,11 +38,6 @@ class Message(models.Model):
     created_at = models.DateTimeField(
         verbose_name=_('Created at'),
         auto_now_add=True,
-    )
-
-    modified_at = models.DateTimeField(
-        verbose_name=_('Modified at'),
-        auto_now=True,
     )
 
     related_task = models.ForeignKey(
@@ -62,3 +57,29 @@ class Message(models.Model):
     def __str__(self):
         return f"{self.sender} - {self.created_at:%d-%m-%Y %H:%M}"
 
+
+class MessageRead(models.Model):
+    message = models.ForeignKey(
+        to=Message,
+        on_delete=models.CASCADE,
+        verbose_name=_('Message'),
+        related_name='reads',
+    )
+
+    user = models.ForeignKey(
+        to=TaskUser,
+        on_delete=models.CASCADE,
+        verbose_name=_('User'),
+        related_name='read_messages',
+    )
+
+    read_at = models.DateTimeField(
+        verbose_name=_('Read at'),
+        auto_now_add=True,
+    )
+
+    class Meta:
+        verbose_name = _('Read message')
+        verbose_name_plural = _('Read messages')
+        unique_together = (('user', 'message'),)
+        ordering = ('-read_at', )
