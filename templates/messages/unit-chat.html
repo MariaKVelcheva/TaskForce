@@ -1,10 +1,402 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends 'common/base.html' %}
 
-</body>
-</html>
+{% block title %}{{ unit.name }} — Comms{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chat-layout {
+        display: grid;
+        grid-template-columns: 1fr 280px;
+        gap: 1.5rem;
+        align-items: start;
+    }
+
+    .chat-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.25rem;
+    }
+
+    .chat-title {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 1.5rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--khaki);
+    }
+
+    .chat-subtitle {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.68rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-top: 0.2rem;
+    }
+
+    .search-bar {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .search-bar input {
+        flex: 1;
+        background: var(--olive-dark);
+        border: 1px solid var(--khaki-dark);
+        border-radius: var(--radius-sm);
+        padding: 0.5rem 0.75rem;
+        color: var(--cream);
+        font-family: 'Barlow', sans-serif;
+        font-size: 0.88rem;
+        outline: none;
+        transition: border-color 0.15s;
+    }
+
+    .search-bar input:focus { border-color: var(--khaki); }
+
+    .search-bar button {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.68rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        background: transparent;
+        border: 1px solid var(--khaki-dark);
+        border-radius: var(--radius-sm);
+        color: var(--khaki-muted);
+        padding: 0.5rem 0.85rem;
+        cursor: pointer;
+        transition: border-color 0.15s, color 0.15s;
+    }
+
+    .search-bar button:hover { border-color: var(--khaki); color: var(--khaki); }
+
+    /* MESSAGES */
+    .chat-feed {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .chat-bubble {
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+        max-width: 85%;
+    }
+
+    .chat-bubble.mine {
+        align-self: flex-end;
+        align-items: flex-end;
+    }
+
+    .chat-bubble.theirs {
+        align-self: flex-start;
+        align-items: flex-start;
+    }
+
+    .bubble-meta {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.63rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--muted);
+    }
+
+    .bubble-body {
+        background: var(--olive-mid);
+        border: 1px solid var(--khaki-dark);
+        border-radius: var(--radius);
+        padding: 0.7rem 1rem;
+        font-size: 0.9rem;
+        color: var(--cream);
+        line-height: 1.5;
+        position: relative;
+    }
+
+    .chat-bubble.mine .bubble-body {
+        background: var(--olive);
+        border-color: var(--khaki-dark);
+        border-bottom-right-radius: var(--radius-sm);
+    }
+
+    .chat-bubble.theirs .bubble-body {
+        border-bottom-left-radius: var(--radius-sm);
+    }
+
+    .bubble-title {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 0.85rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--khaki);
+        margin-bottom: 0.3rem;
+    }
+
+    .bubble-task-link {
+        display: inline-block;
+        margin-top: 0.5rem;
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.65rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--khaki-muted);
+        text-decoration: none;
+        border: 1px solid var(--khaki-dark);
+        border-radius: var(--radius-sm);
+        padding: 0.15rem 0.5rem;
+        transition: color 0.15s, border-color 0.15s;
+    }
+
+    .bubble-task-link:hover { color: var(--khaki); border-color: var(--khaki); }
+
+    .bubble-actions {
+        display: flex;
+        gap: 0.4rem;
+        margin-top: 0.2rem;
+    }
+
+    .bubble-action-btn {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.6rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        background: transparent;
+        border: none;
+        color: var(--muted);
+        cursor: pointer;
+        padding: 0;
+        text-decoration: none;
+        transition: color 0.15s;
+    }
+
+    .bubble-action-btn:hover { color: var(--khaki); }
+    .bubble-action-btn.danger:hover { color: var(--rust-light); }
+
+    /* COLLAPSIBLE DETAILS PANEL */
+    .bubble-details {
+        display: none;
+        background: var(--olive-dark);
+        border: 1px solid var(--khaki-dark);
+        border-radius: var(--radius-sm);
+        padding: 0.6rem 0.85rem;
+        margin-top: 0.3rem;
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.68rem;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+        line-height: 1.8;
+    }
+
+    .bubble-details.open { display: block; }
+
+    /* SIDEBAR */
+    .chat-sidebar {
+        position: sticky;
+        top: 72px;
+    }
+
+    .sidebar-panel {
+        background: var(--olive-mid);
+        border: 1px solid var(--khaki-dark);
+        border-radius: var(--radius);
+        padding: 1.1rem;
+        margin-bottom: 1rem;
+    }
+
+    .sidebar-label {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.63rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid var(--olive);
+    }
+
+    .sidebar-member {
+        font-size: 0.83rem;
+        color: var(--cream-dark);
+        padding: 0.3rem 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .sidebar-role {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.6rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+    }
+
+    .compose-area {
+        background: var(--olive-mid);
+        border: 1px solid var(--khaki-dark);
+        border-radius: var(--radius);
+        padding: 1.1rem;
+    }
+
+    .compose-area textarea {
+        width: 100%;
+        background: var(--olive-dark);
+        border: 1px solid var(--khaki-dark);
+        border-radius: var(--radius-sm);
+        padding: 0.6rem 0.85rem;
+        color: var(--cream);
+        font-family: 'Barlow', sans-serif;
+        font-size: 0.88rem;
+        resize: vertical;
+        min-height: 80px;
+        outline: none;
+        transition: border-color 0.15s;
+        margin-bottom: 0.75rem;
+    }
+
+    .compose-area textarea:focus { border-color: var(--khaki); }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: var(--muted);
+    }
+
+    .empty-state-title {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 1.1rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--khaki-muted);
+        margin-bottom: 0.4rem;
+    }
+
+    @media (max-width: 680px) {
+        .chat-layout { grid-template-columns: 1fr; }
+        .chat-sidebar { position: static; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="chat-header">
+    <div>
+        <h1 class="chat-title">{{ unit.name }} — Comms</h1>
+        <p class="chat-subtitle">
+            <a href="{% url 'details-unit' unit.pk %}" style="color: var(--muted); text-decoration: none;">← Back to unit</a>
+        </p>
+    </div>
+</div>
+
+<form method="get" class="search-bar">
+    {{ search_form.query }}
+    <button type="submit">Search</button>
+    {% if request.GET.query %}
+    <a href="{% url 'unit-chat' unit.pk %}" class="btn btn-ghost" style="font-size: 0.68rem; padding: 0.4rem 0.75rem;">Clear</a>
+    {% endif %}
+</form>
+
+<div class="chat-layout">
+
+    <div>
+        {% if messages %}
+        <div class="chat-feed">
+            {% for message in messages %}
+            <div class="chat-bubble {% if message.sender == request.user %}mine{% else %}theirs{% endif %}"
+                 id="msg-{{ message.pk }}">
+
+                <div class="bubble-meta">
+                    {% if message.sender == request.user %}You{% else %}{{ message.sender.username }}{% endif %}
+                    &mdash; {{ message.created_at|date:"d M, H:i" }}
+                </div>
+
+                <div class="bubble-body">
+                    {% if message.title %}
+                    <div class="bubble-title">{{ message.title }}</div>
+                    {% endif %}
+                    {{ message.text }}
+                    {% if message.related_task %}
+                    <a href="{% url 'details-task' message.related_task.pk %}" class="bubble-task-link">
+                        ↗ {{ message.related_task.name }}
+                    </a>
+                    {% endif %}
+                </div>
+
+                {# Collapsible details panel #}
+                <div class="bubble-details" id="details-{{ message.pk }}">
+                    Sent: {{ message.created_at|date:"d M Y, H:i" }}<br>
+                    From: {{ message.sender.username }}<br>
+                    {% if message.related_task %}Mission: {{ message.related_task.name }}{% endif %}
+                </div>
+
+                <div class="bubble-actions">
+                    <button class="bubble-action-btn"
+                            onclick="toggleDetails({{ message.pk }})">details</button>
+                    {% if message.sender == request.user %}
+                    <a href="{% url 'delete-message' message.pk %}"
+                       class="bubble-action-btn danger">delete</a>
+                    {% endif %}
+                </div>
+
+            </div>
+            {% endfor %}
+        </div>
+
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-state-title">
+                {% if request.GET.query %}No comms match "{{ request.GET.query }}"
+                {% else %}Channel clear{% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    {# SIDEBAR #}
+    <aside class="chat-sidebar">
+
+        <div class="sidebar-panel">
+            <div class="sidebar-label">// Operatives</div>
+            {% for membership in unit.memberships.all %}
+            <div class="sidebar-member">
+                <span>{{ membership.user.username }}</span>
+                <span class="sidebar-role">{{ membership.role }}</span>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="compose-area">
+            <div class="sidebar-label">// New comm</div>
+            <form method="post" action="{% url 'create-message' %}">
+                {% csrf_token %}
+                <input type="hidden" name="unit" value="{{ unit.pk }}">
+                <textarea name="text" placeholder="Your comm here..."></textarea>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Send</button>
+            </form>
+        </div>
+
+    </aside>
+
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function toggleDetails(pk) {
+        const panel = document.getElementById("details-" + pk);
+        panel.classList.toggle("open");
+        // JS hint: you'll need to update the button label when toggled
+        // try finding the button and changing its textContent between "details" and "hide"
+    }
+
+    // Auto-scroll to bottom of feed on load
+    // Hint: find the last .chat-bubble element and call scrollIntoView() on it
+</script>
+{% endblock %}

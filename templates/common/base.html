@@ -43,7 +43,7 @@
                 );
         }
 
-
+        /* NAV */
         nav {
             background: var(--olive-dark);
             border-bottom: 2px solid var(--khaki-dark);
@@ -78,24 +78,6 @@
             list-style: none;
         }
 
-        .nav-links-btn {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.78rem;
-    letter-spacing: 0.06em;
-    color: var(--cream-dark);
-    text-transform: uppercase;
-    border: none;
-    border-bottom: 2px solid transparent;
-    background: transparent;
-    cursor: pointer;
-    transition: color 0.15s, border-color 0.15s;
-}
-
-.nav-links-btn:hover {
-    color: var(--khaki);
-    border-bottom-color: var(--khaki);
-}
-
         .nav-links a {
             font-family: 'Share Tech Mono', monospace;
             font-size: 0.78rem;
@@ -124,7 +106,7 @@
             letter-spacing: 0.04em;
         }
 
-
+        /* MAIN */
         main {
             flex: 1;
             width: 100%;
@@ -133,6 +115,7 @@
             padding: 2.5rem 1.5rem;
         }
 
+        /* PANELS */
         .panel {
             background: var(--olive-mid);
             border: 1px solid var(--khaki-dark);
@@ -151,6 +134,7 @@
             border-bottom: 1px solid var(--olive);
         }
 
+        /* FORMS */
         .form-group {
             margin-bottom: 1.25rem;
         }
@@ -195,7 +179,7 @@
             font-family: 'Share Tech Mono', monospace;
         }
 
-
+        /* BUTTONS */
         .btn {
             display: inline-block;
             font-family: 'Barlow Condensed', sans-serif;
@@ -244,7 +228,7 @@
             color: var(--cream);
         }
 
-
+        /* MESSAGES */
         .messages {
             list-style: none;
             margin-bottom: 1.5rem;
@@ -263,8 +247,7 @@
         .messages .error   { border-color: var(--rust); background: rgba(184,92,56,0.1); color: var(--rust-light); }
         .messages .info    { border-color: var(--khaki); background: rgba(200,185,122,0.1); color: var(--khaki); }
 
-
-
+        /* FOOTER */
         footer {
             border-top: 1px solid var(--olive-mid);
             padding: 1rem 2rem;
@@ -276,7 +259,7 @@
             text-transform: uppercase;
         }
 
-
+        /* UTILS */
         .text-muted { color: var(--muted); }
         .text-mono  { font-family: 'Share Tech Mono', monospace; }
         .mt-1 { margin-top: 1rem; }
@@ -293,10 +276,7 @@
         {% if user.is_authenticated %}
             <li><span class="nav-badge">{{ user.username }}</span></li>
             <li><a href="{% url 'details-profile' %}">Profile</a></li>
-            <form method="post" action="{% url 'logout' %}" style="display: inline;">
-    {% csrf_token %}
-    <button type="submit" class="nav-links-btn">Log out</button>
-</form>
+            <li><a href="{% url 'logout' %}">Log out</a></li>
         {% else %}
             <li><a href="{% url 'login' %}">Log in</a></li>
             <li><a href="{% url 'register' %}">Register</a></li>

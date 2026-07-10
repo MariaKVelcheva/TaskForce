@@ -1,10 +1,326 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends 'common/base.html' %}
 
-</body>
-</html>
+{% block title %}{{ task.name }} — Thread{% endblock %}
+
+{% block extra_css %}
+<style>
+    .thread-header {
+        margin-bottom: 1.5rem;
+    }
+
+    .thread-title {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 1.5rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--khaki);
+    }
+
+    .thread-task-card {
+        background: var(--olive-mid);
+        border: 1px solid var(--khaki-dark);
+        border-radius: var(--radius-sm);
+        padding: 0.85rem 1.1rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.5rem;
+        text-decoration: none;
+        transition: border-color 0.15s;
+    }
+
+    .thread-task-card:hover { border-color: var(--khaki); }
+
+    .thread-task-name {
+        font-size: 0.92rem;
+        color: var(--cream);
+    }
+
+    .thread-task-status {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.65rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.15rem 0.5rem;
+        border-radius: var(--radius-sm);
+        border: 1px solid;
+    }
+
+    .thread-task-status.pending {
+        color: var(--khaki);
+        border-color: var(--khaki-dark);
+    }
+
+    .thread-task-status.done {
+        color: #7aab6a;
+        border-color: #4a7a3a;
+    }
+
+    .search-bar {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .search-bar input {
+        flex: 1;
+        background: var(--olive-dark);
+        border: 1px solid var(--khaki-dark);
+        border-radius: var(--radius-sm);
+        padding: 0.5rem 0.75rem;
+        color: var(--cream);
+        font-family: 'Barlow', sans-serif;
+        font-size: 0.88rem;
+        outline: none;
+        transition: border-color 0.15s;
+    }
+
+    .search-bar input:focus { border-color: var(--khaki); }
+
+    .search-bar button {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.68rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        background: transparent;
+        border: 1px solid var(--khaki-dark);
+        border-radius: var(--radius-sm);
+        color: var(--khaki-muted);
+        padding: 0.5rem 0.85rem;
+        cursor: pointer;
+        transition: border-color 0.15s, color 0.15s;
+    }
+
+    .search-bar button:hover { border-color: var(--khaki); color: var(--khaki); }
+
+    .thread-feed {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .thread-bubble {
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+        max-width: 80%;
+    }
+
+    .thread-bubble.mine {
+        align-self: flex-end;
+        align-items: flex-end;
+    }
+
+    .thread-bubble.theirs {
+        align-self: flex-start;
+        align-items: flex-start;
+    }
+
+    .bubble-meta {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.63rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--muted);
+    }
+
+    .bubble-body {
+        background: var(--olive-mid);
+        border: 1px solid var(--khaki-dark);
+        border-radius: var(--radius);
+        padding: 0.7rem 1rem;
+        font-size: 0.9rem;
+        color: var(--cream);
+        line-height: 1.5;
+    }
+
+    .thread-bubble.mine .bubble-body {
+        background: var(--olive);
+        border-bottom-right-radius: var(--radius-sm);
+    }
+
+    .thread-bubble.theirs .bubble-body {
+        border-bottom-left-radius: var(--radius-sm);
+    }
+
+    .bubble-details {
+        display: none;
+        background: var(--olive-dark);
+        border: 1px solid var(--khaki-dark);
+        border-radius: var(--radius-sm);
+        padding: 0.6rem 0.85rem;
+        margin-top: 0.3rem;
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.68rem;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+        line-height: 1.8;
+    }
+
+    .bubble-details.open { display: block; }
+
+    .bubble-actions {
+        display: flex;
+        gap: 0.4rem;
+    }
+
+    .bubble-action-btn {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.6rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        background: transparent;
+        border: none;
+        color: var(--muted);
+        cursor: pointer;
+        padding: 0;
+        text-decoration: none;
+        transition: color 0.15s;
+    }
+
+    .bubble-action-btn:hover { color: var(--khaki); }
+    .bubble-action-btn.danger:hover { color: var(--rust-light); }
+
+    .compose-area {
+        background: var(--olive-mid);
+        border: 1px solid var(--khaki-dark);
+        border-radius: var(--radius);
+        padding: 1.1rem;
+    }
+
+    .compose-label {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.63rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 0.75rem;
+    }
+
+    .compose-area textarea {
+        width: 100%;
+        background: var(--olive-dark);
+        border: 1px solid var(--khaki-dark);
+        border-radius: var(--radius-sm);
+        padding: 0.6rem 0.85rem;
+        color: var(--cream);
+        font-family: 'Barlow', sans-serif;
+        font-size: 0.88rem;
+        resize: vertical;
+        min-height: 80px;
+        outline: none;
+        transition: border-color 0.15s;
+        margin-bottom: 0.75rem;
+    }
+
+    .compose-area textarea:focus { border-color: var(--khaki); }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+    }
+
+    .empty-state-title {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 1.1rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--khaki-muted);
+        margin-bottom: 0.4rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="thread-header">
+    <p style="font-family: 'Share Tech Mono', monospace; font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.5rem;">
+        <a href="{% url 'details-task' task.pk %}" style="color: var(--muted); text-decoration: none;">← Back to mission</a>
+    </p>
+    <h1 class="thread-title">Thread — {{ task.name }}</h1>
+</div>
+
+<a href="{% url 'details-task' task.pk %}" class="thread-task-card">
+    <span class="thread-task-name">{{ task.name }}</span>
+    <span class="thread-task-status {% if task.is_done %}done{% else %}pending{% endif %}">
+        {% if task.is_done %}Complete{% else %}Pending{% endif %}
+    </span>
+</a>
+
+<form method="get" class="search-bar">
+    {{ search_form.query }}
+    <button type="submit">Search</button>
+    {% if request.GET.query %}
+    <a href="{% url 'task-thread' task.pk %}" class="btn btn-ghost" style="font-size: 0.68rem; padding: 0.4rem 0.75rem;">Clear</a>
+    {% endif %}
+</form>
+
+{% if messages %}
+<div class="thread-feed">
+    {% for message in messages %}
+    <div class="thread-bubble {% if message.sender == request.user %}mine{% else %}theirs{% endif %}"
+         id="msg-{{ message.pk }}">
+
+        <div class="bubble-meta">
+            {% if message.sender == request.user %}You{% else %}{{ message.sender.username }}{% endif %}
+            &mdash; {{ message.created_at|date:"d M, H:i" }}
+        </div>
+
+        <div class="bubble-body">
+            {% if message.title %}
+            <div style="font-family: 'Barlow Condensed', sans-serif; font-size: 0.85rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--khaki); margin-bottom: 0.3rem;">
+                {{ message.title }}
+            </div>
+            {% endif %}
+            {{ message.text }}
+        </div>
+
+        <div class="bubble-details" id="details-{{ message.pk }}">
+            Sent: {{ message.created_at|date:"d M Y, H:i" }}<br>
+            From: {{ message.sender.username }}<br>
+            Recipients: {% for r in message.recipients.all %}{{ r.username }}{% if not forloop.last %}, {% endif %}{% endfor %}
+        </div>
+
+        <div class="bubble-actions">
+            <button class="bubble-action-btn" onclick="toggleDetails({{ message.pk }})">details</button>
+            {% if message.sender == request.user %}
+            <a href="{% url 'delete-message' message.pk %}" class="bubble-action-btn danger">delete</a>
+            {% endif %}
+        </div>
+
+    </div>
+    {% endfor %}
+</div>
+
+{% else %}
+<div class="empty-state">
+    <div class="empty-state-title">
+        {% if request.GET.query %}No comms match "{{ request.GET.query }}"
+        {% else %}No comms on this mission yet{% endif %}
+    </div>
+</div>
+{% endif %}
+
+<div class="compose-area">
+    <div class="compose-label">// Add to thread</div>
+    <form method="post" action="{% url 'create-message' %}">
+        {% csrf_token %}
+        <input type="hidden" name="related_task" value="{{ task.pk }}">
+        <textarea name="text" placeholder="Your comm here..."></textarea>
+        <button type="submit" class="btn btn-primary">Send</button>
+    </form>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function toggleDetails(pk) {
+        const panel = document.getElementById("details-" + pk);
+        panel.classList.toggle("open");
+    }
+</script>
+{% endblock %}

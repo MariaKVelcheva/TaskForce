@@ -15,6 +15,7 @@ class CreateMessageView(LoginRequiredMixin, CreateView):
     form_class = MessageCreateForm
     template_name = "messages/create-message.html"
 
+
     def form_valid(self, form):
         form.instance.sender = self.request.user
         return super().form_valid(form)
@@ -23,7 +24,7 @@ class CreateMessageView(LoginRequiredMixin, CreateView):
         if self.object.unit:
             return reverse_lazy("unit-chat", kwargs={"pk": self.object.unit.pk})
         if self.object.task:
-            return reverse_lazy("task-thread", kwargs={"pk": self.object.task.pk})
+            return reverse_lazy("task-thread", kwargs={"pk": self.object.related_task.pk})
         return reverse_lazy("inbox")
 
 
@@ -43,7 +44,6 @@ class DeleteMessageView(LoginRequiredMixin, DeleteView):
 class DetailsMessageView(LoginRequiredMixin, DetailView):
     model = Message
     context_object_name = "message"
-    template_name = "messages/details-message.html"
 
     def get_queryset(self):
         return Message.objects.filter(
@@ -68,10 +68,12 @@ class DetailsMessageView(LoginRequiredMixin, DetailView):
                 user=self.request.user,
             ).values_list('message_id', flat=True))
         return context
+
+
 class InboxView(LoginRequiredMixin, ListView):
     model = Message
     context_object_name = "messages"
-    template_name = "messages/all-messages.html"
+    template_name = "messages/inbox.html"
 
     def get_queryset(self):
         user = self.request.user
@@ -156,3 +158,4 @@ class ChatThreadView(LoginRequiredMixin, ListView):
         context['search_form'] = SearchMessageForm(self.request.GET or None)
         context["task"] = get_object_or_404(Task, pk=self.kwargs['pk'])
         return context
+

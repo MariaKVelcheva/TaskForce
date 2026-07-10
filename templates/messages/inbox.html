@@ -1,0 +1,251 @@
+{% extends 'common/base.html' %}
+
+{% block title %}Inbox — Task: Force!{% endblock %}
+
+{% block extra_css %}
+<style>
+    .inbox-header {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        margin-bottom: 1.5rem;
+    }
+
+    .inbox-title {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 1.8rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--khaki);
+    }
+
+    .search-bar {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .search-bar input {
+        flex: 1;
+        background: var(--olive-dark);
+        border: 1px solid var(--khaki-dark);
+        border-radius: var(--radius-sm);
+        padding: 0.55rem 0.85rem;
+        color: var(--cream);
+        font-family: 'Barlow', sans-serif;
+        font-size: 0.9rem;
+        outline: none;
+        transition: border-color 0.15s;
+    }
+
+    .search-bar input:focus { border-color: var(--khaki); }
+
+    .search-bar button {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.72rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        background: transparent;
+        border: 1px solid var(--khaki-dark);
+        border-radius: var(--radius-sm);
+        color: var(--khaki-muted);
+        padding: 0.55rem 1rem;
+        cursor: pointer;
+        transition: border-color 0.15s, color 0.15s;
+    }
+
+    .search-bar button:hover {
+        border-color: var(--khaki);
+        color: var(--khaki);
+    }
+
+    .message-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+    }
+
+    .message-row {
+        display: grid;
+        grid-template-columns: auto 1fr auto auto;
+        align-items: center;
+        gap: 1rem;
+        background: var(--olive-mid);
+        border: 1px solid var(--khaki-dark);
+        border-radius: var(--radius-sm);
+        padding: 0.8rem 1.1rem;
+        text-decoration: none;
+        transition: border-color 0.15s, background 0.15s;
+    }
+
+    .message-row:hover {
+        border-color: var(--khaki);
+        background: var(--olive);
+    }
+
+    .message-row.unread {
+        border-left: 3px solid var(--khaki);
+    }
+
+    .unread-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--khaki);
+        flex-shrink: 0;
+    }
+
+    .read-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        border: 1px solid var(--khaki-dark);
+        flex-shrink: 0;
+    }
+
+    .message-sender {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.75rem;
+        letter-spacing: 0.06em;
+        color: var(--khaki-muted);
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+
+    .message-row.unread .message-sender {
+        color: var(--khaki);
+        font-weight: bold;
+    }
+
+    .message-preview {
+        font-size: 0.88rem;
+        color: var(--muted);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .message-row.unread .message-preview {
+        color: var(--cream);
+        font-weight: 500;
+    }
+
+    .message-context {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.65rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 0.15rem 0.5rem;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--khaki-dark);
+        color: var(--khaki-muted);
+        white-space: nowrap;
+    }
+
+    .message-date {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.68rem;
+        color: var(--muted);
+        white-space: nowrap;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+    }
+
+    .empty-state-title {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 1.2rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--khaki-muted);
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-state-sub {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.75rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 1.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="inbox-header">
+    <div>
+        <h1 class="inbox-title">Inbox</h1>
+        <p style="font-family: 'Share Tech Mono', monospace; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-top: 0.3rem;">
+            {{ messages|length }} comm{{ messages|length|pluralize }}
+        </p>
+    </div>
+    <a href="{% url 'create-message' %}" class="btn btn-primary">+ New comm</a>
+</div>
+
+<form method="get" class="search-bar">
+    {{ search_form.query }}
+    <button type="submit">Search</button>
+    {% if request.GET.query %}
+    <a href="{% url 'inbox' %}" class="btn btn-ghost" style="font-size: 0.72rem; padding: 0.45rem 0.85rem;">Clear</a>
+    {% endif %}
+</form>
+
+{% if messages %}
+<div class="message-list">
+    {% for message in messages %}
+    {% with is_unread=message.pk|stringformat:"i" %}
+    {% with unread=message.pk not in read_message_ids %}
+    <a href="{% url 'details-message' message.pk %}"
+       class="message-row {% if message.pk not in read_message_ids and message.sender != request.user %}unread{% endif %}">
+
+        {% if message.pk not in read_message_ids and message.sender != request.user %}
+        <div class="unread-dot"></div>
+        {% else %}
+        <div class="read-dot"></div>
+        {% endif %}
+
+        <div>
+            <div class="message-sender">
+                {% if message.sender == request.user %}You{% else %}{{ message.sender.username }}{% endif %}
+            </div>
+            <div class="message-preview">
+                {% if message.title %}{{ message.title }} — {% endif %}{{ message.text|truncatechars:60 }}
+            </div>
+        </div>
+
+        <div>
+            {% if message.unit %}
+            <span class="message-context">{{ message.unit.name }}</span>
+            {% elif message.related_task %}
+            <span class="message-context">{{ message.related_task.name }}</span>
+            {% endif %}
+        </div>
+
+        <div class="message-date">{{ message.created_at|date:"d M, H:i" }}</div>
+    </a>
+    {% endwith %}
+    {% endwith %}
+    {% endfor %}
+</div>
+
+{% else %}
+<div class="empty-state">
+    {% if request.GET.query %}
+    <div class="empty-state-title">No comms found</div>
+    <p class="empty-state-sub">No results for "{{ request.GET.query }}"</p>
+    <a href="{% url 'inbox' %}" class="btn btn-ghost">Clear search</a>
+    {% else %}
+    <div class="empty-state-title">Inbox clear</div>
+    <p class="empty-state-sub">No comms received or sent yet.</p>
+    <a href="{% url 'create-message' %}" class="btn btn-ghost">Send first comm</a>
+    {% endif %}
+</div>
+{% endif %}
+
+{% endblock %}

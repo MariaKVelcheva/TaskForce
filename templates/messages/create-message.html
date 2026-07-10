@@ -1,10 +1,101 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends 'common/base.html' %}
 
-</body>
-</html>
+{% block title %}New comm — Task: Force!{% endblock %}
+
+{% block extra_css %}
+<style>
+    select,
+    textarea {
+        width: 100%;
+        background: var(--olive-dark);
+        border: 1px solid var(--khaki-dark);
+        border-radius: var(--radius-sm);
+        padding: 0.6rem 0.85rem;
+        color: var(--cream);
+        font-family: 'Barlow', sans-serif;
+        font-size: 0.95rem;
+        outline: none;
+        transition: border-color 0.15s;
+    }
+
+    select:focus, textarea:focus { border-color: var(--khaki); }
+    select option { background: var(--olive-dark); color: var(--cream); }
+
+    textarea { resize: vertical; min-height: 120px; }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div style="max-width: 580px; margin: 0 auto;">
+
+    <div style="margin-bottom: 2rem;">
+        <h1 style="font-family: 'Barlow Condensed', sans-serif; font-size: 1.8rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--khaki);">New comm</h1>
+        <p style="font-family: 'Share Tech Mono', monospace; font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-top: 0.3rem;">Compose your transmission</p>
+    </div>
+
+    <div class="panel">
+        <div class="panel-header">// Transmission details</div>
+
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            {% if form.title %}
+            <div class="form-group">
+                <label for="{{ form.title.id_for_label }}">{{ form.title.label }}</label>
+                {{ form.title }}
+                {% if form.title.errors %}
+                <ul class="errorlist">{% for e in form.title.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <div class="form-group">
+                <label for="{{ form.text.id_for_label }}">{{ form.text.label }}</label>
+                {{ form.text }}
+                {% if form.text.errors %}
+                <ul class="errorlist">{% for e in form.text.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.recipients.id_for_label }}">{{ form.recipients.label }}</label>
+                {{ form.recipients }}
+                {% if form.recipients.errors %}
+                <ul class="errorlist">{% for e in form.recipients.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+                {% endif %}
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="{{ form.unit.id_for_label }}">{{ form.unit.label }}</label>
+                    {{ form.unit }}
+                    {% if form.unit.errors %}
+                    <ul class="errorlist">{% for e in form.unit.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.related_task.id_for_label }}">{{ form.related_task.label }}</label>
+                    {{ form.related_task }}
+                    {% if form.related_task.errors %}
+                    <ul class="errorlist">{% for e in form.related_task.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div style="margin-top: 1.75rem; display: flex; gap: 0.75rem;">
+                <button type="submit" class="btn btn-primary">Transmit</button>
+                <a href="{% url 'inbox' %}" class="btn btn-ghost">Cancel</a>
+            </div>
+        </form>
+    </div>
+
+</div>
+
+{% endblock %}
