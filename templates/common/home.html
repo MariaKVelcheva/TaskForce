@@ -5,12 +5,15 @@
 {% block extra_css %}
 <style>
     .home-header {
-        margin-bottom: 2.5rem;
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        margin-bottom: 2rem;
     }
 
     .home-title {
         font-family: 'Barlow Condensed', sans-serif;
-        font-size: 2rem;
+        font-size: 1.8rem;
         font-weight: 700;
         letter-spacing: 0.08em;
         text-transform: uppercase;
@@ -19,68 +22,270 @@
 
     .home-subtitle {
         font-family: 'Share Tech Mono', monospace;
-        font-size: 0.78rem;
+        font-size: 0.72rem;
         letter-spacing: 0.1em;
         text-transform: uppercase;
         color: var(--muted);
-        margin-top: 0.4rem;
+        margin-top: 0.3rem;
     }
 
-    .placeholder-grid {
+    
+    .stats-row {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 1rem;
-        margin-top: 1.5rem;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.75rem;
+        margin-bottom: 2rem;
     }
 
-    .placeholder-card {
-        background: var(--olive-mid);
-        border: 1px dashed var(--khaki-dark);
-        border-radius: var(--radius);
-        padding: 1.5rem;
-        opacity: 0.6;
-    }
-
-    .placeholder-card-label {
-        font-family: 'Share Tech Mono', monospace;
-        font-size: 0.68rem;
-        letter-spacing: 0.12em;
-        text-transform: uppercase;
-        color: var(--khaki-muted);
-        margin-bottom: 0.5rem;
-    }
-
-    .placeholder-card-title {
-        font-family: 'Barlow Condensed', sans-serif;
-        font-size: 1rem;
-        font-weight: 700;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
-        color: var(--cream-dark);
-    }
-
-    .status-bar {
-        display: flex;
-        align-items: center;
-        gap: 1.5rem;
-        padding: 0.75rem 1rem;
+    .stat-card {
         background: var(--olive-mid);
         border: 1px solid var(--khaki-dark);
         border-radius: var(--radius-sm);
-        margin-bottom: 2rem;
+        padding: 1rem;
+        text-align: center;
+    }
+
+    .stat-value {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 2rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        color: var(--khaki);
+        line-height: 1;
+    }
+
+    .stat-label {
         font-family: 'Share Tech Mono', monospace;
-        font-size: 0.72rem;
+        font-size: 0.62rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-top: 0.35rem;
+    }
+
+    
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.25rem;
+    }
+
+    .dashboard-section {
+        background: var(--olive-mid);
+        border: 1px solid var(--khaki-dark);
+        border-radius: var(--radius);
+        padding: 1.25rem;
+    }
+
+    .section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid var(--olive);
+    }
+
+    .section-title {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.65rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--muted);
+    }
+
+    .section-link {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.62rem;
         letter-spacing: 0.08em;
         text-transform: uppercase;
         color: var(--khaki-muted);
+        text-decoration: none;
+        transition: color 0.15s;
     }
 
-    .status-dot {
+    .section-link:hover { color: var(--khaki); }
+
+    
+    .task-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.55rem 0;
+        border-bottom: 1px solid var(--olive);
+        text-decoration: none;
+        transition: color 0.15s;
+    }
+
+    .task-item:last-child { border-bottom: none; }
+
+    .task-item:hover .task-item-name { color: var(--khaki); }
+
+    .task-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        border: 2px solid var(--khaki-dark);
+        flex-shrink: 0;
+    }
+
+    .task-item-name {
+        flex: 1;
+        font-size: 0.88rem;
+        color: var(--cream-dark);
+        transition: color 0.15s;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .task-item-pts {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.65rem;
+        color: var(--muted);
+        flex-shrink: 0;
+    }
+
+    
+    .unit-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.55rem 0;
+        border-bottom: 1px solid var(--olive);
+        text-decoration: none;
+        transition: color 0.15s;
+    }
+
+    .unit-item:last-child { border-bottom: none; }
+
+    .unit-item-name {
+        font-size: 0.88rem;
+        color: var(--cream-dark);
+        transition: color 0.15s;
+    }
+
+    .unit-item:hover .unit-item-name { color: var(--khaki); }
+
+    .unit-item-meta {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.62rem;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+    }
+
+    
+    .comm-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.55rem 0;
+        border-bottom: 1px solid var(--olive);
+        text-decoration: none;
+        transition: color 0.15s;
+    }
+
+    .comm-item:last-child { border-bottom: none; }
+
+    .comm-unread-dot {
         width: 6px;
         height: 6px;
         border-radius: 50%;
-        background: #7aab6a;
+        background: var(--khaki);
         flex-shrink: 0;
+    }
+
+    .comm-read-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        border: 1px solid var(--muted);
+        flex-shrink: 0;
+    }
+
+    .comm-item-sender {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.68rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--khaki-muted);
+        flex-shrink: 0;
+        width: 80px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .comm-item.unread .comm-item-sender { color: var(--khaki); }
+
+    .comm-item-preview {
+        flex: 1;
+        font-size: 0.82rem;
+        color: var(--muted);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .comm-item.unread .comm-item-preview { color: var(--cream-dark); font-weight: 500; }
+
+    
+    .empty-section {
+        padding: 1.5rem 0;
+        text-align: center;
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.7rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+    }
+
+    .quick-add {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--olive);
+    }
+
+    .quick-add input {
+        flex: 1;
+        background: var(--olive-dark);
+        border: 1px solid var(--khaki-dark);
+        border-radius: var(--radius-sm);
+        padding: 0.45rem 0.75rem;
+        color: var(--cream);
+        font-family: 'Barlow', sans-serif;
+        font-size: 0.85rem;
+        outline: none;
+        transition: border-color 0.15s;
+    }
+
+    .quick-add input:focus { border-color: var(--khaki); }
+    .quick-add input::placeholder { color: var(--muted); }
+
+    .quick-add button {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 0.85rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        background: var(--khaki);
+        color: var(--ink);
+        border: none;
+        border-radius: var(--radius-sm);
+        padding: 0.45rem 1rem;
+        cursor: pointer;
+        transition: background 0.15s;
+        flex-shrink: 0;
+    }
+
+    .quick-add button:hover { background: var(--khaki-dark); }
+
+    @media (max-width: 620px) {
+        .stats-row { grid-template-columns: repeat(2, 1fr); }
+        .dashboard-grid { grid-template-columns: 1fr; }
     }
 </style>
 {% endblock %}
@@ -88,41 +293,106 @@
 {% block content %}
 
 <div class="home-header">
-    <h1 class="home-title">
-        {% if request.GET.mode == 'report' %}
-            Debrief — task report
-        {% else %}
-            Headquarters
-        {% endif %}
-    </h1>
-    <p class="home-subtitle">
-        Operative: {{ user.username }} &mdash;
-        {% if request.GET.mode == 'report' %}
-            report mode active
-        {% else %}
-            field mode active
-        {% endif %}
-    </p>
+    <div>
+        <h1 class="home-title">Headquarters</h1>
+        <p class="home-subtitle">Operative: {{ user.username }}</p>
+    </div>
+    <a href="{% url 'add-task' %}" class="btn btn-primary" style="font-size: 0.85rem;">+ New mission</a>
 </div>
 
-<div class="status-bar">
-    <span class="status-dot"></span>
-    Systems online &mdash; awaiting orders
+    
+<div class="stats-row">
+    <div class="stat-card">
+        <div class="stat-value">{{ open_tasks_count }}</div>
+        <div class="stat-label">Active missions</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ done_tasks_count }}</div>
+        <div class="stat-label">Completed</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value" style="color: var(--rust-light);">{{ unread_count }}</div>
+        <div class="stat-label">Unread comms</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{% if user.avatar %}{{ user.avatar.points }}{% else %}0{% endif %}</div>
+        <div class="stat-label">Intel points</div>
+    </div>
 </div>
 
-<div class="placeholder-grid">
-    <div class="placeholder-card">
-        <div class="placeholder-card-label">Sector</div>
-        <div class="placeholder-card-title">Active missions</div>
+<div class="dashboard-grid">
+
+    <div class="dashboard-section">
+        <div class="section-header">
+            <span class="section-title">// Active missions</span>
+            <a href="{% url 'all-tasks' %}" class="section-link">All →</a>
+        </div>
+
+        {% if open_tasks %}
+            {% for task in open_tasks %}
+            <a href="{% url 'details-task' task.pk %}" class="task-item">
+                <div class="task-dot"></div>
+                <span class="task-item-name">{{ task.name }}</span>
+                <span class="task-item-pts">{{ task.appointed_points }}pts</span>
+            </a>
+            {% endfor %}
+        {% else %}
+        <div class="empty-section">No active missions</div>
+        {% endif %}
+
+        <div class="quick-add">
+            <form method="post" action="{% url 'add-task' %}" style="display: flex; gap: 0.5rem; width: 100%;">
+                {% csrf_token %}
+                <input type="text" name="name" placeholder="Quick add mission...">
+                <button type="submit">Add</button>
+            </form>
+        </div>
     </div>
-    <div class="placeholder-card">
-        <div class="placeholder-card-label">Unit</div>
-        <div class="placeholder-card-title">Your unit</div>
+
+    <div class="dashboard-section">
+        <div class="section-header">
+            <span class="section-title">// Your units</span>
+            <a href="{% url 'all-units' %}" class="section-link">All →</a>
+        </div>
+
+        {% if units %}
+            {% for unit in units %}
+            <a href="{% url 'details-unit' unit.pk %}" class="unit-item">
+                <span class="unit-item-name">{{ unit.name }}</span>
+                <span class="unit-item-meta">{{ unit.users.count }} ops</span>
+            </a>
+            {% endfor %}
+        {% else %}
+        <div class="empty-section">No units — <a href="{% url 'create-unit' %}" style="color: var(--khaki-muted);">form one</a></div>
+        {% endif %}
     </div>
-    <div class="placeholder-card">
-        <div class="placeholder-card-label">Comms</div>
-        <div class="placeholder-card-title">Messages</div>
+
+    <div class="dashboard-section" style="grid-column: 1 / -1;">
+        <div class="section-header">
+            <span class="section-title">// Recent comms</span>
+            <a href="{% url 'inbox' %}" class="section-link">Inbox →</a>
+        </div>
+
+        {% if recent_messages %}
+            {% for message in recent_messages %}
+            <a href="{% url 'details-message' message.pk %}"
+               class="comm-item {% if message.pk not in read_message_ids and message.sender != request.user %}unread{% endif %}">
+                {% if message.pk not in read_message_ids and message.sender != request.user %}
+                <div class="comm-unread-dot"></div>
+                {% else %}
+                <div class="comm-read-dot"></div>
+                {% endif %}
+                <span class="comm-item-sender">
+                    {% if message.sender == request.user %}You{% else %}{{ message.sender.username }}{% endif %}
+                </span>
+                <span class="comm-item-preview">{{ message.text|truncatechars:80 }}</span>
+            </a>
+            {% endfor %}
+        {% else %}
+        <div class="empty-section">No comms yet</div>
+        {% endif %}
     </div>
+
 </div>
 
 {% endblock %}

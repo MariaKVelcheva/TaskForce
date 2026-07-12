@@ -67,9 +67,7 @@
             text-transform: uppercase;
         }
 
-        .nav-brand span {
-            color: var(--rust-light);
-        }
+        .nav-brand span { color: var(--rust-light); }
 
         .nav-links {
             display: flex;
@@ -88,9 +86,15 @@
             padding: 0.3rem 0;
             border-bottom: 2px solid transparent;
             transition: color 0.15s, border-color 0.15s;
+            position: relative;
         }
 
         .nav-links a:hover {
+            color: var(--khaki);
+            border-bottom-color: var(--khaki);
+        }
+
+        .nav-links a.active {
             color: var(--khaki);
             border-bottom-color: var(--khaki);
         }
@@ -104,6 +108,43 @@
             padding: 0.2rem 0.6rem;
             border-radius: var(--radius-sm);
             letter-spacing: 0.04em;
+        }
+
+        .nav-unread {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 16px;
+            height: 16px;
+            background: var(--rust);
+            color: var(--cream);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.6rem;
+            border-radius: 8px;
+            padding: 0 4px;
+            position: absolute;
+            top: -6px;
+            right: -14px;
+            line-height: 1;
+        }
+
+        .nav-links-btn {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.78rem;
+            letter-spacing: 0.06em;
+            color: var(--cream-dark);
+            text-transform: uppercase;
+            padding: 0.3rem 0;
+            border: none;
+            border-bottom: 2px solid transparent;
+            background: transparent;
+            cursor: pointer;
+            transition: color 0.15s, border-color 0.15s;
+        }
+
+        .nav-links-btn:hover {
+            color: var(--khaki);
+            border-bottom-color: var(--khaki);
         }
 
         /* MAIN */
@@ -135,9 +176,7 @@
         }
 
         /* FORMS */
-        .form-group {
-            margin-bottom: 1.25rem;
-        }
+        .form-group { margin-bottom: 1.25rem; }
 
         label {
             display: block;
@@ -164,14 +203,9 @@
             transition: border-color 0.15s;
         }
 
-        input:focus {
-            border-color: var(--khaki);
-        }
+        input:focus { border-color: var(--khaki); }
 
-        .errorlist {
-            list-style: none;
-            margin-top: 0.35rem;
-        }
+        .errorlist { list-style: none; margin-top: 0.35rem; }
 
         .errorlist li {
             font-size: 0.8rem;
@@ -195,44 +229,15 @@
             transition: background 0.15s, color 0.15s, border-color 0.15s;
         }
 
-        .btn-primary {
-            background: var(--khaki);
-            color: var(--ink);
-            border-color: var(--khaki);
-        }
+        .btn-primary { background: var(--khaki); color: var(--ink); border-color: var(--khaki); }
+        .btn-primary:hover { background: var(--khaki-dark); border-color: var(--khaki-dark); }
+        .btn-ghost { background: transparent; color: var(--khaki); border-color: var(--khaki-dark); }
+        .btn-ghost:hover { background: var(--olive); border-color: var(--khaki); }
+        .btn-danger { background: transparent; color: var(--rust-light); border-color: var(--rust); }
+        .btn-danger:hover { background: var(--rust); color: var(--cream); }
 
-        .btn-primary:hover {
-            background: var(--khaki-dark);
-            border-color: var(--khaki-dark);
-        }
-
-        .btn-ghost {
-            background: transparent;
-            color: var(--khaki);
-            border-color: var(--khaki-dark);
-        }
-
-        .btn-ghost:hover {
-            background: var(--olive);
-            border-color: var(--khaki);
-        }
-
-        .btn-danger {
-            background: transparent;
-            color: var(--rust-light);
-            border-color: var(--rust);
-        }
-
-        .btn-danger:hover {
-            background: var(--rust);
-            color: var(--cream);
-        }
-
-        /* MESSAGES */
-        .messages {
-            list-style: none;
-            margin-bottom: 1.5rem;
-        }
+        /* DJANGO MESSAGES */
+        .messages { list-style: none; margin-bottom: 1.5rem; }
 
         .messages li {
             font-family: 'Share Tech Mono', monospace;
@@ -274,9 +279,40 @@
     <a href="{% url 'index' %}" class="nav-brand">Task<span>:</span> Force!</a>
     <ul class="nav-links">
         {% if user.is_authenticated %}
+            <li>
+                <a href="{% url 'all-tasks' %}"
+                   class="{% if request.resolver_match.url_name == 'all-tasks' %}active{% endif %}">
+                   Missions
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'all-units' %}"
+                   class="{% if request.resolver_match.url_name == 'all-units' %}active{% endif %}">
+                   Units
+                </a>
+            </li>
+            <li style="position: relative;">
+                <a href="{% url 'inbox' %}"
+                   class="{% if request.resolver_match.url_name == 'inbox' %}active{% endif %}">
+                   Comms
+                   {% if unread_count %}
+                   <span class="nav-unread">{{ unread_count }}</span>
+                   {% endif %}
+                </a>
+            </li>
             <li><span class="nav-badge">{{ user.username }}</span></li>
-            <li><a href="{% url 'details-profile' %}">Profile</a></li>
-            <li><a href="{% url 'logout' %}">Log out</a></li>
+            <li>
+                <a href="{% url 'details-profile' %}"
+                   class="{% if request.resolver_match.url_name == 'details-profile' %}active{% endif %}">
+                   Profile
+                </a>
+            </li>
+            <li>
+                <form method="post" action="{% url 'logout' %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="nav-links-btn">Log out</button>
+                </form>
+            </li>
         {% else %}
             <li><a href="{% url 'login' %}">Log in</a></li>
             <li><a href="{% url 'register' %}">Register</a></li>
