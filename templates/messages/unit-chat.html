@@ -176,7 +176,6 @@
     .bubble-action-btn:hover { color: var(--khaki); }
     .bubble-action-btn.danger:hover { color: var(--rust-light); }
 
-    /* COLLAPSIBLE DETAILS PANEL */
     .bubble-details {
         display: none;
         background: var(--olive-dark);
@@ -193,7 +192,6 @@
 
     .bubble-details.open { display: block; }
 
-    /* SIDEBAR */
     .chat-sidebar {
         position: sticky;
         top: 72px;
@@ -328,7 +326,6 @@
                     {% endif %}
                 </div>
 
-                {# Collapsible details panel #}
                 <div class="bubble-details" id="details-{{ message.pk }}">
                     Sent: {{ message.created_at|date:"d M Y, H:i" }}<br>
                     From: {{ message.sender.username }}<br>
@@ -336,8 +333,10 @@
                 </div>
 
                 <div class="bubble-actions">
-                    <button class="bubble-action-btn"
-                            onclick="toggleDetails({{ message.pk }})">details</button>
+<button class="bubble-action-btn"
+        onclick="document.getElementById('details-{{ message.pk }}').click();">
+    details
+</button>
                     {% if message.sender == request.user %}
                     <a href="{% url 'delete-message' message.pk %}"
                        class="bubble-action-btn danger">delete</a>
@@ -358,7 +357,6 @@
         {% endif %}
     </div>
 
-    {# SIDEBAR #}
     <aside class="chat-sidebar">
 
         <div class="sidebar-panel">
@@ -389,14 +387,18 @@
 
 {% block extra_js %}
 <script>
-    function toggleDetails(pk) {
-        const panel = document.getElementById("details-" + pk);
-        panel.classList.toggle("open");
-        // JS hint: you'll need to update the button label when toggled
-        // try finding the button and changing its textContent between "details" and "hide"
-    }
+    document.querySelectorAll(".bubble-details").forEach(panel => {
+        panel.addEventListener("click", () => {
+            panel.classList.toggle("open");
+        })
+    })
 
-    // Auto-scroll to bottom of feed on load
-    // Hint: find the last .chat-bubble element and call scrollIntoView() on it
+
+    bubbles = document.querySelectorAll(".chat-bubble");
+    lastBubble = bubbles[bubbles.length - 1];
+
+    if (lastBubble) {
+        lastBubble.scrollIntoView({behavior: "smooth"});
+    }
 </script>
 {% endblock %}
