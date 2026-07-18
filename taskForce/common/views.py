@@ -12,7 +12,7 @@ TaskUser = get_user_model()
 
 
 class IndexView(TemplateView):
-    template_name = "common/index.html"
+    template_name = "common/canvas.html"
 
 
 class HomeView(LoginRequiredMixin, TemplateView):

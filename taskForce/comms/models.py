@@ -11,6 +11,14 @@ class Message(models.Model):
         verbose_name=_('Text'),
     )
 
+    title = models.CharField(
+        verbose_name=_('Title'),
+        max_length=255,
+        null=True,
+        blank=True,
+        default=None,
+    )
+
     sender = models.ForeignKey(
         to=TaskUser,
         on_delete=models.SET_NULL,
