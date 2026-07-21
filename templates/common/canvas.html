@@ -8,26 +8,31 @@
 
 {% block extra_js %}
 <script>
+
+
     const canvas = document.getElementById("scene");
     const ctx = canvas.getContext("2d");
 
-    ctx.fillStyle = "olive";
-    ctx.fillRect(0, 0, 100, 100);
-    ctx.fillRect(0, 300, 100, 100);
-    ctx.fillRect(200, 0, 100, 100);
-    ctx.fillRect(200, 300, 100, 100);
+    const image = new Image()
+    image.onload = draw;
+    image.src = "static/images/beagle.jpeg";
 
-    ctx.strokeRect(0, 0, 100, 100);
-    ctx.clearRect(200, 300, 100, 100);
-    
-    const x = 10;
-    const y = 20;
-    const z = 50;
-    const w = 60;
-    
-    const array = {x, y, z, w};
-    
-    ctx.fillRect(array[0], array[1], array[2], array[3]);
-    
+    const rectangles = [
+        {x: 10, y: 20, z: 30, w:40},
+        {x: 20, y: 80, z: 40, w:50},
+        {x: 30, y: 40, z: 20, w:90},
+        {x: 40, y: 30, z: 20, w:30},
+    ]
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(image, 0, 0);
+        
+        rectangles.forEach(rectangle => {
+            ctx.strokeRect(rectangle.x, rectangle.y, rectangle.z, rectangle.w);
+        })
+    }
+
+
 </script>
 {% endblock %}
