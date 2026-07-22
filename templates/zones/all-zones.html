@@ -1,0 +1,130 @@
+{% extends 'common/base.html' %}
+
+{% block title %}Sectors — Task: Force!{% endblock %}
+
+{% block extra_css %}
+<style>
+    .catalogue-header {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        margin-bottom: 2rem;
+    }
+
+    .catalogue-title {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 1.8rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--khaki);
+    }
+
+    .catalogue-count {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.72rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-top: 0.3rem;
+    }
+
+    .zone-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+    }
+
+    .zone-row {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        background: var(--olive-mid);
+        border: 1px solid var(--khaki-dark);
+        border-radius: var(--radius-sm);
+        padding: 0.85rem 1.1rem;
+        text-decoration: none;
+        transition: border-color 0.15s, background 0.15s;
+    }
+
+    .zone-row:hover {
+        border-color: var(--khaki);
+        background: var(--olive);
+    }
+
+    .zone-marker {
+        width: 10px;
+        height: 10px;
+        border-radius: 2px;
+        border: 2px solid var(--khaki-dark);
+        flex-shrink: 0;
+    }
+
+    .zone-name {
+        flex: 1;
+        font-size: 0.95rem;
+        color: var(--cream);
+        letter-spacing: 0.02em;
+    }
+
+    .zone-slug {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.65rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--khaki-muted);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: var(--muted);
+    }
+
+    .empty-state-title {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 1.2rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--khaki-muted);
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-state-sub {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.75rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="catalogue-header">
+    <div>
+        <h1 class="catalogue-title">Sectors</h1>
+        <p class="catalogue-count">{{ zones.count }} sector{{ zones.count|pluralize }} mapped</p>
+    </div>
+</div>
+
+{% if zones %}
+<div class="zone-list">
+    {% for zone in zones %}
+    <a href="{% url 'details-zone' zone.slug %}" class="zone-row">
+        <div class="zone-marker"></div>
+        <span class="zone-name">{{ zone.name }}</span>
+        <span class="zone-slug">{{ zone.slug }}</span>
+    </a>
+    {% endfor %}
+</div>
+
+{% else %}
+<div class="empty-state">
+    <div class="empty-state-title">No sectors mapped</div>
+    <p class="empty-state-sub">Territory uncharted.</p>
+</div>
+{% endif %}
+
+{% endblock %}

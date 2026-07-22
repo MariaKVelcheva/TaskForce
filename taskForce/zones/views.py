@@ -1,15 +1,23 @@
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q, Count
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.urls import reverse, reverse_lazy
-from django.views.generic import DetailView
+from django.views.generic import DetailView, ListView
 
 from taskForce.tasks.models import Task
 from taskForce.units.models import Membership, Unit
 from taskForce.zones.models import Zone
 
 
+class AllZonesView(LoginRequiredMixin, ListView):
+    model = Zone
+    template_name = "zones/all-zones.html"
+    context_object_name = "zones"
+
+
+"""    
 @login_required
 def zone_scene_data(request):
     user = request.user
@@ -29,7 +37,10 @@ def zone_scene_data(request):
             for zone in zones
         ]
     })
+"""
 
 
-class ZoneDetailView(DetailView):
-    pass
+class ZoneDetailView(LoginRequiredMixin, DetailView):
+    model = Zone
+    template_name = "zones/details-zone.html"
+    context_object_name = "zone"

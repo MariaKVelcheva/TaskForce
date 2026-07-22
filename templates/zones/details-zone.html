@@ -1,0 +1,175 @@
+{% extends 'common/base.html' %}
+
+{% block title %}{{ object.name }} — Task: Force!{% endblock %}
+
+{% block extra_css %}
+<style>
+    .detail-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .detail-title {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 1.8rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--khaki);
+        line-height: 1.1;
+    }
+
+    .zone-meta {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.72rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-top: 0.4rem;
+    }
+
+    .section-label {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.68rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin: 2rem 0 0.75rem;
+    }
+
+    .task-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .task-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        background: var(--olive-mid);
+        border: 1px solid var(--khaki-dark);
+        border-radius: var(--radius-sm);
+        padding: 0.75rem 1rem;
+        transition: border-color 0.15s ease;
+    }
+
+    .task-row:hover {
+        border-color: var(--khaki);
+    }
+
+    .task-row-name {
+        font-size: 0.95rem;
+        color: var(--cream);
+    }
+
+    .task-row-name.done {
+        text-decoration: line-through;
+        color: var(--khaki-muted);
+    }
+
+    .task-row-meta {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex-shrink: 0;
+    }
+
+    .task-points {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--khaki);
+        letter-spacing: 0.04em;
+    }
+
+    .status-badge {
+        display: inline-block;
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.68rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.2rem 0.7rem;
+        border-radius: var(--radius-sm);
+        border: 1px solid;
+    }
+
+    .status-badge.pending {
+        color: var(--khaki);
+        border-color: var(--khaki-dark);
+        background: rgba(200,185,122,0.08);
+    }
+
+    .status-badge.done {
+        color: #7aab6a;
+        border-color: #4a7a3a;
+        background: rgba(122,171,106,0.1);
+    }
+
+    .empty-state {
+        background: var(--olive-mid);
+        border: 1px dashed var(--khaki-dark);
+        border-radius: var(--radius-sm);
+        padding: 1.5rem;
+        text-align: center;
+        color: var(--muted);
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.8rem;
+        letter-spacing: 0.06em;
+    }
+
+    .danger-zone {
+        margin-top: 2.5rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--olive-mid);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="detail-header">
+    <div>
+        <h1 class="detail-title">{{ object.name }}</h1>
+        <p class="zone-meta">Sector // {{ object.slug }}</p>
+    </div>
+</div>
+
+<div class="section-label">// Active missions in sector</div>
+
+{% with tasks=object.tasks.all %}
+{% if tasks %}
+<div class="task-list">
+    {% for task in tasks %}
+    <div class="task-row">
+        <a href="{% url 'details-task' task.pk %}" class="task-row-name {% if task.is_done %}done{% endif %}">
+            {{ task.name }}
+        </a>
+        <div class="task-row-meta">
+            <span class="task-points">{{ task.appointed_points }}</span>
+            {% if task.is_done %}
+            <span class="status-badge done">Complete</span>
+            {% else %}
+            <span class="status-badge pending">Pending</span>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">No missions assigned to this sector.</div>
+{% endif %}
+{% endwith %}
+
+<div class="danger-zone">
+    <a href="{% url 'all-zones' %}" class="btn btn-ghost" style="font-size: 0.82rem;">Back to sectors</a>
+</div>
+
+{% endblock %}
