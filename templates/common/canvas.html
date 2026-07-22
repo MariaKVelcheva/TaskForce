@@ -24,14 +24,59 @@
         {x: 40, y: 30, z: 20, w:30},
     ]
 
+    let dragging = false;
+    let start = {x: 0, y: 0};
+    let current = {x: 0, y:0};
+
+    function normalize(a, b) {
+        return {
+            x: Math.min(a.x, b.x),
+            y: Math.min(a.y, b.y),
+            w: Math.abs(a.x - b.x),
+            h: Math.abs(a.y - b.y),
+        }
+    }
+
+    function getPosition(e) {
+        const box = canvas.getBoundingClientRect();
+        return {
+            x: e.clientX - box.left,
+            y: e.clientY - box.top,
+        }
+    }
+
     function draw() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(image, 0, 0);
-        
+
         rectangles.forEach(rectangle => {
             ctx.strokeRect(rectangle.x, rectangle.y, rectangle.z, rectangle.w);
-        })
+        });
+
+        if (dragging) {
+            const r = normalize(start, current);
+            ctx.strokeRect(r.x, r.y, r.w, r.h);
+        }
     }
+
+    canvas.addEventListener("mousedown", (e) => {
+        dragging = true;
+        start = getPosition(e);
+        current = start;
+    });
+
+    canvas.addEventListener("mousemove", (e) => {
+        if (!dragging) return;
+
+        current = getPosition(e);
+        draw();
+    });
+
+    canvas.addEventListener("mouseup", (e) => {
+       dragging = false;
+       const rectangle = normalize(start, current);
+       console.log(rectangle);
+    });
 
 
 </script>
