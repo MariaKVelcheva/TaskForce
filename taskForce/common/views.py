@@ -12,7 +12,7 @@ TaskUser = get_user_model()
 
 
 class IndexView(TemplateView):
-    template_name = "common/canvas.html"
+    template_name = "common/index.html"
 
 
 class HomeView(LoginRequiredMixin, TemplateView):
@@ -24,7 +24,7 @@ class HomeView(LoginRequiredMixin, TemplateView):
         user = self.request.user
 
         user_tasks = Task.objects.filter(user=user)
-        open_tasks = user_tasks.open_tasks()[:5]
+        open_tasks = user_tasks.filter(is_done=False)
         done_tasks = user_tasks.filter(is_done=True)
 
         units = Unit.objects.filter(
