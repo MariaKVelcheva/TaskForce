@@ -1,49 +1,132 @@
 {% extends 'common/base.html' %}
 
-{% block title %}Profile — Task: Force!{% endblock %}
+{% block title %}Operative file — Task: Force!{% endblock %}
+
+{% block extra_css %}
+<style>
+    .profile-wrap {
+        max-width: 560px;
+        margin: 0 auto;
+    }
+
+    .profile-header {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        margin-bottom: 2rem;
+    }
+
+    .profile-title {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 1.8rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--khaki);
+    }
+
+    .profile-subtitle {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.75rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin: 0.3rem 0 0;
+    }
+
+    .detail-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.25rem;
+    }
+
+    .detail-full {
+        grid-column: 1 / -1;
+    }
+
+    .detail-label {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.68rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 0.3rem;
+    }
+
+    .detail-value {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 1.4rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        color: var(--khaki);
+    }
+
+    .unit-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .danger-zone {
+        margin-top: 2.5rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--olive-mid);
+    }
+
+    .danger-zone-label {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.68rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
 
-<div style="max-width: 560px; margin: 0 auto;">
+<div class="profile-wrap">
 
-    <div style="margin-bottom: 2rem; display: flex; align-items: baseline; justify-content: space-between;">
+    <div class="profile-header">
         <div>
-            <h1 style="font-family: 'Barlow Condensed', sans-serif; font-size: 1.8rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--khaki);">Operative file</h1>
-            <p style="font-family: 'Share Tech Mono', monospace; font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-top: 0.3rem;">{{ profile.user.username }}</p>
+            <h1 class="profile-title">Operative file</h1>
+            <p class="profile-subtitle">{{ profile.user.username }}</p>
         </div>
-        <a href="{% url 'update-profile' %}" class="btn btn-ghost" style="font-size: 0.8rem;">Edit profile</a>
+        {# <a href="{% url 'update-profile' %}" class="btn btn-ghost" style="font-size: 0.8rem;">Edit profile</a> #}
     </div>
 
     <div class="panel">
         <div class="panel-header">// Operative details</div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
+        <div class="detail-grid">
 
             <div>
-                <div style="font-family: 'Share Tech Mono', monospace; font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.3rem;">Species</div>
-                <div style="font-size: 0.95rem; color: var(--cream);">{{ profile.species|default:"—" }}</div>
+                <div class="detail-label">Code name</div>
+                <div class="detail-value">{{ profile.email }}</div>
             </div>
 
             <div>
-                <div style="font-family: 'Share Tech Mono', monospace; font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.3rem;">Hair color</div>
-                <div style="font-size: 0.95rem; color: var(--cream);">{{ profile.hair_color|default:"—" }}</div>
+                <div class="detail-label">Intel points</div>
+                <div class="detail-value">{{ profile.points }}</div>
             </div>
 
-            <div>
-                <div style="font-family: 'Share Tech Mono', monospace; font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.3rem;">Glasses</div>
-                <div style="font-size: 0.95rem; color: var(--cream);">{% if profile.glasses %}Yes{% else %}No{% endif %}</div>
-            </div>
-
-            <div>
-                <div style="font-family: 'Share Tech Mono', monospace; font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.3rem;">Intel points</div>
-                <div style="font-family: 'Barlow Condensed', sans-serif; font-size: 1.4rem; font-weight: 700; color: var(--khaki); letter-spacing: 0.06em;">{{ profile.points }}</div>
+            <div class="detail-full">
+                <div class="detail-label">Joined units</div>
+                <ul class="unit-list">
+                    {% for unit in profile.units.all %}
+                    <li class="detail-value">{{ unit.name }}</li>
+                    {% empty %}
+                    <li class="detail-value">No units yet</li>
+                    {% endfor %}
+                </ul>
             </div>
 
         </div>
     </div>
 
-    <div style="margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px solid var(--olive-mid);">
-        <div style="font-family: 'Share Tech Mono', monospace; font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 1rem;">Danger zone</div>
+    <div class="danger-zone">
+        <div class="danger-zone-label">Danger zone</div>
         <a href="{% url 'delete-user' %}" class="btn btn-danger" style="font-size: 0.82rem;">Terminate account</a>
     </div>
 

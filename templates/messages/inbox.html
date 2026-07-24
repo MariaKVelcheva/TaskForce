@@ -87,16 +87,7 @@
     .message-row.unread {
         border-left: 3px solid var(--khaki);
     }
-
-    .unread-dot {
-        width: 7px;
-        height: 7px;
-        border-radius: 50%;
-        background: var(--khaki);
-        flex-shrink: 0;
-    }
-
-    .read-dot {
+.status-dot {
         width: 7px;
         height: 7px;
         border-radius: 50%;
@@ -104,6 +95,10 @@
         flex-shrink: 0;
     }
 
+    .message-row.unread .status-dot {
+        background: var(--khaki);
+        border-color: var(--khaki);
+    }
     .message-sender {
         font-family: 'Share Tech Mono', monospace;
         font-size: 0.75rem;
@@ -182,7 +177,7 @@
     <div>
         <h1 class="inbox-title">Inbox</h1>
         <p style="font-family: 'Share Tech Mono', monospace; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-top: 0.3rem;">
-            {{ messages|length }} comm{{ messages|length|pluralize }}
+            {{ inbox_messages|length }} comm{{ inbox_messages|length|pluralize }}
         </p>
     </div>
     <a href="{% url 'create-message' %}" class="btn btn-primary">+ New comm</a>
@@ -195,20 +190,13 @@
     <a href="{% url 'inbox' %}" class="btn btn-ghost" style="font-size: 0.72rem; padding: 0.45rem 0.85rem;">Clear</a>
     {% endif %}
 </form>
-
-{% if messages %}
+{% if inbox_messages %}
 <div class="message-list">
-    {% for message in messages %}
-    {% with is_unread=message.pk|stringformat:"i" %}
-    {% with unread=message.pk not in read_message_ids %}
+    {% for message in inbox_messages %}
     <a href="{% url 'details-message' message.pk %}"
-       class="message-row {% if message.pk not in read_message_ids and message.sender != request.user %}unread{% endif %}">
+       class="message-row {% if not message.is_read and message.sender != request.user %}unread{% endif %}">
 
-        {% if message.pk not in read_message_ids and message.sender != request.user %}
-        <div class="unread-dot"></div>
-        {% else %}
-        <div class="read-dot"></div>
-        {% endif %}
+        <div class="status-dot"></div>
 
         <div>
             <div class="message-sender">
@@ -229,8 +217,6 @@
 
         <div class="message-date">{{ message.created_at|date:"d M, H:i" }}</div>
     </a>
-    {% endwith %}
-    {% endwith %}
     {% endfor %}
 </div>
 

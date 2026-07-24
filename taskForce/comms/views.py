@@ -1,5 +1,5 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Q
+from django.db.models import Q, OuterRef, Exists
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, DeleteView, DetailView, ListView
@@ -78,9 +78,15 @@ class InboxView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         user = self.request.user
 
-        messages = Message.objects.filter(
-            Q(sender=user) | Q(recipients=user)
-        ).distinct().order_by("-created_at")
+        read = MessageRead.objects.filter(
+            message=OuterRef("pk"),
+            user=user,
+        )
+
+        messages = (Message.objects.filter(Q(sender=user) | Q(recipients=user))
+                    .annotate(is_read=Exists(read))
+                    .distinct()
+                    .order_by("-created_at"))
 
         query = self.request.GET.get("query")
 
@@ -94,17 +100,13 @@ class InboxView(LoginRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['search_form'] = SearchMessageForm(self.request.GET or None)
-        context['read_message_ids'] = set(
-            MessageRead.objects.filter(
-                user=self.request.user
-            ).values_list('message_id', flat=True)
-        )
+
         return context
 
 
 class UnitChatView(LoginRequiredMixin, ListView):
     model = Message
-    context_object_name = "messages"
+    context_object_name = "inbox_messages"
     template_name = "messages/unit-chat.html"
 
     def get_queryset(self):
