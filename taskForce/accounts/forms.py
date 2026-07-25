@@ -65,13 +65,17 @@ class AvatarUpdateForm(AvatarBaseForm):
 
 
 class LoginCustomForm(AuthenticationForm):
-    email = forms.EmailField(
-        label=_('Email'),
-        widget=forms.EmailInput(),
+    username = forms.CharField(
+        label=_('Username or email'),
+        widget=forms.TextInput(attrs={"autofocus": True, "autocomplete": "username"}),
     )
 
     password = forms.CharField(
         label=_('Password'),
-        widget=forms.PasswordInput(),
+        widget=forms.PasswordInput(attrs={"autocomplete": "current-password"}),
     )
 
+    error_messages = {
+        **AuthenticationForm.error_messages,
+        "invalid_login": _("Wrong credentials, operative. Check and try again."),
+    }

@@ -39,6 +39,11 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+AUTHENTICATION_BACKENDS = [
+    "taskForce.accounts.backends.UsernameOrEmailBackend",
+    "django.contrib.auth.backends.ModelBackend",
+]
+
 ROOT_URLCONF = 'taskForce.urls'
 
 TEMPLATES = [
