@@ -63,6 +63,7 @@ class AvatarBaseForm(forms.ModelForm):
 class AvatarUpdateForm(AvatarBaseForm):
     pass
 
+
 class LoginCustomForm(AuthenticationForm):
     email = forms.EmailField(
         label=_('Email'),
