@@ -17,8 +17,6 @@ class BaseTaskForm(forms.ModelForm):
             "unit": "Unit",
             "appointed_points": "Intel points",
             "due_date": "Due date",
-            "alarm_at": "Alarm",
-            "timer_duration": "Timer",
         }
 
         widgets = {
@@ -46,19 +44,11 @@ class BaseTaskForm(forms.ModelForm):
             "due_date": forms.DateTimeInput(attrs={
                 "type": "datetime-local",
             }, format="%Y-%m-%dT%H:%M"),
-            "alarm_at": forms.DateTimeInput(attrs={
-                "type": "datetime-local",
-            }, format="%Y-%m-%dT%H:%M"),
-            "timer_duration": forms.TextInput(attrs={
-                "placeholder": "HH:MM:SS",
-                "pattern": r"\d{1,2}:\d{2}:\d{2}",
-                "title": "Format: HH:MM:SS",
-                "class": "mono-field",
-            }),
             "is_done": forms.CheckboxInput(attrs={
                 "class": "checkbox-field",
             }),
         }
+
 
 class CreateTaskForm(BaseTaskForm):
     class Meta(BaseTaskForm.Meta):

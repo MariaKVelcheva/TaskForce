@@ -92,24 +92,6 @@ class Task(models.Model):
         verbose_name=_('due date'),
     )
 
-    alarm_at = models.DateTimeField(
-        null=True,
-        blank=True,
-        verbose_name=_('alarm at'),
-    )
-
-    timer_duration = models.DurationField(
-        null=True,
-        blank=True,
-        verbose_name=_('timer duration'),
-    )
-
-    timer_at = models.DateTimeField(
-        null=True,
-        blank=True,
-        verbose_name=_('timer at'),
-    )
-
     objects = TaskManager()
 
     def complete(self, user):
