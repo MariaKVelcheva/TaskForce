@@ -41,6 +41,47 @@
         gap: 1rem;
     }
 
+    .advanced {
+        margin-top: 1.5rem;
+        border-top: 1px solid var(--olive);
+        padding-top: 1.25rem;
+    }
+
+    .advanced > summary {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.65rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--muted);
+        cursor: pointer;
+        list-style: none;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: color 0.15s;
+    }
+
+    .advanced > summary::-webkit-details-marker { display: none; }
+
+    .advanced > summary:hover { color: var(--khaki); }
+
+    .advanced > summary::before {
+        content: "▸";
+        font-size: 0.8rem;
+        transition: transform 0.15s;
+    }
+
+    .advanced[open] > summary::before { transform: rotate(90deg); }
+
+    .advanced[open] > summary { margin-bottom: 1.25rem; }
+
+    .field-help {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.73rem;
+        color: var(--muted);
+        margin-top: 0.3rem;
+    }
+
     .form-section {
         margin-top: 1.5rem;
         padding-top: 1.25rem;
@@ -87,79 +128,38 @@
 
     <div class="panel">
         <div class="panel-header">// Mission briefing</div>
+    
 
-        <form method="post" novalidate>
+    <form method="post" novalidate>
             {% csrf_token %}
 
-            <div class="form-group">
-                <label for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
-                {{ form.name }}
-                {% if form.name.errors %}
-                <ul class="errorlist">{% for e in form.name.errors %}<li>{{ e }}</li>{% endfor %}</ul>
-                {% endif %}
-            </div>
+            {% if form.non_field_errors %}
+            <ul class="errorlist" style="margin-bottom: 1rem;">
+                {% for e in form.non_field_errors %}<li>{{ e }}</li>{% endfor %}
+            </ul>
+            {% endif %}
 
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="{{ form.zone.id_for_label }}">{{ form.zone.label }}</label>
-                    {{ form.zone }}
-                    {% if form.zone.errors %}
-                    <ul class="errorlist">{% for e in form.zone.errors %}<li>{{ e }}</li>{% endfor %}</ul>
-                    {% endif %}
-                </div>
-                <div class="form-group">
-                    <label for="{{ form.type.id_for_label }}">{{ form.type.label }}</label>
-                    {{ form.type }}
-                    {% if form.type.errors %}
-                    <ul class="errorlist">{% for e in form.type.errors %}<li>{{ e }}</li>{% endfor %}</ul>
-                    {% endif %}
-                </div>
-            </div>
+            {% include 'common/partials/_field.html' with field=form.name %}
 
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="{{ form.unit.id_for_label }}">{{ form.unit.label }}</label>
-                    {{ form.unit }}
-                    {% if form.unit.errors %}
-                    <ul class="errorlist">{% for e in form.unit.errors %}<li>{{ e }}</li>{% endfor %}</ul>
-                    {% endif %}
-                </div>
-                <div class="form-group">
-                    <label for="{{ form.appointed_points.id_for_label }}">{{ form.appointed_points.label }}</label>
-                    {{ form.appointed_points }}
-                    {% if form.appointed_points.errors %}
-                    <ul class="errorlist">{% for e in form.appointed_points.errors %}<li>{{ e }}</li>{% endfor %}</ul>
-                    {% endif %}
-                </div>
-            </div>
+            <details class="advanced" {% if form.has_advanced_errors %}open{% endif %}>
+                <summary>Advanced options</summary>
 
-            <div class="form-section">
-                <div class="form-section-label">// Scheduling</div>
                 <div class="form-row">
-                    <div class="form-group">
-                        <label for="{{ form.due_date.id_for_label }}">{{ form.due_date.label }}</label>
-                        {{ form.due_date }}
-                        {% if form.due_date.errors %}
-                        <ul class="errorlist">{% for e in form.due_date.errors %}<li>{{ e }}</li>{% endfor %}</ul>
-                        {% endif %}
-                    </div>
-                    <div class="form-group">
-                        <label for="{{ form.alarm_at.id_for_label }}">{{ form.alarm_at.label }}</label>
-                        {{ form.alarm_at }}
-                        {% if form.alarm_at.errors %}
-                        <ul class="errorlist">{% for e in form.alarm_at.errors %}<li>{{ e }}</li>{% endfor %}</ul>
-                        {% endif %}
-                    </div>
+                    {% include 'common/partials/_field.html' with field=form.zone %}
+                    {% include 'common/partials/_field.html' with field=form.type %}
                 </div>
-                <div class="form-group">
-                    <label for="{{ form.timer_duration.id_for_label }}">{{ form.timer_duration.label }}</label>
-                    {{ form.timer_duration }}
-                    {% if form.timer_duration.errors %}
-                    <ul class="errorlist">{% for e in form.timer_duration.errors %}<li>{{ e }}</li>{% endfor %}</ul>
-                    {% endif %}
-                    <p style="font-size: 0.72rem; color: var(--muted); margin-top: 0.3rem; font-family: 'Share Tech Mono', monospace;">Format: HH:MM:SS</p>
+
+                <div class="form-row">
+                    {% include 'common/partials/_field.html' with field=form.unit %}
+                    {% include 'common/partials/_field.html' with field=form.assigned_to %}
                 </div>
-            </div>
+
+                <div class="form-row">
+                    {% include 'common/partials/_field.html' with field=form.due_date %}
+                    {% include 'common/partials/_field.html' with field=form.appointed_points %}
+                </div>
+
+            </details>
 
             <div style="margin-top: 1.75rem; display: flex; gap: 0.75rem;">
                 <button type="submit" class="btn btn-primary">Deploy mission</button>

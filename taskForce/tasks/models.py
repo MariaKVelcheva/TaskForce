@@ -78,6 +78,7 @@ class Task(models.Model):
     appointed_points = models.PositiveSmallIntegerField(
         default=1,
         verbose_name=_('appointed points'),
+        blank=True,
     )
 
     accomplished_at = models.DateTimeField(
