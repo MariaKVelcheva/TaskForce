@@ -5,7 +5,7 @@ from django.urls import reverse_lazy
 from django.views.decorators.http import require_POST
 from django.views.generic import CreateView, DetailView, UpdateView, DeleteView, ListView
 
-from taskForce.tasks.forms import CreateTaskForm, UpdateTaskForm
+from taskForce.tasks.forms import CreateTaskForm, UpdateTaskForm, QuickCreateTaskForm
 from taskForce.tasks.models import Task
 
 

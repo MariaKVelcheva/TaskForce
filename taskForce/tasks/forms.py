@@ -55,6 +55,12 @@ class CreateTaskForm(BaseTaskForm):
         exclude = BaseTaskForm.Meta.exclude + ["is_done", "assigned_to"]
 
 
+class QuickCreateTaskForm(forms.ModelForm):
+    class Meta:
+        model = Task
+        fields = ("name", )
+
+
 class UpdateTaskForm(BaseTaskForm):
     pass
 

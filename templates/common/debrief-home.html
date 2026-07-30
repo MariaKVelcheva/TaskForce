@@ -341,7 +341,7 @@
         {% endif %}
 
         <div class="quick-add">
-            <form method="post" action="{% url 'add-task' %}" style="display: flex; gap: 0.5rem; width: 100%;">
+            <form method="post" style="display: flex; gap: 0.5rem; width: 100%;">
                 {% csrf_token %}
                 <input type="text" name="name" placeholder="Quick add mission...">
                 <button type="submit">Add</button>

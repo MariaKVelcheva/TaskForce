@@ -1,10 +1,12 @@
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth import get_user_model
 from django.db.models import Q
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.views.generic import TemplateView
 
 from taskForce.comms.models import Message, MessageRead
+from taskForce.tasks.forms import QuickCreateTaskForm
 from taskForce.tasks.models import Task
 from taskForce.units.models import Unit
 
@@ -15,47 +17,65 @@ class IndexView(TemplateView):
     template_name = "common/index.html"
 
 
-class HomeView(LoginRequiredMixin, TemplateView):
-    template_name = "common/home.html"
+class DebriefHomeView(LoginRequiredMixin, TemplateView):
+    template_name = "common/debrief-home.html"
+
+    RECENT_MESSAGES = 5
+    VISIBLE_UNITS = 4
+
+    def post(self, request, *args, **kwargs):
+        form = QuickCreateTaskForm(request.POST)
+
+        if form.is_valid():
+            task = form.save(commit=False)
+            task.user = request.user
+            task.save()
+        else:
+            for error in form.errors.get("name", []):
+                messages.error(request, error)
+
+        return redirect(request.path)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-
-        user = self.request.user
-
-        user_tasks = Task.objects.filter(user=user)
-        open_tasks = user_tasks.filter(is_done=False)
-        done_tasks = user_tasks.filter(is_done=True)
-
-        units = Unit.objects.filter(
-            memberships__user=user,
-        )[:4]
-
-        user_messages = Message.objects.filter(
-            Q(sender=user) | Q(recipients=user)
-        ).distinct().order_by("-created_at")
-
-        read_ids = set(
-            MessageRead.objects.filter(
-                user=user
-            ).values_list('message_id', flat=True)
-        )
-
-        unread_count = user_messages.filter(
-            ~Q(sender=user)
-        ).exclude(pk__in=read_ids).count()
-
-        context["open_tasks"] = open_tasks
-        context["user_tasks"] = user_tasks
-        context["open_tasks_count"] = open_tasks.count()
-        context["done_tasks_count"] = done_tasks.count()
-        context["units"] = units
-        context["recent_messages"] = user_messages[:5]
-        context["read_message_ids"] = read_ids
-        context["unread_count"] = unread_count
-
+        context["form"] = QuickCreateTaskForm()
+        context.update(self.get_task_context())
+        context.update(self.get_unit_context())
+        context.update(self.get_message_context())
         return context
 
+    def get_task_context(self):
+        tasks = Task.objects.filter(user=self.request.user)
+        counts = tasks.aggregate(
+            open=Count("pk", filter=Q(is_done=False)),
+            done=Count("pk", filter=Q(is_done=True)),
+        )
+        return {
+            "open_tasks": tasks.filter(is_done=False),
+            "open_tasks_count": counts["open"],
+            "done_tasks_count": counts["done"],
+        }
 
+    def get_unit_context(self):
+        return {
+            "units": Unit.objects.filter(
+                memberships__user=self.request.user
+            )[:self.VISIBLE_UNITS]
+        }
+
+    def get_message_context(self):
+        user = self.request.user
+        read = MessageRead.objects.filter(message=OuterRef("pk"), user=user)
+
+        visible = (
+            Message.objects.filter(Q(sender=user) | Q(recipients=user))
+            .annotate(is_read=Exists(read))
+            .distinct()
+        )
+
+        return {
+            "recent_messages": visible.order_by("-created_at")[:self.RECENT_MESSAGES],
+            "unread_count": visible.exclude(sender=user).filter(is_read=False).count(),
+        }
 
 
