@@ -19,3 +19,4 @@ def unread_count(request):
     ).distinct().count()
 
     return {'unread_count': count}
+

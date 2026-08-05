@@ -315,7 +315,7 @@
         <div class="stat-label">Unread comms</div>
     </div>
     <div class="stat-card">
-        <div class="stat-value">{% if user.avatar %}{{ user.avatar.points }}{% else %}0{% endif %}</div>
+        <div class="stat-value">{{ points }}</div>
         <div class="stat-label">Intel points</div>
     </div>
 </div>
@@ -375,18 +375,13 @@
 
         {% if recent_messages %}
             {% for message in recent_messages %}
-            <a href="{% url 'details-message' message.pk %}"
-               class="comm-item {% if message.pk not in read_message_ids and message.sender != request.user %}unread{% endif %}">
-                {% if message.pk not in read_message_ids and message.sender != request.user %}
+                <a href="{% url 'details-message' message.pk %}"
+               class="comm-item {% if not message.is_read and message.sender != request.user %}unread{% endif %}">
+                {% if not message.is_read and message.sender != request.user %}
                 <div class="comm-unread-dot"></div>
                 {% else %}
                 <div class="comm-read-dot"></div>
                 {% endif %}
-                <span class="comm-item-sender">
-                    {% if message.sender == request.user %}You{% else %}{{ message.sender.username }}{% endif %}
-                </span>
-                <span class="comm-item-preview">{{ message.text|truncatechars:80 }}</span>
-            </a>
             {% endfor %}
         {% else %}
         <div class="empty-section">No comms yet</div>

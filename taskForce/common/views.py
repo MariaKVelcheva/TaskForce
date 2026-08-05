@@ -1,7 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth import get_user_model
-from django.db.models import Q
+from django.db.models import Q, Exists, OuterRef, Count
 from django.shortcuts import render, redirect
 from django.views.generic import TemplateView
 
@@ -39,6 +39,8 @@ class DebriefHomeView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["form"] = QuickCreateTaskForm()
+        avatar = getattr(self.request.user, "avatar", None)
+        context["points"] = avatar.points if avatar else 0
         context.update(self.get_task_context())
         context.update(self.get_unit_context())
         context.update(self.get_message_context())
@@ -70,12 +72,11 @@ class DebriefHomeView(LoginRequiredMixin, TemplateView):
         visible = (
             Message.objects.filter(Q(sender=user) | Q(recipients=user))
             .annotate(is_read=Exists(read))
-            .distinct()
+            .distinct().select_related("sender")
         )
 
         return {
             "recent_messages": visible.order_by("-created_at")[:self.RECENT_MESSAGES],
-            "unread_count": visible.exclude(sender=user).filter(is_read=False).count(),
         }
 
 
