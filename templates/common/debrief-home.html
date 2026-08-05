@@ -372,16 +372,20 @@
             <span class="section-title">// Recent comms</span>
             <a href="{% url 'inbox' %}" class="section-link">Inbox →</a>
         </div>
-
         {% if recent_messages %}
             {% for message in recent_messages %}
-                <a href="{% url 'details-message' message.pk %}"
+            <a href="{% url 'details-message' message.pk %}"
                class="comm-item {% if not message.is_read and message.sender != request.user %}unread{% endif %}">
                 {% if not message.is_read and message.sender != request.user %}
                 <div class="comm-unread-dot"></div>
                 {% else %}
                 <div class="comm-read-dot"></div>
                 {% endif %}
+                <span class="comm-item-sender">
+                    {% if message.sender == request.user %}You{% else %}{{ message.sender.username }}{% endif %}
+                </span>
+                <span class="comm-item-preview">{{ message.text|truncatechars:80 }}</span>
+            </a>
             {% endfor %}
         {% else %}
         <div class="empty-section">No comms yet</div>
