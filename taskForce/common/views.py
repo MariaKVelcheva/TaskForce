@@ -39,11 +39,14 @@ class DebriefHomeView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["form"] = QuickCreateTaskForm()
-        avatar = getattr(self.request.user, "avatar", None)
-        context["points"] = avatar.points if avatar else 0
+
         context.update(self.get_task_context())
         context.update(self.get_unit_context())
         context.update(self.get_message_context())
+
+        avatar = getattr(self.request.user, "avatar", None)
+        context["points"] = avatar.points if avatar else 0
+
         return context
 
     def get_task_context(self):
@@ -62,7 +65,9 @@ class DebriefHomeView(LoginRequiredMixin, TemplateView):
         return {
             "units": Unit.objects.filter(
                 memberships__user=self.request.user
-            )[:self.VISIBLE_UNITS]
+            ).annotate(
+                user_count=Count("users", distinct=True)
+            ).order_by("name")[:self.VISIBLE_UNITS]
         }
 
     def get_message_context(self):

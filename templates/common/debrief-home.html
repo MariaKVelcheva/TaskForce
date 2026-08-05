@@ -359,7 +359,7 @@
             {% for unit in units %}
             <a href="{% url 'details-unit' unit.pk %}" class="unit-item">
                 <span class="unit-item-name">{{ unit.name }}</span>
-                <span class="unit-item-meta">{{ unit.users.count }} ops</span>
+                <span class="unit-item-meta">{{ unit.user_count }} ops</span>
             </a>
             {% endfor %}
         {% else %}
