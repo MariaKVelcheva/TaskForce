@@ -88,6 +88,6 @@ class MessageRead(models.Model):
 
     class Meta:
         verbose_name = _('Read message')
-        verbose_name_plural = _('Read messages')
+        verbose_name_plural = _('Read comms')
         unique_together = (('user', 'message'),)
         ordering = ('-read_at', )

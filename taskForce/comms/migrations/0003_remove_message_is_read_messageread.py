@@ -27,7 +27,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 'verbose_name': 'Read message',
-                'verbose_name_plural': 'Read messages',
+                'verbose_name_plural': 'Read comms',
                 'ordering': ('-read_at',),
                 'unique_together': {('user', 'message')},
             },
