@@ -1,6 +1,7 @@
 import uuid
 
 from django.db import models
+from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth import get_user_model
 
@@ -35,12 +36,21 @@ class Unit(models.Model):
         editable=False,
     )
 
+    def get_absolute_url(self):
+        return reverse("details-unit", kwargs={"pk": self.pk})
+
+    def get_invite_url(self, request):
+        return request.build_absolute_uri(
+            reverse("join-unit") + f"?code={self.invite_code}"
+        )
+
     def __str__(self):
         return self.name
 
     class Meta:
         verbose_name = _('unit')
         verbose_name_plural = _('units')
+        ordering = ("name", )
 
 
 class Membership(models.Model):

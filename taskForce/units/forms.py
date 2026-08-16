@@ -26,3 +26,18 @@ class CreateUnitForm(BaseUnitForm):
 class UpdateUnitForm(BaseUnitForm):
     pass
 
+
+class JoinUnitForm(forms.Form):
+    invite_code = forms.UUIDField(
+        label=_("Clearance code"),
+    )
+
+    def clean_invite_code(self):
+        code = self.cleaned_data["invite_code"]
+
+        try:
+            self.unit = Unit.objects.get(invite_code=code)
+        except Unit.DoesNotExist:
+            raise forms.ValidationError(_("No unit matches this clearance code."))
+
+        return code

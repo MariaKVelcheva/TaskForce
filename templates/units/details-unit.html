@@ -191,11 +191,6 @@
             {{ object.users.count }} operative{{ object.users.count|pluralize }}
         </p>
     </div>
-    {% if is_commander %}
-    <div class="detail-actions">
-        <a href="{% url 'update-unit' object.pk %}" class="btn btn-ghost" style="font-size: 0.8rem; padding: 0.45rem 1rem;">Edit</a>
-    </div>
-    {% endif %}
 </div>
 
 <div class="section-label">// Clearance code</div>

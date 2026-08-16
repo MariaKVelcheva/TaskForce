@@ -130,7 +130,10 @@
         <h1 class="catalogue-title">Your units</h1>
         <p class="catalogue-count">{{ units|length }} unit{{ units|length|pluralize }} active</p>
     </div>
-    <a href="{% url 'create-unit' %}" class="btn btn-primary">+ Form unit</a>
+    <div style="display: flex; gap: 0.75rem;">
+        <a href="{% url 'join-unit' %}" class="btn btn-ghost">Enter code</a>
+        <a href="{% url 'create-unit' %}" class="btn btn-primary">+ Form unit</a>
+    </div>
 </div>
 
 {% if units %}

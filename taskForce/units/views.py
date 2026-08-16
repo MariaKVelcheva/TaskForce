@@ -4,10 +4,10 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import Http404
 from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
-from django.views.generic import CreateView, UpdateView, DeleteView, DetailView, ListView
+from django.views.generic import CreateView, UpdateView, DeleteView, DetailView, ListView, FormView
 from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
-from taskForce.units.forms import CreateUnitForm, UpdateUnitForm
+from taskForce.units.forms import CreateUnitForm, UpdateUnitForm, JoinUnitForm
 from taskForce.units.models import Unit, Membership
 
 TaskUser = get_user_model()
@@ -73,6 +73,10 @@ class DetailUnitView(LoginRequiredMixin, DetailView):
         context["is_commander"] = self.object.memberships.filter(
             user=self.request.user,
             role="commander").exists()
+
+        if context["is_commander"]:
+            context["invite_url"] = self.object.get_invite_url(self.request)
+
         context["unit_tasks"] = unit_tasks
         context["active_tasks"] = unit_tasks.filter(is_done=False)
         context["finished_tasks"] = unit_tasks.filter(is_done=False)
@@ -89,36 +93,31 @@ class CatalogueUnitView(LoginRequiredMixin, ListView):
         return Unit.objects.filter(memberships__user=self.request.user)
 
 
-@login_required
-def join_unit(request, invite_code):
-    unit = Unit.objects.filter(
-        invite_code=invite_code,
-    ).first()
+class JoinUnitView(LoginRequiredMixin, FormView):
+    template_name = "units/join-unit.html"
+    form_class = JoinUnitForm
 
-    if not unit:
-        raise Http404(_("Unit does not exist"))
+    def get_initial(self):
+        initial = super().get_initial()
+        code = self.request.GET.get("code")
 
-    user = request.user
+        if code:
+            initial["invite_code"] = code
 
-    if unit.memberships.filter(user=user).exists():
-        messages.info(request, _("You are already a member of this unit."))
-        return redirect("details-unit", pk=unit.pk)
+        return initial
 
-    if request.method == "POST":
-        Membership.objects.create(
-            user=user,
-            role="operative",
+    def form_valid(self, form):
+        unit = form.unit
+
+        membership, created = Membership.objects.get_or_create(
+            user=self.request.user,
             unit=unit,
+            defaults={"role": "operative"},
         )
-        messages.success(request,
-                         f"You have successfully joined {unit.name}")
+
+        if created:
+            messages.success(self.request, _("You have joined %(name)s.") % {"name": unit.name})
+        else:
+            messages.info(self.request, _("You are already a member of this unit."))
+
         return redirect("details-unit", pk=unit.pk)
-
-    context = {
-        "user": user,
-        "invite_code": invite_code,
-        "unit": unit
-    }
-
-    return render(request, "units/join-unit.html", context)
-
