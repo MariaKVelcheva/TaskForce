@@ -1,6 +1,6 @@
 {% extends 'common/base.html' %}
 
-{% block title %}Edit {{ object.name }} — Task: Force!{% endblock %}
+{% block title %}Rename {{ object.name }} — Task: Force!{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -27,12 +27,12 @@
 <div style="max-width: 480px; margin: 0 auto;">
 
     <div style="margin-bottom: 2rem;">
-        <h1 style="font-family: 'Barlow Condensed', sans-serif; font-size: 1.8rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--khaki);">Edit unit</h1>
+        <h1 style="font-family: 'Barlow Condensed', sans-serif; font-size: 1.8rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--khaki);">Rename unit</h1>
         <p style="font-family: 'Share Tech Mono', monospace; font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-top: 0.3rem;">{{ object.name }}</p>
     </div>
 
     <div class="panel">
-        <div class="panel-header">// Amend unit record</div>
+        <div class="panel-header">// Amend unit name record</div>
 
         <form method="post" novalidate>
             {% csrf_token %}
