@@ -228,6 +228,7 @@
 {% if is_commander %}
 <div class="danger-zone">
     <div style="font-family: 'Share Tech Mono', monospace; font-size: 0.65rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 1rem;">Danger zone</div>
+    <a href="{% url 'update-unit' object.pk %}" class="btn" style="font-size: 0.82rem; color: var(--khaki); border: 2px solid var(--khaki); margin-right: 0.5rem;">Rename unit</a>
     <a href="{% url 'delete-unit' object.pk %}" class="btn btn-danger" style="font-size: 0.82rem;">Dissolve unit</a>
 </div>
 {% endif %}

@@ -7,7 +7,7 @@ from django.urls import reverse_lazy
 from django.views.generic import CreateView, UpdateView, DeleteView, DetailView, ListView, FormView
 from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
-from taskForce.units.forms import CreateUnitForm, UpdateUnitForm, JoinUnitForm
+from taskForce.units.forms import CreateUnitForm, JoinUnitForm, RenameUnitForm
 from taskForce.units.models import Unit, Membership
 
 TaskUser = get_user_model()
@@ -34,10 +34,10 @@ class CreateUnitView(LoginRequiredMixin, CreateView):
         return response
 
 
-class UpdateUnitView(LoginRequiredMixin, UpdateView):
+class RenameUnitView(LoginRequiredMixin, UpdateView):
     model = Unit
-    form_class = UpdateUnitForm
-    template_name = "units/update-unit.html"
+    form_class = RenameUnitForm
+    template_name = "units/rename-unit.html"
 
     def get_queryset(self):
         return Unit.objects.filter(

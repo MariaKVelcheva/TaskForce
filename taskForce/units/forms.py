@@ -7,7 +7,7 @@ from taskForce.units.models import Unit
 class BaseUnitForm(forms.ModelForm):
     class Meta:
         model = Unit
-        exclude = ("users", "invite_code", "created_by", )
+        fields = ("name", )
 
         labels = {
             "name": _("Name"),
@@ -23,7 +23,7 @@ class CreateUnitForm(BaseUnitForm):
     pass
 
 
-class UpdateUnitForm(BaseUnitForm):
+class RenameUnitForm(BaseUnitForm):
     pass
 
 
