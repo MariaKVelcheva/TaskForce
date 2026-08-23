@@ -72,7 +72,7 @@ class DetailsMessageView(LoginRequiredMixin, DetailView):
 
 class InboxView(LoginRequiredMixin, ListView):
     model = Message
-    context_object_name = "comms"
+    context_object_name = "inbox_messages"
     template_name = "messages/inbox.html"
 
     def get_queryset(self):
