@@ -12,8 +12,6 @@ class Conversation(models.Model):
         on_delete=models.CASCADE,
         related_name="conversations",
         verbose_name=_("Unit"),
-        null=True,
-        blank=True,
     )
 
     task = models.ForeignKey(
@@ -59,9 +57,9 @@ class Message(models.Model):
     sender = models.ForeignKey(
         to=TaskUser,
         on_delete=models.SET_NULL,
-        related_name="sent_messages",
         null=True,
         blank=True,
+        related_name="sent_messages",
         verbose_name=_("Sender"),
     )
 
@@ -73,48 +71,17 @@ class Message(models.Model):
         ordering = ("created_at",)
 
 
-class MessageRead(models.Model):
-    message = models.ForeignKey(
-        to=Message,
-        on_delete=models.CASCADE,
-        verbose_name=_('Message'),
-        related_name='reads',
-    )
-
-    user = models.ForeignKey(
-        to=TaskUser,
-        on_delete=models.CASCADE,
-        verbose_name=_('User'),
-        related_name='read_messages',
-    )
-
-    read_at = models.DateTimeField(
-        verbose_name=_('Read at'),
-        auto_now_add=True,
-    )
-
-    class Meta:
-        verbose_name = _('Read message')
-        verbose_name_plural = _('Read comms')
-        unique_together = (('user', 'message'),)
-        ordering = ('-read_at', )
-
-
 class ConversationRead(models.Model):
     conversation = models.ForeignKey(
         to=Conversation,
         on_delete=models.CASCADE,
         related_name="reads",
-        null=True,
-        blank=True,
     )
 
     user = models.ForeignKey(
         to=TaskUser,
         on_delete=models.CASCADE,
         related_name="conversation_reads",
-        null=True,
-        blank=True,
     )
 
     last_read_at = models.DateTimeField(auto_now=True)

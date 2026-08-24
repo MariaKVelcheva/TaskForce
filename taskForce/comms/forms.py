@@ -4,15 +4,15 @@ from django.utils.translation import gettext_lazy as _
 from taskForce.comms.models import Message
 
 
-class MessageBaseForm(forms.models.ModelForm):
+class MessageBaseForm(forms.ModelForm):
     class Meta:
         model = Message
-        exclude = ("created_at", )
+        fields = ("text",)
         labels = {
             "text": _("Comm"),
         }
         widgets = {
-            "text": forms.Textarea(attrs={'cols': 80, 'rows': 4, "placeholder": _("Your comm here")}),
+            "text": forms.Textarea(attrs={"rows": 4, "placeholder": _("Your comm here")}),
         }
 
 

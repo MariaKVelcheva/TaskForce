@@ -8,6 +8,5 @@ urlpatterns = [
     path("create/", views.CreateMessageView.as_view(), name="create-message"),
     path("<int:pk>/", include([
         path("delete/", views.DeleteMessageView.as_view(), name="delete-message"),
-        path("details/", views.DetailsMessageView.as_view(), name="details-message"),
     ]))
 ]

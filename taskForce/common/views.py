@@ -5,7 +5,7 @@ from django.db.models import Q, Exists, OuterRef, Count
 from django.shortcuts import render, redirect
 from django.views.generic import TemplateView
 
-from taskForce.comms.models import Message, MessageRead
+from taskForce.comms.models import Message, ConversationRead
 from taskForce.tasks.forms import QuickCreateTaskForm
 from taskForce.tasks.models import Task
 from taskForce.units.models import Unit
@@ -72,7 +72,7 @@ class DebriefHomeView(LoginRequiredMixin, TemplateView):
 
     def get_message_context(self):
         user = self.request.user
-        read = MessageRead.objects.filter(message=OuterRef("pk"), user=user)
+        read = ConversationRead.objects.filter(message=OuterRef("pk"), user=user)
 
         visible = (
             Message.objects.filter(sender=user)

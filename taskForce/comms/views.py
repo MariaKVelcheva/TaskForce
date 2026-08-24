@@ -5,7 +5,7 @@ from django.urls import reverse_lazy
 from django.views.generic import CreateView, DeleteView, DetailView, ListView
 
 from taskForce.comms.forms import MessageCreateForm, SearchMessageForm
-from taskForce.comms.models import Message, MessageRead
+from taskForce.comms.models import Message, ConversationRead
 from taskForce.tasks.models import Task
 from taskForce.units.models import Unit
 
@@ -44,36 +44,6 @@ class DeleteMessageView(LoginRequiredMixin, DeleteView):
         return reverse_lazy("inbox")
 
 
-class DetailsMessageView(LoginRequiredMixin, DetailView):
-    model = Message
-    context_object_name = "message"
-    template_name = "messages/details-message.html"
-
-    def get_queryset(self):
-        return Message.objects.filter(
-            sender=self.request.user
-        )
-
-    def get_object(self, queryset=None):
-        message = super().get_object(queryset)
-
-        if message.sender != self.request.user:
-            MessageRead.objects.get_or_create(
-                message=message,
-                user=self.request.user,
-            )
-
-        return message
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['read_message_ids'] = set(
-            MessageRead.objects.filter(
-                user=self.request.user,
-            ).values_list('message_id', flat=True))
-        return context
-
-
 class InboxView(LoginRequiredMixin, ListView):
     model = Message
     context_object_name = "inbox_messages"
@@ -82,7 +52,7 @@ class InboxView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         user = self.request.user
 
-        read = MessageRead.objects.filter(
+        read = ConversationRead.objects.filter(
             message=OuterRef("pk"),
             user=user,
         )
@@ -133,7 +103,7 @@ class UnitChatView(LoginRequiredMixin, ListView):
         context["unit"] = get_object_or_404(Unit, pk=self.kwargs["pk"], memberships__user=self.request.user)
         context['search_form'] = SearchMessageForm(self.request.GET or None)
         context['read_message_ids'] = set(
-            MessageRead.objects.filter(
+            ConversationRead.objects.filter(
                 user=self.request.user,
             ).values_list('message_id', flat=True))
         return context

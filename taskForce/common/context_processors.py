@@ -1,5 +1,5 @@
 from django.db.models import Q
-from taskForce.comms.models import Message, MessageRead
+from taskForce.comms.models import Message, ConversationRead
 
 
 def unread_count(request):
@@ -7,7 +7,7 @@ def unread_count(request):
         return {'unread_count': 0}
 
     read_ids = set(
-        MessageRead.objects.filter(
+        ConversationRead.objects.filter(
             user=request.user
         ).values_list('message_id', flat=True)
     )
