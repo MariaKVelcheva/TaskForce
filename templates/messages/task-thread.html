@@ -281,7 +281,6 @@
         <div class="bubble-details" id="details-{{ message.pk }}">
             Sent: {{ message.created_at|date:"d M Y, H:i" }}<br>
             From: {{ message.sender.username }}<br>
-            Recipients: {% for r in message.recipients.all %}{{ r.username }}{% if not forloop.last %}, {% endif %}{% endfor %}
         </div>
 
         <div class="bubble-actions">

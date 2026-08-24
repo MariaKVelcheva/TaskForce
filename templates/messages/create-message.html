@@ -46,16 +46,6 @@
         <form method="post" novalidate>
             {% csrf_token %}
 
-            {% if form.title %}
-            <div class="form-group">
-                <label for="{{ form.title.id_for_label }}">{{ form.title.label }}</label>
-                {{ form.title }}
-                {% if form.title.errors %}
-                <ul class="errorlist">{% for e in form.title.errors %}<li>{{ e }}</li>{% endfor %}</ul>
-                {% endif %}
-            </div>
-            {% endif %}
-
             <div class="form-group">
                 <label for="{{ form.text.id_for_label }}">{{ form.text.label }}</label>
                 {{ form.text }}
@@ -65,28 +55,11 @@
             </div>
 
             <div class="form-group">
-                <label for="{{ form.recipients.id_for_label }}">{{ form.recipients.label }}</label>
-                {{ form.recipients }}
-                {% if form.recipients.errors %}
-                <ul class="errorlist">{% for e in form.recipients.errors %}<li>{{ e }}</li>{% endfor %}</ul>
-                {% endif %}
+
             </div>
 
             <div class="form-row">
-                <div class="form-group">
-                    <label for="{{ form.unit.id_for_label }}">{{ form.unit.label }}</label>
-                    {{ form.unit }}
-                    {% if form.unit.errors %}
-                    <ul class="errorlist">{% for e in form.unit.errors %}<li>{{ e }}</li>{% endfor %}</ul>
-                    {% endif %}
-                </div>
-                <div class="form-group">
-                    <label for="{{ form.related_task.id_for_label }}">{{ form.related_task.label }}</label>
-                    {{ form.related_task }}
-                    {% if form.related_task.errors %}
-                    <ul class="errorlist">{% for e in form.related_task.errors %}<li>{{ e }}</li>{% endfor %}</ul>
-                    {% endif %}
-                </div>
+                
             </div>
 
             <div style="margin-top: 1.75rem; display: flex; gap: 0.75rem;">

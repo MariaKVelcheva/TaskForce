@@ -6,64 +6,71 @@ from django.utils.translation import gettext_lazy as _
 TaskUser = get_user_model()
 
 
-class Message(models.Model):
-    text = models.TextField(
-        verbose_name=_('Text'),
-    )
-
-    title = models.CharField(
-        verbose_name=_('Title'),
-        max_length=255,
+class Conversation(models.Model):
+    unit = models.ForeignKey(
+        to="units.Unit",
+        on_delete=models.CASCADE,
+        related_name="conversations",
+        verbose_name=_("Unit"),
         null=True,
         blank=True,
-        default=None,
+    )
+
+    task = models.ForeignKey(
+        to="tasks.Task",
+        on_delete=models.CASCADE,
+        related_name="conversations",
+        null=True,
+        blank=True,
+        verbose_name=_("Task"),
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True,)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["unit", "task"],
+                name="unique_task_conversation",
+            ),
+            models.UniqueConstraint(
+                fields=["unit"],
+                condition=models.Q(task__isnull=True),
+                name="unique_general_conversation",
+            ),
+        ]
+
+    def __str__(self):
+        return self.title
+
+    @property
+    def title(self):
+        return self.task.name if self.task else self.unit.name
+
+
+class Message(models.Model):
+    conversation = models.ForeignKey(
+        to=Conversation,
+        on_delete=models.CASCADE,
+        related_name="messages",
+        verbose_name=_("Conversation"),
     )
 
     sender = models.ForeignKey(
         to=TaskUser,
         on_delete=models.SET_NULL,
-        verbose_name=_('Sender'),
-        related_name='sent_messages',
+        related_name="sent_messages",
         null=True,
         blank=True,
+        verbose_name=_("Sender"),
     )
 
-    recipients = models.ManyToManyField(
-        to=TaskUser,
-        verbose_name=_('Recipients'),
-        related_name='received_messages',
-    )
+    text = models.TextField(verbose_name=_("Text"))
 
-    unit = models.ForeignKey(
-        to="units.Unit",
-        on_delete=models.SET_NULL,
-        verbose_name=_('Unit'),
-        related_name='unit_messages',
-        null=True,
-        blank=True,
-    )
-
-    created_at = models.DateTimeField(
-        verbose_name=_('Created at'),
-        auto_now_add=True,
-    )
-
-    related_task = models.ForeignKey(
-        to="tasks.Task",
-        on_delete=models.SET_NULL,
-        verbose_name=_('Related task'),
-        related_name='task_messages',
-        null=True,
-        blank=True,
-    )
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        verbose_name = _('Message')
-        verbose_name_plural = _('Messages')
-        ordering = ('-created_at', )
-
-    def __str__(self):
-        return f"{self.sender} - {self.created_at:%d-%m-%Y %H:%M}"
+        ordering = ("created_at",)
 
 
 class MessageRead(models.Model):
@@ -91,3 +98,31 @@ class MessageRead(models.Model):
         verbose_name_plural = _('Read comms')
         unique_together = (('user', 'message'),)
         ordering = ('-read_at', )
+
+
+class ConversationRead(models.Model):
+    conversation = models.ForeignKey(
+        to=Conversation,
+        on_delete=models.CASCADE,
+        related_name="reads",
+        null=True,
+        blank=True,
+    )
+
+    user = models.ForeignKey(
+        to=TaskUser,
+        on_delete=models.CASCADE,
+        related_name="conversation_reads",
+        null=True,
+        blank=True,
+    )
+
+    last_read_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "conversation"],
+                name="unique_conversation_read",
+            )
+        ]

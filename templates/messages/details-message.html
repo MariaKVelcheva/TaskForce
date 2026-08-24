@@ -58,25 +58,7 @@
         white-space: pre-wrap;
         word-break: break-word;
     }
-
-    .comm-recipients {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.4rem;
-        margin-top: 0.25rem;
-    }
-
-    .recipient-chip {
-        font-family: 'Share Tech Mono', monospace;
-        font-size: 0.65rem;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
-        padding: 0.15rem 0.5rem;
-        border-radius: var(--radius-sm);
-        border: 1px solid var(--khaki-dark);
-        color: var(--khaki-muted);
-    }
-
+    
     .comm-actions {
         margin-top: 2rem;
         display: flex;
@@ -91,7 +73,6 @@
 <div style="max-width: 700px; margin: 0 auto;">
 
     <div class="comm-header">
-        <h1 class="comm-title">{% if message.title %}{{ message.title }}{% else %}Comm{% endif %}</h1>
         <p class="comm-meta-line">{{ message.created_at|date:"d M Y, H:i" }}</p>
     </div>
 
@@ -106,25 +87,6 @@
                 </div>
             </div>
 
-            <div>
-                <div class="comm-meta-label">To</div>
-                <div class="comm-recipients">
-                    {% for recipient in message.recipients.all %}
-                    <span class="recipient-chip">{{ recipient.username }}</span>
-                    {% empty %}
-                    <span class="comm-meta-value">—</span>
-                    {% endfor %}
-                </div>
-            </div>
-
-            {% if message.unit %}
-            <div>
-                <div class="comm-meta-label">Unit</div>
-                <div class="comm-meta-value">
-                    <a href="{% url 'unit-chat' message.unit.pk %}" style="color: var(--khaki); text-decoration: none;">{{ message.unit.name }}</a>
-                </div>
-            </div>
-            {% endif %}
 
             {% if message.related_task %}
             <div>

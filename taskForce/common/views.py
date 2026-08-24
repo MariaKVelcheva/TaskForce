@@ -75,7 +75,7 @@ class DebriefHomeView(LoginRequiredMixin, TemplateView):
         read = MessageRead.objects.filter(message=OuterRef("pk"), user=user)
 
         visible = (
-            Message.objects.filter(Q(sender=user) | Q(recipients=user))
+            Message.objects.filter(sender=user)
             .annotate(is_read=Exists(read))
             .distinct().select_related("sender")
         )

@@ -15,7 +15,6 @@ class CreateMessageView(LoginRequiredMixin, CreateView):
     form_class = MessageCreateForm
     template_name = "messages/create-message.html"
 
-
     def form_valid(self, form):
         form.instance.sender = self.request.user
         return super().form_valid(form)
@@ -26,6 +25,10 @@ class CreateMessageView(LoginRequiredMixin, CreateView):
         if self.object.task:
             return reverse_lazy("task-thread", kwargs={"pk": self.object.related_task.pk})
         return reverse_lazy("inbox")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
 
 
 class DeleteMessageView(LoginRequiredMixin, DeleteView):
@@ -48,7 +51,7 @@ class DetailsMessageView(LoginRequiredMixin, DetailView):
 
     def get_queryset(self):
         return Message.objects.filter(
-            Q(sender=self.request.user) | Q(recipients=self.request.user),
+            sender=self.request.user
         )
 
     def get_object(self, queryset=None):
@@ -84,7 +87,7 @@ class InboxView(LoginRequiredMixin, ListView):
             user=user,
         )
 
-        messages = (Message.objects.filter(Q(sender=user) | Q(recipients=user))
+        messages = (Message.objects.filter(sender=user)
                     .annotate(is_read=Exists(read))
                     .distinct()
                     .order_by("-created_at"))
@@ -93,7 +96,7 @@ class InboxView(LoginRequiredMixin, ListView):
 
         if query:
             messages = messages.filter(
-                Q(text__icontains=query) | Q(title__icontains=query) | Q(sender__username__icontains=query)
+                Q(text__icontains=query) | Q(sender__username__icontains=query)
             )
 
         return messages
