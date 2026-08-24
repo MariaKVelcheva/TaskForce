@@ -44,6 +44,7 @@ class DeleteMessageView(LoginRequiredMixin, DeleteView):
 class DetailsMessageView(LoginRequiredMixin, DetailView):
     model = Message
     context_object_name = "message"
+    template_name = "messages/details-message.html"
 
     def get_queryset(self):
         return Message.objects.filter(

@@ -1,10 +1,151 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends 'common/base.html' %}
 
-</body>
-</html>
+{% block title %}Comm — Task: Force!{% endblock %}
+
+{% block extra_css %}
+<style>
+    .comm-header {
+        margin-bottom: 1.5rem;
+    }
+
+    .comm-title {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 1.8rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--khaki);
+    }
+
+    .comm-meta-line {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.72rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-top: 0.3rem;
+    }
+
+    .comm-meta {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 1rem;
+        padding-bottom: 1.25rem;
+        margin-bottom: 1.25rem;
+        border-bottom: 1px solid var(--olive);
+    }
+
+    .comm-meta-label {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.62rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 0.25rem;
+    }
+
+    .comm-meta-value {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.78rem;
+        letter-spacing: 0.04em;
+        color: var(--cream-dark);
+    }
+
+    .comm-body {
+        font-size: 0.95rem;
+        line-height: 1.65;
+        color: var(--cream);
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+
+    .comm-recipients {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        margin-top: 0.25rem;
+    }
+
+    .recipient-chip {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.65rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.15rem 0.5rem;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--khaki-dark);
+        color: var(--khaki-muted);
+    }
+
+    .comm-actions {
+        margin-top: 2rem;
+        display: flex;
+        gap: 0.75rem;
+        align-items: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div style="max-width: 700px; margin: 0 auto;">
+
+    <div class="comm-header">
+        <h1 class="comm-title">{% if message.title %}{{ message.title }}{% else %}Comm{% endif %}</h1>
+        <p class="comm-meta-line">{{ message.created_at|date:"d M Y, H:i" }}</p>
+    </div>
+
+    <div class="panel">
+        <div class="panel-header">// Transmission</div>
+
+        <div class="comm-meta">
+            <div>
+                <div class="comm-meta-label">From</div>
+                <div class="comm-meta-value">
+                    {% if message.sender == request.user %}You{% else %}{{ message.sender.username }}{% endif %}
+                </div>
+            </div>
+
+            <div>
+                <div class="comm-meta-label">To</div>
+                <div class="comm-recipients">
+                    {% for recipient in message.recipients.all %}
+                    <span class="recipient-chip">{{ recipient.username }}</span>
+                    {% empty %}
+                    <span class="comm-meta-value">—</span>
+                    {% endfor %}
+                </div>
+            </div>
+
+            {% if message.unit %}
+            <div>
+                <div class="comm-meta-label">Unit</div>
+                <div class="comm-meta-value">
+                    <a href="{% url 'unit-chat' message.unit.pk %}" style="color: var(--khaki); text-decoration: none;">{{ message.unit.name }}</a>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if message.related_task %}
+            <div>
+                <div class="comm-meta-label">Mission</div>
+                <div class="comm-meta-value">
+                    <a href="{% url 'details-task' message.related_task.pk %}" style="color: var(--khaki); text-decoration: none;">{{ message.related_task.name }}</a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="comm-body">{{ message.text }}</div>
+    </div>
+
+    <div class="comm-actions">
+        <a href="{% url 'inbox' %}" class="btn btn-ghost">← Inbox</a>
+        {% if message.sender == request.user %}
+        <a href="{% url 'delete-message' message.pk %}" class="btn btn-danger" style="font-size: 0.82rem;">Delete comm</a>
+        {% endif %}
+    </div>
+
+</div>
+
+{% endblock %}
