@@ -1,137 +1,138 @@
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Q, OuterRef, Exists
-from django.shortcuts import get_object_or_404
-from django.urls import reverse_lazy
-from django.views.generic import CreateView, DeleteView, DetailView, ListView
+import datetime
 
+from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models import Q, OuterRef, Exists, F, Subquery, Max, Value
+from django.db.models.functions import Coalesce
+from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse_lazy
+from django.utils import timezone
+from django.views import View
+from django.views.generic import ListView
+from django.utils.translation import gettext_lazy as _
 from taskForce.comms.forms import MessageCreateForm, SearchMessageForm
-from taskForce.comms.models import Message, ConversationRead
+from taskForce.comms.models import Message, ConversationRead, Conversation
 from taskForce.tasks.models import Task
 from taskForce.units.models import Unit
 
 
-class CreateMessageView(LoginRequiredMixin, CreateView):
-    model = Message
-    form_class = MessageCreateForm
-    template_name = "messages/create-message.html"
+class OpenUnitChatView(LoginRequiredMixin, View):
+    def get(self, request, pk):
+        unit = get_object_or_404(Unit, pk=pk, memberships__user=request.user)
+        conversation, created = Conversation.objects.get_or_create(
+            unit=unit,
+            task=None,
+        )
+        return redirect("conversation", pk=conversation.pk)
 
-    def form_valid(self, form):
-        form.instance.sender = self.request.user
-        return super().form_valid(form)
 
-    def get_success_url(self):
-        if self.object.unit:
-            return reverse_lazy("unit-chat", kwargs={"pk": self.object.unit.pk})
-        if self.object.task:
-            return reverse_lazy("task-thread", kwargs={"pk": self.object.related_task.pk})
-        return reverse_lazy("inbox")
+class OpenTaskChatView(LoginRequiredMixin, View):
+    def get(self, request, pk):
+        task = get_object_or_404(
+            Task,
+            pk=pk,
+            unit__isnull=False,
+            unit__memberships__user=request.user,
+        )
+
+        conversation, created = Conversation.objects.get_or_create(
+            unit=task.unit,
+            task=task,
+        )
+
+        return redirect("conversation", pk=conversation.pk)
+
+
+class ConversationView(LoginRequiredMixin, ListView):
+    template_name = "messages/conversation.html"
+    context_object_name = "messages_list"
+
+    def get_conversation(self):
+        return get_object_or_404(
+            Conversation,
+            pk=self.kwargs['pk'],
+            unit__memberships__user=self.request.user,
+        )
+
+    def get_queryset(self):
+        return self.get_conversation().messages.select_related("sender")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        return context
+        conversation = self.get_conversation()
 
-
-class DeleteMessageView(LoginRequiredMixin, DeleteView):
-    model = Message
-    template_name = "messages/delete-message.html"
-
-    def get_queryset(self):
-        return Message.objects.filter(
-            sender=self.request.user,
+        ConversationRead.objects.update_or_create(
+            conversation=conversation,
+            user=self.request.user,
         )
 
-    def get_success_url(self):
-        return reverse_lazy("inbox")
+        context["conversation"] = conversation
+        context["form"] = MessageCreateForm()
+        return context
+
+    def post(self, request, *args, **kwargs):
+        conversation = self.get_conversation()
+        form = MessageCreateForm(request.POST, request.FILES)
+
+        if form.is_valid():
+            message = form.save(commit=False)
+            message.conversation = conversation
+            message.sender = request.user
+            message.save()
+        else:
+            messages.error(request, _("Comm cannot be empty."))
+
+        return redirect("conversation", pk=conversation.pk)
 
 
 class InboxView(LoginRequiredMixin, ListView):
-    model = Message
-    context_object_name = "inbox_messages"
     template_name = "messages/inbox.html"
+    context_object_name = "conversations"
 
     def get_queryset(self):
         user = self.request.user
 
-        read = ConversationRead.objects.filter(
-            message=OuterRef("pk"),
+        my_read = ConversationRead.objects.filter(
+            conversation=OuterRef("pk"),
             user=user,
+        ).values("last_read_at")[:1]
+
+        unread = Message.objects.filter(
+            conversation=OuterRef("pk"),
+            created_at__gt=OuterRef("last_read_at"),
+        ).exclude(sender=user)
+
+        conversations = (
+            Conversation.objects.filter(unit__memberships__user=user)
+            .select_related("unit", "task")
+            .annotate(
+                last_read_at=Coalesce(Subquery(my_read), Value(datetime.datetime(1970,
+                                                                                 1, 1,
+                                                                                 tzinfo=datetime.timezone.utc))),
+                last_message_at=Max("messages__created_at"),
+                has_unread=Exists(unread),
+            )
+            .order_by(F("last_message_at").desc(nulls_last=True))
         )
 
-        messages = (Message.objects.filter(sender=user)
-                    .annotate(is_read=Exists(read))
-                    .distinct()
-                    .order_by("-created_at"))
-
         query = self.request.GET.get("query")
 
         if query:
-            messages = messages.filter(
-                Q(text__icontains=query) | Q(sender__username__icontains=query)
-            )
+            matching = Message.objects.filter(
+                conversation=OuterRef("pk"),
+                text__icontains=query,
+            ).order_by("-created_at").values("text")[:1]
 
-        return messages
+            conversations = conversations.filter(
+                Q(messages__text__icontains=query)
+                | Q(unit__name__icontains=query)
+                | Q(task__name__icontains=query)
+            ).annotate(match_preview=Subquery(matching)).distinct()
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['search_form'] = SearchMessageForm(self.request.GET or None)
-
-        return context
-
-
-class UnitChatView(LoginRequiredMixin, ListView):
-    model = Message
-    context_object_name = "inbox_messages"
-    template_name = "messages/unit-chat.html"
-
-    def get_queryset(self):
-        messages = Message.objects.filter(
-            unit__pk=self.kwargs["pk"],
-            unit__memberships__user=self.request.user,
-        ).order_by("created_at")
-
-        query = self.request.GET.get("query")
-
-        if query:
-            messages = messages.filter(
-                Q(text__icontains=query) | Q(title__icontains=query) | Q(sender__username__icontains=query)
-            )
-
-        return messages
+        return conversations
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["unit"] = get_object_or_404(Unit, pk=self.kwargs["pk"], memberships__user=self.request.user)
-        context['search_form'] = SearchMessageForm(self.request.GET or None)
-        context['read_message_ids'] = set(
-            ConversationRead.objects.filter(
-                user=self.request.user,
-            ).values_list('message_id', flat=True))
-        return context
-
-
-class ChatThreadView(LoginRequiredMixin, ListView):
-    model = Message
-    context_object_name = "comms"
-    template_name = "messages/task-thread.html"
-
-    def get_queryset(self):
-        messages = Message.objects.filter(
-            task__pk=self.kwargs["pk"],
-        ).order_by("created_at")
-
-        query = self.request.GET.get("query")
-
-        if query:
-            messages = messages.filter(
-                Q(text__icontains=query) | Q(title__icontains=query) | Q(sender__username__icontains=query) |
-                Q(related_task__name__icontains=query)
-            )
-
-        return messages
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['search_form'] = SearchMessageForm(self.request.GET or None)
-        context["task"] = get_object_or_404(Task, pk=self.kwargs['pk'])
+        context["search_form"] = SearchMessageForm(self.request.GET or None)
         return context
 

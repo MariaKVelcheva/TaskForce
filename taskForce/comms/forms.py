@@ -22,6 +22,7 @@ class MessageCreateForm(MessageBaseForm):
 
 class SearchMessageForm(forms.Form):
     query = forms.CharField(
-        widget=forms.TextInput(attrs={'placeholder': _("Search in comms...")}),
+        required=False,
+        label="",
+        widget=forms.TextInput(attrs={"placeholder": _("Search comms...")}),
     )
-
