@@ -1,6 +1,6 @@
 {% extends 'common/base.html' %}
 
-{% block title %}Inbox — Task: Force!{% endblock %}
+{% block title %}Comms — Task: Force!{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -20,13 +20,23 @@
         color: var(--khaki);
     }
 
+    .inbox-count {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.72rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-top: 0.3rem;
+    }
+
     .search-bar {
         display: flex;
+        align-items: center;
         gap: 0.5rem;
         margin-bottom: 1.5rem;
     }
 
-    .search-bar input {
+    .search-bar input[type="text"] {
         flex: 1;
         background: var(--olive-dark);
         border: 1px solid var(--khaki-dark);
@@ -39,7 +49,7 @@
         transition: border-color 0.15s;
     }
 
-    .search-bar input:focus { border-color: var(--khaki); }
+    .search-bar input[type="text"]:focus { border-color: var(--khaki); }
 
     .search-bar button {
         font-family: 'Share Tech Mono', monospace;
@@ -60,34 +70,53 @@
         color: var(--khaki);
     }
 
-    .message-list {
+    .filter-toggle {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.68rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+        white-space: nowrap;
+        cursor: pointer;
+    }
+
+    .filter-toggle input {
+        width: 15px;
+        height: 15px;
+        accent-color: var(--khaki);
+        cursor: pointer;
+    }
+
+    .conversation-list {
         display: flex;
         flex-direction: column;
         gap: 0.4rem;
     }
 
-    .message-row {
+    .conversation-row {
         display: grid;
-        grid-template-columns: auto 1fr auto auto;
+        grid-template-columns: auto 1fr auto;
         align-items: center;
         gap: 1rem;
         background: var(--olive-mid);
         border: 1px solid var(--khaki-dark);
         border-radius: var(--radius-sm);
-        padding: 0.8rem 1.1rem;
+        padding: 0.85rem 1.1rem;
         text-decoration: none;
         transition: border-color 0.15s, background 0.15s;
     }
 
-    .message-row:hover {
+    .conversation-row:hover {
         border-color: var(--khaki);
         background: var(--olive);
     }
 
-    .message-row.unread {
-        border-left: 3px solid var(--khaki);
-    }
-.status-dot {
+    .conversation-row.unread { border-left: 3px solid var(--khaki); }
+
+    .status-dot {
         width: 7px;
         height: 7px;
         border-radius: 50%;
@@ -95,54 +124,62 @@
         flex-shrink: 0;
     }
 
-    .message-row.unread .status-dot {
+    .conversation-row.unread .status-dot {
         background: var(--khaki);
         border-color: var(--khaki);
     }
-    .message-sender {
-        font-family: 'Share Tech Mono', monospace;
-        font-size: 0.75rem;
+
+    .conversation-name {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 1.1rem;
+        font-weight: 700;
         letter-spacing: 0.06em;
-        color: var(--khaki-muted);
         text-transform: uppercase;
-        white-space: nowrap;
+        color: var(--cream-dark);
     }
 
-    .message-row.unread .message-sender {
-        color: var(--khaki);
-        font-weight: bold;
-    }
+    .conversation-row.unread .conversation-name { color: var(--khaki); }
 
-    .message-preview {
-        font-size: 0.88rem;
+    .conversation-sub {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.65rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
         color: var(--muted);
+        margin-top: 0.2rem;
+    }
+
+    .conversation-preview {
+        font-size: 0.82rem;
+        color: var(--cream-dark);
+        margin-top: 0.35rem;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
     }
 
-    .message-row.unread .message-preview {
-        color: var(--cream);
-        font-weight: 500;
-    }
-
-    .message-context {
-        font-family: 'Share Tech Mono', monospace;
-        font-size: 0.65rem;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        padding: 0.15rem 0.5rem;
-        border-radius: var(--radius-sm);
-        border: 1px solid var(--khaki-dark);
-        color: var(--khaki-muted);
-        white-space: nowrap;
-    }
-
-    .message-date {
+    .conversation-date {
         font-family: 'Share Tech Mono', monospace;
         font-size: 0.68rem;
         color: var(--muted);
         white-space: nowrap;
+    }
+
+    .task-badge {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.6rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 0.1rem 0.4rem;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--khaki-dark);
+        color: var(--khaki-muted);
+        margin-left: 0.4rem;
+    }
+
+    .task-badge.done {
+        border-color: var(--olive);
+        color: var(--muted);
     }
 
     .empty-state {
@@ -175,61 +212,66 @@
 
 <div class="inbox-header">
     <div>
-        <h1 class="inbox-title">Inbox</h1>
-        <p style="font-family: 'Share Tech Mono', monospace; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-top: 0.3rem;">
-            {{ inbox_messages|length }} comm{{ inbox_messages|length|pluralize }}
+        <h1 class="inbox-title">Comms</h1>
+        <p class="inbox-count">
+            {{ conversations|length }} channel{{ conversations|length|pluralize }}
         </p>
     </div>
-    <a href="{% url 'create-message' %}" class="btn btn-primary">+ New comm</a>
+    <a href="{% url 'all-units' %}" class="btn btn-primary">Your units</a>
 </div>
 
 <form method="get" class="search-bar">
     {{ search_form.query }}
+    <label class="filter-toggle">
+        <input type="checkbox" name="active" value="1" {% if request.GET.active %}checked{% endif %}>
+        Active only
+    </label>
     <button type="submit">Search</button>
-    {% if request.GET.query %}
+    {% if request.GET.query or request.GET.active %}
     <a href="{% url 'inbox' %}" class="btn btn-ghost" style="font-size: 0.72rem; padding: 0.45rem 0.85rem;">Clear</a>
     {% endif %}
 </form>
-{% if inbox_messages %}
-<div class="message-list">
-    {% for message in inbox_messages %}
-    <a href="{% url 'details-message' message.pk %}"
-       class="message-row {% if not message.is_read and message.sender != request.user %}unread{% endif %}">
+
+{% if conversations %}
+<div class="conversation-list">
+    {% for conversation in conversations %}
+    <a href="{% url 'conversation' conversation.pk %}"
+       class="conversation-row {% if conversation.has_unread %}unread{% endif %}">
 
         <div class="status-dot"></div>
 
         <div>
-            <div class="message-sender">
-                {% if message.sender == request.user %}You{% else %}{{ message.sender.username }}{% endif %}
+            <div class="conversation-name">
+                {{ conversation.title }}
+                {% if conversation.task %}
+                <span class="task-badge {% if conversation.task.is_done %}done{% endif %}">
+                    {% if conversation.task.is_done %}Complete{% else %}Mission{% endif %}
+                </span>
+                {% endif %}
             </div>
-            <div class="message-preview">
-                {% if message.title %}{{ message.title }} — {% endif %}{{ message.text|truncatechars:60 }}
-            </div>
-        </div>
-
-        <div>
-            {% if message.unit %}
-            <span class="message-context">{{ message.unit.name }}</span>
-            {% elif message.related_task %}
-            <span class="message-context">{{ message.related_task.name }}</span>
+            <div class="conversation-sub">{{ conversation.unit.name }}</div>
+            {% if conversation.match_preview %}
+            <div class="conversation-preview">{{ conversation.match_preview|truncatechars:80 }}</div>
             {% endif %}
         </div>
 
-        <div class="message-date">{{ message.created_at|date:"d M, H:i" }}</div>
+        <div class="conversation-date">
+            {% if conversation.last_message_at %}{{ conversation.last_message_at|date:"d M, H:i" }}{% else %}—{% endif %}
+        </div>
     </a>
     {% endfor %}
 </div>
 
 {% else %}
 <div class="empty-state">
-    {% if request.GET.query %}
-    <div class="empty-state-title">No comms found</div>
-    <p class="empty-state-sub">No results for "{{ request.GET.query }}"</p>
-    <a href="{% url 'inbox' %}" class="btn btn-ghost">Clear search</a>
+    {% if request.GET.query or request.GET.active %}
+    <div class="empty-state-title">No channels found</div>
+    <p class="empty-state-sub">Nothing matches your filters.</p>
+    <a href="{% url 'inbox' %}" class="btn btn-ghost">Clear filters</a>
     {% else %}
-    <div class="empty-state-title">Inbox clear</div>
-    <p class="empty-state-sub">No comms received or sent yet.</p>
-    <a href="{% url 'create-message' %}" class="btn btn-ghost">Send first comm</a>
+    <div class="empty-state-title">No channels</div>
+    <p class="empty-state-sub">Join or form a unit to start talking.</p>
+    <a href="{% url 'all-units' %}" class="btn btn-ghost">Your units</a>
     {% endif %}
 </div>
 {% endif %}

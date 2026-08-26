@@ -9,11 +9,11 @@ def unread_count(request):
     read_ids = set(
         ConversationRead.objects.filter(
             user=request.user
-        ).values_list('message_id', flat=True)
+        ).values_list('conversation_id', flat=True)
     )
 
     count = Message.objects.filter(
-        Q(recipients=request.user)
+        Q(sender=request.user)
     ).exclude(
         pk__in=read_ids
     ).distinct().count()

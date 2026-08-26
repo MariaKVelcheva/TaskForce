@@ -5,8 +5,6 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q, OuterRef, Exists, F, Subquery, Max, Value
 from django.db.models.functions import Coalesce
 from django.shortcuts import get_object_or_404, redirect
-from django.urls import reverse_lazy
-from django.utils import timezone
 from django.views import View
 from django.views.generic import ListView
 from django.utils.translation import gettext_lazy as _

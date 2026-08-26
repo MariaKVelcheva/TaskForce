@@ -72,16 +72,15 @@ class DebriefHomeView(LoginRequiredMixin, TemplateView):
 
     def get_message_context(self):
         user = self.request.user
-        read = ConversationRead.objects.filter(message=OuterRef("pk"), user=user)
-
-        visible = (
-            Message.objects.filter(sender=user)
-            .annotate(is_read=Exists(read))
-            .distinct().select_related("sender")
-        )
 
         return {
-            "recent_messages": visible.order_by("-created_at")[:self.RECENT_MESSAGES],
+            "recent_messages": (
+                Message.objects.filter(conversation__unit__memberships__user=user)
+                .select_related("sender", "conversation", "conversation__unit", "conversation__task")
+                .order_by("-created_at")[:self.RECENT_MESSAGES]
+            )
         }
+
+
 
 
