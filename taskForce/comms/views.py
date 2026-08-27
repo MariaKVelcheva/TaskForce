@@ -17,10 +17,7 @@ from taskForce.units.models import Unit
 class OpenUnitChatView(LoginRequiredMixin, View):
     def get(self, request, pk):
         unit = get_object_or_404(Unit, pk=pk, memberships__user=request.user)
-        conversation, created = Conversation.objects.get_or_create(
-            unit=unit,
-            task=None,
-        )
+        conversation = Conversation.objects.for_unit(unit)
         return redirect("conversation", pk=conversation.pk)
 
 
@@ -33,10 +30,7 @@ class OpenTaskChatView(LoginRequiredMixin, View):
             unit__memberships__user=request.user,
         )
 
-        conversation, created = Conversation.objects.get_or_create(
-            unit=task.unit,
-            task=task,
-        )
+        conversation, = Conversation.objects.for_task(task)
 
         return redirect("conversation", pk=conversation.pk)
 
@@ -47,10 +41,8 @@ class ConversationView(LoginRequiredMixin, ListView):
 
     def get_conversation(self):
         return get_object_or_404(
-            Conversation,
-            pk=self.kwargs['pk'],
-            unit__memberships__user=self.request.user,
-        )
+            Conversation.objects.visible_to(self.request.user),
+            pk=self.kwargs["pk"])
 
     def get_queryset(self):
         return self.get_conversation().messages.select_related("sender")

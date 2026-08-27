@@ -190,6 +190,7 @@
         <p style="font-family: 'Share Tech Mono', monospace; font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-top: 0.4rem;">
             {{ object.users.count }} operative{{ object.users.count|pluralize }}
         </p>
+        <a href="{% url 'unit-chat' unit.pk %}" class="btn btn-ghost">Discussion</a>
     </div>
 </div>
 

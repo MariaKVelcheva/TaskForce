@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
 
+from taskForce.comms.managers import ConversationManager
 
 TaskUser = get_user_model()
 
@@ -24,6 +25,8 @@ class Conversation(models.Model):
     )
 
     created_at = models.DateTimeField(auto_now_add=True,)
+
+    objects = ConversationManager()
 
     class Meta:
         constraints = [

@@ -128,7 +128,9 @@
 {% endblock %}
 
 {% block content %}
-
+{% if task.unit %}
+<a href="{% url 'task-chat' task.pk %}" class="btn btn-ghost">Discussion</a>
+{% endif %}
 <div class="detail-header">
     <div>
         <h1 class="detail-title {% if object.is_done %}done{% endif %}">{{ object.name }}</h1>
@@ -154,6 +156,7 @@
             <span class="status-badge pending">Pending</span>
             {% endif %}
         </div>
+
     </div>
 
     <div class="detail-field">
