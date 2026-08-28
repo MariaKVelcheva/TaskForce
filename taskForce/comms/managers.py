@@ -1,16 +1,15 @@
 from django.db import models
 
-from taskForce.comms.models import Conversation
-
 
 class ConversationManager(models.Manager):
     def visible_to(self, user):
         return self.filter(unit__memberships__user=user)
 
     def for_unit(self, unit):
-        conversation, _ = Conversation.objects.get_or_create(unit=unit)
+        conversation, _ = self.get_or_create(unit=unit)
         return conversation
 
     def for_task(self, task):
-        conversation, _ = Conversation.objects.get_or_create(task=task)
+        conversation, _ = self.get_or_create(task=task)
         return conversation
+
