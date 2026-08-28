@@ -1,0 +1,209 @@
+{% extends 'common/base.html' %}
+
+{% block title %}{{ conversation.title }} — Task: Force!{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chat-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1.25rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--olive);
+    }
+
+    .chat-title {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 1.6rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--khaki);
+    }
+
+    .chat-sub {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.68rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-top: 0.3rem;
+    }
+
+    .chat-sub a {
+        color: var(--khaki-muted);
+        text-decoration: none;
+    }
+
+    .chat-sub a:hover { color: var(--khaki); }
+
+    .status-pill {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.62rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.15rem 0.5rem;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--khaki-dark);
+        color: var(--khaki);
+        white-space: nowrap;
+    }
+
+    .status-pill.done {
+        border-color: var(--olive);
+        color: var(--muted);
+    }
+
+    .message-stream {
+        display: flex;
+        flex-direction: column;
+        gap: 0.85rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .msg {
+        display: flex;
+        flex-direction: column;
+        max-width: 78%;
+        padding: 0.6rem 0.9rem;
+        border-radius: var(--radius);
+        border: 1px solid var(--khaki-dark);
+        background: var(--olive-mid);
+    }
+
+    .msg.mine {
+        align-self: flex-end;
+        background: var(--olive);
+        border-color: var(--khaki-muted);
+    }
+
+    .msg-meta {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.62rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 0.3rem;
+        display: flex;
+        gap: 0.6rem;
+    }
+
+    .msg-sender { color: var(--khaki-muted); }
+
+    .msg.mine .msg-sender { color: var(--khaki); }
+
+    .msg-text {
+        font-size: 0.92rem;
+        line-height: 1.55;
+        color: var(--cream);
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+
+    .send-box {
+        position: sticky;
+        bottom: 0;
+        background: var(--olive-dark);
+        padding-top: 1rem;
+        border-top: 1px solid var(--olive);
+    }
+
+    .send-box textarea {
+        width: 100%;
+        background: var(--olive-mid);
+        border: 1px solid var(--khaki-dark);
+        border-radius: var(--radius-sm);
+        padding: 0.6rem 0.85rem;
+        color: var(--cream);
+        font-family: 'Barlow', sans-serif;
+        font-size: 0.92rem;
+        resize: vertical;
+        outline: none;
+        transition: border-color 0.15s;
+    }
+
+    .send-box textarea:focus { border-color: var(--khaki); }
+
+    .send-row {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 0.6rem;
+    }
+
+    .empty-stream {
+        padding: 3rem 1rem;
+        text-align: center;
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.72rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div style="max-width: 700px; margin: 0 auto;">
+
+    <div class="chat-header">
+        <div>
+            <h1 class="chat-title">{{ conversation.title }}</h1>
+            <p class="chat-sub">
+                {% if conversation.task %}
+                Mission in <a href="{% url 'details-unit' conversation.unit.pk %}">{{ conversation.unit.name }}</a>
+                &middot; <a href="{% url 'details-task' conversation.task.pk %}">View mission</a>
+                {% else %}
+                <a href="{% url 'details-unit' conversation.unit.pk %}">{{ conversation.unit.name }}</a>
+                &middot; General channel
+                {% endif %}
+            </p>
+        </div>
+
+        {% if conversation.task %}
+        <span class="status-pill {% if conversation.task.is_done %}done{% endif %}">
+            {% if conversation.task.is_done %}Complete{% else %}Active{% endif %}
+        </span>
+        {% endif %}
+    </div>
+
+    {% if messages_list %}
+    <div class="message-stream">
+        {% for message in messages_list %}
+        <div class="msg {% if message.sender == request.user %}mine{% endif %}">
+            <div class="msg-meta">
+                <span class="msg-sender">
+                    {% if message.sender == request.user %}You{% elif message.sender %}{{ message.sender.username }}{% else %}Unknown{% endif %}
+                </span>
+                <span>{{ message.created_at|date:"d M, H:i" }}</span>
+            </div>
+            <div class="msg-text">{{ message.text }}</div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-stream">No comms in this channel yet</div>
+    {% endif %}
+
+    <div class="send-box">
+        <form method="post">
+            {% csrf_token %}
+            {{ form.text }}
+            {% if form.text.errors %}
+            <ul class="errorlist">{% for e in form.text.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+            {% endif %}
+            <div class="send-row">
+                <button type="submit" class="btn btn-primary" style="font-size: 0.85rem;">Transmit</button>
+            </div>
+        </form>
+    </div>
+
+    <p style="margin-top: 1.5rem;">
+        <a href="{% url 'inbox' %}" class="btn btn-ghost" style="font-size: 0.8rem;">← All channels</a>
+    </p>
+
+</div>
+
+{% endblock %}

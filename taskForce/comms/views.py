@@ -41,7 +41,7 @@ class ConversationView(LoginRequiredMixin, ListView):
 
     def get_conversation(self):
         return get_object_or_404(
-            Conversation.objects.visible_to(self.request.user),
+            Conversation.objects.visible_to(self.request.user).select_related("unit", "task"),
             pk=self.kwargs["pk"])
 
     def get_queryset(self):
