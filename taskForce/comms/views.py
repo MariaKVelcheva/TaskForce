@@ -30,7 +30,7 @@ class OpenTaskChatView(LoginRequiredMixin, View):
             unit__memberships__user=request.user,
         )
 
-        conversation, = Conversation.objects.for_task(task)
+        conversation = Conversation.objects.for_task(task)
 
         return redirect("conversation", pk=conversation.pk)
 

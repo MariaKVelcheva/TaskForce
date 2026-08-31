@@ -4,6 +4,48 @@
 
 {% block extra_css %}
 <style>
+    .chat-icon {
+        font-size: 0.95rem;
+        text-decoration: none;
+        opacity: 0.55;
+        flex-shrink: 0;
+        transition: opacity 0.15s;
+    }
+
+    .chat-icon:hover { opacity: 1; }
+
+    .task-preview-row {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.6rem 0.9rem;
+        background: var(--olive-mid);
+        border: 1px solid var(--khaki-dark);
+        border-radius: var(--radius-sm);
+        transition: border-color 0.15s;
+    }
+
+    .task-preview-row:hover { border-color: var(--khaki); }
+
+    .task-preview-link {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        text-decoration: none;
+        min-width: 0;
+    }
+
+    .empty-note {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.7rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+        padding: 1rem 0;
+        margin-bottom: 1.5rem;
+    }
+
     .detail-header {
         display: flex;
         align-items: flex-start;
@@ -135,22 +177,6 @@
         margin-bottom: 1.5rem;
     }
 
-    .task-preview-row {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        padding: 0.6rem 0.9rem;
-        background: var(--olive-mid);
-        border: 1px solid var(--khaki-dark);
-        border-radius: var(--radius-sm);
-        text-decoration: none;
-        transition: border-color 0.15s;
-    }
-
-    .task-preview-row:hover {
-        border-color: var(--khaki);
-    }
-
     .task-dot {
         width: 8px;
         height: 8px;
@@ -180,32 +206,26 @@
         border-top: 1px solid var(--olive-mid);
     }
 </style>
-{% endblock %}
-
-{% block content %}
+{% endblock %}{% block content %}
 
 <div class="detail-header">
     <div>
-        <h1 class="detail-title">{{ object.name }}</h1>
+        <h1 class="detail-title">{{ unit.name }}</h1>
         <p style="font-family: 'Share Tech Mono', monospace; font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-top: 0.4rem;">
-            {{ object.users.count }} operative{{ object.users.count|pluralize }}
+            {{ member_count }} operative{{ member_count|pluralize }}
         </p>
-        <a href="{% url 'unit-chat' unit.pk %}" class="btn btn-ghost">Discussion</a>
     </div>
-</div>
-
-<div class="section-label">// Clearance code</div>
-<div class="clearance-box">
-    <div>
-        <div class="clearance-label">Share to recruit operatives</div>
-        <div class="clearance-code" id="invite-code">{{ object.invite_code }}</div>
+    <div class="detail-actions">
+        <a href="{% url 'unit-chat' unit.pk %}" class="btn btn-primary" style="font-size: 0.82rem;">Discussion</a>
+        {% if is_commander %}
+        <a href="{% url 'update-unit' unit.pk %}" class="btn btn-ghost" style="font-size: 0.82rem;">Rename</a>
+        {% endif %}
     </div>
-    <button class="copy-btn" onclick="copyCode()">Copy</button>
 </div>
 
 <div class="section-label">// Operatives</div>
 <div class="member-list">
-    {% for membership in object.memberships.all %}
+    {% for membership in memberships %}
     <div class="member-row">
         <span class="member-name">{{ membership.user.username }}</span>
         <span class="member-role {{ membership.role }}">{{ membership.role }}</span>
@@ -213,24 +233,52 @@
     {% endfor %}
 </div>
 
-{% if unit_tasks %}
 <div class="section-label">// Active missions</div>
+{% if active_tasks %}
 <div class="task-preview-list">
-    {% for task in unit_tasks %}
-    <a href="{% url 'details-task' task.pk %}" class="task-preview-row">
-        <div class="task-dot {% if task.is_done %}done{% endif %}"></div>
-        <span class="task-preview-name {% if task.is_done %}done{% endif %}">{{ task.name }}</span>
-        <span style="font-family: 'Share Tech Mono', monospace; font-size: 0.7rem; color: var(--muted);">{{ task.appointed_points }} pts</span>
-    </a>
+    {% for task in active_tasks %}
+    <div class="task-preview-row">
+        <a href="{% url 'details-task' task.pk %}" class="task-preview-link">
+            <div class="task-dot"></div>
+            <span class="task-preview-name">{{ task.name }}</span>
+            <span style="font-family: 'Share Tech Mono', monospace; font-size: 0.7rem; color: var(--muted);">{{ task.appointed_points }} pts</span>
+        </a>
+        <a href="{% url 'task-chat' task.pk %}" class="chat-icon" title="Discussion">&#128172;</a>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-note">No active missions</div>
+{% endif %}
+
+{% if finished_tasks %}
+<div class="section-label">// Completed</div>
+<div class="task-preview-list">
+    {% for task in finished_tasks %}
+    <div class="task-preview-row">
+        <a href="{% url 'details-task' task.pk %}" class="task-preview-link">
+            <div class="task-dot done"></div>
+            <span class="task-preview-name done">{{ task.name }}</span>
+        </a>
+        <a href="{% url 'task-chat' task.pk %}" class="chat-icon" title="Discussion">&#128172;</a>
+    </div>
     {% endfor %}
 </div>
 {% endif %}
 
 {% if is_commander %}
+<div class="section-label">// Clearance code</div>
+<div class="clearance-box">
+    <div style="min-width: 0;">
+        <div class="clearance-label">Share to recruit operatives</div>
+        <div class="clearance-code" id="invite-code">{{ invite_url }}</div>
+    </div>
+    <button class="copy-btn" onclick="copyCode()">Copy</button>
+</div>
+
 <div class="danger-zone">
     <div style="font-family: 'Share Tech Mono', monospace; font-size: 0.65rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 1rem;">Danger zone</div>
-    <a href="{% url 'update-unit' object.pk %}" class="btn" style="font-size: 0.82rem; color: var(--khaki); border: 2px solid var(--khaki); margin-right: 0.5rem;">Rename unit</a>
-    <a href="{% url 'delete-unit' object.pk %}" class="btn btn-danger" style="font-size: 0.82rem;">Dissolve unit</a>
+    <a href="{% url 'delete-unit' unit.pk %}" class="btn btn-danger" style="font-size: 0.82rem;">Dissolve unit</a>
 </div>
 {% endif %}
 

@@ -34,13 +34,11 @@
         grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
         gap: 1rem;
     }
-
     .unit-card {
         background: var(--olive-mid);
         border: 1px solid var(--khaki-dark);
         border-radius: var(--radius);
         padding: 1.25rem 1.4rem;
-        text-decoration: none;
         display: flex;
         flex-direction: column;
         gap: 0.75rem;
@@ -52,6 +50,13 @@
         background: var(--olive);
     }
 
+    .unit-card-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+    }
+
     .unit-card-name {
         font-family: 'Barlow Condensed', sans-serif;
         font-size: 1.15rem;
@@ -59,8 +64,30 @@
         letter-spacing: 0.08em;
         text-transform: uppercase;
         color: var(--khaki);
+        text-decoration: none;
+        flex: 1;
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
+    .unit-chat-link {
+        text-decoration: none;
+        font-size: 1rem;
+        opacity: 0.5;
+        flex-shrink: 0;
+        transition: opacity 0.15s;
+    }
+
+    .unit-chat-link:hover { opacity: 1; }
+
+    .unit-card-meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        text-decoration: none;
+    }
     .unit-card-meta {
         display: flex;
         align-items: center;
@@ -137,23 +164,21 @@
 </div>
 
 {% if units %}
-<div class="unit-grid">
-    {% for unit in units %}
-    <a href="{% url 'details-unit' unit.pk %}" class="unit-card">
-        <div class="unit-card-name">{{ unit.name }}</div>
-        <div class="unit-card-meta">
-            <span class="unit-card-members">
-                {{ unit.users.count }} operative{{ unit.users.count|pluralize }}
-            </span>
-            {% with membership=unit.memberships.all %}
-            {% for m in membership %}
-                {% if m.user == request.user %}
-                <span class="unit-role-badge {{ m.role }}">{{ m.role }}</span>
-                {% endif %}
-            {% endfor %}
-            {% endwith %}
+<div class="unit-grid">    {% for unit in units %}
+    <div class="unit-card">
+        <div class="unit-card-head">
+            <a href="{% url 'details-unit' unit.pk %}" class="unit-card-name">{{ unit.name }}</a>
+            <a href="{% url 'unit-chat' unit.pk %}" class="unit-chat-link" title="Unit discussion">&#128172;</a>
         </div>
-    </a>
+        <a href="{% url 'details-unit' unit.pk %}" class="unit-card-meta">
+            <span class="unit-card-members">
+                {{ unit.user_count }} operative{{ unit.user_count|pluralize }}
+            </span>
+            {% if unit.my_role %}
+            <span class="unit-role-badge {{ unit.my_role }}">{{ unit.my_role }}</span>
+            {% endif %}
+        </a>
+    </div>
     {% endfor %}
 </div>
 

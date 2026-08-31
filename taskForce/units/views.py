@@ -68,20 +68,29 @@ class DetailUnitView(LoginRequiredMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        unit_tasks = self.object.tasks.all()
+        unit = self.object
+        tasks = unit.tasks.all()
+        memberships = unit.memberships.select_related("user").order_by("role", "user__username")
 
         context["is_commander"] = self.object.memberships.filter(
             user=self.request.user,
-            role="commander").exists()
+            role="commander"
+        ).exists()
 
         if context["is_commander"]:
             context["invite_url"] = self.object.get_invite_url(self.request)
 
-        context["unit_tasks"] = unit_tasks
-        context["active_tasks"] = unit_tasks.filter(is_done=False)
-        context["finished_tasks"] = unit_tasks.filter(is_done=False)
+        context["tasks"] = tasks
+        context["unit"] = unit
+        context["memberships"] = memberships
+        context["memberships_count"] = memberships.count()
+        context["active_tasks"] = tasks.filter(is_done=False)
+        context["finished_tasks"] = tasks.filter(is_done=False)
 
         return context
+
+    def get_queryset(self):
+        return Unit.objects.filter(memberships__user=self.request.user)
 
 
 class CatalogueUnitView(LoginRequiredMixin, ListView):

@@ -1,7 +1,6 @@
 {% extends 'common/base.html' %}
 
 {% block title %}Missions — Task: Force!{% endblock %}
-
 {% block extra_css %}
 <style>
     .catalogue-header {
@@ -38,12 +37,11 @@
     .task-row {
         display: flex;
         align-items: center;
-        gap: 1rem;
+        gap: 0.75rem;
         background: var(--olive-mid);
         border: 1px solid var(--khaki-dark);
         border-radius: var(--radius-sm);
         padding: 0.85rem 1.1rem;
-        text-decoration: none;
         transition: border-color 0.15s, background 0.15s;
     }
 
@@ -56,6 +54,26 @@
         opacity: 0.5;
         border-style: dashed;
     }
+
+    .task-row-link {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        text-decoration: none;
+    }
+
+    .task-chat-link {
+        text-decoration: none;
+        font-size: 0.95rem;
+        opacity: 0.5;
+        flex-shrink: 0;
+        padding: 0 0.2rem;
+        transition: opacity 0.15s;
+    }
+
+    .task-chat-link:hover { opacity: 1; }
 
     .task-status {
         width: 10px;
@@ -72,8 +90,12 @@
 
     .task-name {
         flex: 1;
+        min-width: 0;
         font-size: 0.95rem;
         color: var(--cream);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     .task-row.done .task-name {
@@ -85,6 +107,7 @@
         display: flex;
         align-items: center;
         gap: 0.6rem;
+        flex-shrink: 0;
     }
 
     .task-tag {
@@ -96,6 +119,7 @@
         border-radius: var(--radius-sm);
         border: 1px solid var(--khaki-dark);
         color: var(--khaki-muted);
+        white-space: nowrap;
     }
 
     .task-points {
@@ -104,6 +128,7 @@
         color: var(--khaki);
         min-width: 3rem;
         text-align: right;
+        flex-shrink: 0;
     }
 
     .empty-state {
@@ -131,7 +156,6 @@
     }
 </style>
 {% endblock %}
-
 {% block content %}
 
 <div class="catalogue-header">
@@ -140,30 +164,32 @@
         <p class="catalogue-count">{{ tasks.count }} mission{{ tasks.count|pluralize }} on record</p>
     </div>
     <a href="{% url 'add-task' %}" class="btn btn-primary">+ New mission</a>
-</div>
-
-{% if tasks %}
+</div>{% if tasks %}
 <div class="task-list">
     {% for task in tasks %}
-    <a href="{% url 'details-task' task.pk %}" class="task-row {% if task.is_done %}done{% endif %}">
-        <div class="task-status {% if task.is_done %}done{% endif %}"></div>
-        <span class="task-name">{{ task.name }}</span>
-        <div class="task-meta">
-            {% if task.zone %}
-            <span class="task-tag">{{ task.zone.name }}</span>
-            {% endif %}
-            {% if task.type %}
-            <span class="task-tag">{{ task.get_type_display }}</span>
-            {% endif %}
-            {% if task.unit %}
-            <span class="task-tag">{{ task.unit.name }}</span>
-            {% endif %}
-        </div>
-        <span class="task-points">{{ task.appointed_points }} pt{% if task.appointed_points != 1 %}s{% endif %}</span>
-    </a>
+    <div class="task-row {% if task.is_done %}done{% endif %}">
+        <a href="{% url 'details-task' task.pk %}" class="task-row-link">
+            <div class="task-status {% if task.is_done %}done{% endif %}"></div>
+            <span class="task-name">{{ task.name }}</span>
+            <div class="task-meta">
+                {% if task.zone %}
+                <span class="task-tag">{{ task.zone.name }}</span>
+                {% endif %}
+                {% if task.type %}
+                <span class="task-tag">{{ task.get_type_display }}</span>
+                {% endif %}
+                {% if task.unit %}
+                <span class="task-tag">{{ task.unit.name }}</span>
+                {% endif %}
+            </div>
+            <span class="task-points">{{ task.appointed_points }} pt{{ task.appointed_points|pluralize }}</span>
+        </a>
+        {% if task.unit %}
+        <a href="{% url 'task-chat' task.pk %}" class="task-chat-link" title="Unit discussion">&#128172;</a>
+        {% endif %}
+    </div>
     {% endfor %}
 </div>
-
 {% else %}
 <div class="empty-state">
     <div class="empty-state-title">No missions on record</div>
