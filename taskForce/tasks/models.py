@@ -96,16 +96,22 @@ class Task(models.Model):
     objects = TaskManager()
 
     def complete(self, user):
-        if self.is_done:
-            return
+        claimed = (
+            Task.objects
+            .filter(pk=self.pk, is_done=False)
+            .update(
+                is_done=True,
+                assigned_to=user,
+                accomplished_at=timezone.now(),
+            )
+        )
+        if not claimed:
+            return False
 
-        self.assigned_to = user
-        self.is_done = True
-        self.accomplished_at = timezone.now()
-        self.save()
-
-        user.avatar.points += self.appointed_points
-        user.avatar.save()
+        user.avatar.__class__.objects.filter(pk=user.avatar.pk).update(
+            points=models.F("points") + self.appointed_points
+        )
+        return True
 
     class Meta:
         verbose_name = _('task')
@@ -117,3 +123,4 @@ class Task(models.Model):
                 name='unique_active_task_per_user_unit_zone'
             )
         ]
+        ordering = ["is_done", "-created_at"]

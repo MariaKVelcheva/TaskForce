@@ -1,3 +1,4 @@
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import redirect, get_object_or_404
@@ -28,7 +29,7 @@ class DetailTaskView(LoginRequiredMixin, DetailView):
     context_object_name = "task"
 
     def get_queryset(self, *args, **kwargs):
-        return Task.objects.filter(user=self.request.user)
+        return Task.objects.visible_to(self.request.user)
 
 
 class UpdateTaskView(LoginRequiredMixin, UpdateView):
@@ -60,13 +61,16 @@ class CatalogueTaskView(LoginRequiredMixin, ListView):
     context_object_name = "tasks"
 
     def get_queryset(self, *args, **kwargs):
-        return Task.objects.filter(user=self.request.user)
+        return Task.objects.visible_to(self.request.user)
 
 
 @login_required
 @require_POST
 def complete_task(request, pk):
-    task = get_object_or_404(Task, pk=pk, user=request.user)
-    task.complete(request.user)
+    task = get_object_or_404(Task.objects.visible_to(request.user), pk=pk)
+
+    if not task.complete(request.user):
+        messages.info(request, "Mission already accomplished by another operative.")
+
     return redirect("details-task", pk=task.id)
 
