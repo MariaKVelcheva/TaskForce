@@ -1,8 +1,20 @@
 from django import forms
+from django.contrib.auth import get_user_model
+
 from taskForce.tasks.models import Task
+from taskForce.units.models import Unit
+
+
+User = get_user_model()
 
 
 class BaseTaskForm(forms.ModelForm):
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["unit"].queryset = Unit.objects.filter(users=user)
+        self.fields["assigned_to"].queryset = User.objects.filter(
+            units__users=user
+        ).distinct()
 
     class Meta:
         model = Task
