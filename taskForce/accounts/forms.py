@@ -48,14 +48,12 @@ class AvatarBaseForm(forms.ModelForm):
             'species': _('Species'),
             'hair_color': _('Hair color'),
             'glasses': _('Glasses'),
-            'attire': _('Attire'),
         }
 
         widgets = {
             'glasses': forms.CheckboxInput(),
             'species': forms.RadioSelect(),
             'hair_color': forms.RadioSelect(),
-            'attire': forms.CheckboxSelectMultiple(),
 
         }
 

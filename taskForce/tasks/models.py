@@ -9,15 +9,6 @@ User = get_user_model()
 
 
 class Task(models.Model):
-    TYPE_CHOICES = (
-        ("groceries", "Groceries"),
-        ("travel", "Travel"),
-        ("work", "Work"),
-        ("school", "School"),
-        ("chores", "Chores"),
-        ("sports", "Sports"),
-    )
-
     name = models.CharField(
         _("name"),
         max_length=100,
@@ -52,18 +43,8 @@ class Task(models.Model):
     type = models.CharField(
         max_length=20,
         verbose_name=_('type'),
-        choices=TYPE_CHOICES,
         null=True,
         blank=True,
-    )
-
-    zone = models.ForeignKey(
-        to='zones.Zone',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='tasks',
-        verbose_name=_('zone'),
     )
 
     unit = models.ForeignKey(
@@ -118,9 +99,9 @@ class Task(models.Model):
         verbose_name_plural = _('tasks')
         constraints = [
             models.UniqueConstraint(
-                fields=['user', 'unit', 'name', 'zone'],
+                fields=['user', 'unit', 'name', ],
                 condition=models.Q(is_done=False),
-                name='unique_active_task_per_user_unit_zone'
+                name='unique_active_task_per_user_unit'
             )
         ]
         ordering = ["is_done", "-created_at"]

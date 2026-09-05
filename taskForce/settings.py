@@ -13,11 +13,9 @@ ALLOWED_HOSTS = []
 MY_APPS = [
     "taskForce.accounts.apps.AccountsConfig",
     "taskForce.units.apps.UnitsConfig",
-    "taskForce.zones.apps.ZonesConfig",
     "taskForce.common.apps.CommonConfig",
     "taskForce.comms.apps.CommsConfig",
     "taskForce.tasks.apps.TasksConfig",
-    "taskForce.attires.apps.AttiresConfig",
 ]
 
 INSTALLED_APPS = [

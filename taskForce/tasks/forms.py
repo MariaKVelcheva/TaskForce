@@ -13,7 +13,6 @@ class BaseTaskForm(forms.ModelForm):
             "assigned_to": "Assign to operative",
             "is_done": "Already complete",
             "type": "Type",
-            "zone": "Sector",
             "unit": "Unit",
             "appointed_points": "Intel points",
             "due_date": "Due date",
@@ -25,9 +24,6 @@ class BaseTaskForm(forms.ModelForm):
                 "autofocus": True,
             }),
             "type": forms.Select(attrs={
-                "class": "select-field",
-            }),
-            "zone": forms.Select(attrs={
                 "class": "select-field",
             }),
             "unit": forms.Select(attrs={

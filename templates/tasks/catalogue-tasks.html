@@ -172,9 +172,6 @@
             <div class="task-status {% if task.is_done %}done{% endif %}"></div>
             <span class="task-name">{{ task.name }}</span>
             <div class="task-meta">
-                {% if task.zone %}
-                <span class="task-tag">{{ task.zone.name }}</span>
-                {% endif %}
                 {% if task.type %}
                 <span class="task-tag">{{ task.get_type_display }}</span>
                 {% endif %}

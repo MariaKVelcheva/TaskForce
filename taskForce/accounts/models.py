@@ -11,29 +11,6 @@ class Avatar(models.Model):
         verbose_name=_('User'),
     )
 
-    species = models.CharField(
-        null=True,
-        blank=True,
-        verbose_name=_('Species'),
-    )
-
-    hair_color = models.CharField(
-        null=True,
-        blank=True,
-        verbose_name=_('Hair Color'),
-    )
-
-    glasses = models.BooleanField(
-        default=False,
-        verbose_name=_('Glasses'),
-    )
-
-    attire = models.ManyToManyField(
-        to='attires.Attire',
-        related_name='avatars',
-        verbose_name=_('Attire'),
-    )
-
     points = models.PositiveSmallIntegerField(
         default=0,
         verbose_name=_('Points'),
