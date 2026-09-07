@@ -1,14 +1,22 @@
-from django.db import models
+from django.db import models, transaction
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
+from taskForce.accounts.models import Avatar
 from taskForce.tasks.manager import TaskManager
 
 User = get_user_model()
 
 
 class Task(models.Model):
+    TYPE_CHOICES = (
+        ("groceries", "Groceries"),
+        ("workout", "Workout"),
+        ("chores", "Chores"),
+        ("list", "List"),
+    )
+
     name = models.CharField(
         _("name"),
         max_length=100,
@@ -43,6 +51,7 @@ class Task(models.Model):
     type = models.CharField(
         max_length=20,
         verbose_name=_('type'),
+        choices=TYPE_CHOICES,
         null=True,
         blank=True,
     )
@@ -77,31 +86,25 @@ class Task(models.Model):
     objects = TaskManager()
 
     def complete(self, user):
-        claimed = (
-            Task.objects
-            .filter(pk=self.pk, is_done=False)
-            .update(
-                is_done=True,
-                assigned_to=user,
-                accomplished_at=timezone.now(),
+        with transaction.atomic():
+            claimed = (
+                Task.objects
+                .filter(pk=self.pk, is_done=False)
+                .update(
+                    is_done=True,
+                    assigned_to=user,
+                    accomplished_at=timezone.now(),
+                )
             )
-        )
-        if not claimed:
-            return False
+            if not claimed:
+                return False
 
-        user.avatar.__class__.objects.filter(pk=user.avatar.pk).update(
-            points=models.F("points") + self.appointed_points
-        )
+            Avatar.objects.filter(user=user).update(
+                points=models.F("points") + self.appointed_points
+            )
         return True
 
     class Meta:
         verbose_name = _('task')
         verbose_name_plural = _('tasks')
-        constraints = [
-            models.UniqueConstraint(
-                fields=['user', 'unit', 'name', ],
-                condition=models.Q(is_done=False),
-                name='unique_active_task_per_user_unit'
-            )
-        ]
         ordering = ["is_done", "-created_at"]

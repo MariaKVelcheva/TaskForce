@@ -13,12 +13,12 @@ class BaseTaskForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields["unit"].queryset = Unit.objects.filter(users=user)
         self.fields["assigned_to"].queryset = User.objects.filter(
-            units__users=user
+            units__in=Unit.objects.filter(users=user)
         ).distinct()
 
     class Meta:
         model = Task
-        exclude = ['user', 'created_at', 'accomplished_at']
+        fields = ["name", "type", "unit", "assigned_to", "appointed_points", "due_date", "is_done"]
 
         labels = {
             "name": "Mission name",
@@ -60,7 +60,7 @@ class BaseTaskForm(forms.ModelForm):
 
 class CreateTaskForm(BaseTaskForm):
     class Meta(BaseTaskForm.Meta):
-        exclude = BaseTaskForm.Meta.exclude + ["is_done", "assigned_to"]
+        fields = ["name", "type", "unit", "appointed_points", "due_date"]
 
 
 class QuickCreateTaskForm(forms.ModelForm):
@@ -70,5 +70,6 @@ class QuickCreateTaskForm(forms.ModelForm):
 
 
 class UpdateTaskForm(BaseTaskForm):
-    pass
+    class Meta(BaseTaskForm.Meta):
+        fields = ["name", "type", "appointed_points", "due_date"]
 

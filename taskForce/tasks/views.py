@@ -19,6 +19,11 @@ class CreateTaskView(LoginRequiredMixin, CreateView):
         form.instance.user = self.request.user
         return super().form_valid(form)
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
+        return kwargs
+
     def get_success_url(self):
         return reverse_lazy("details-task", kwargs={"pk": self.object.pk})
 
@@ -28,7 +33,7 @@ class DetailTaskView(LoginRequiredMixin, DetailView):
     template_name = "tasks/details-task.html"
     context_object_name = "task"
 
-    def get_queryset(self, *args, **kwargs):
+    def get_queryset(self):
         return Task.objects.visible_to(self.request.user)
 
 
@@ -37,8 +42,13 @@ class UpdateTaskView(LoginRequiredMixin, UpdateView):
     form_class = UpdateTaskForm
     template_name = "tasks/update-task.html"
 
-    def get_queryset(self, *args, **kwargs):
+    def get_queryset(self):
         return Task.objects.filter(user=self.request.user)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
+        return kwargs
 
     def get_success_url(self):
         return reverse_lazy("details-task", kwargs={"pk": self.object.pk})
@@ -48,7 +58,7 @@ class DeleteTaskView(LoginRequiredMixin, DeleteView):
     model = Task
     template_name = "tasks/delete-task.html"
 
-    def get_queryset(self, *args, **kwargs):
+    def get_queryset(self):
         return Task.objects.filter(user=self.request.user)
 
     def get_success_url(self):
@@ -60,7 +70,7 @@ class CatalogueTaskView(LoginRequiredMixin, ListView):
     template_name = "tasks/catalogue-tasks.html"
     context_object_name = "tasks"
 
-    def get_queryset(self, *args, **kwargs):
+    def get_queryset(self):
         return Task.objects.visible_to(self.request.user)
 
 
@@ -72,5 +82,5 @@ def complete_task(request, pk):
     if not task.complete(request.user):
         messages.info(request, "Mission already accomplished by another operative.")
 
-    return redirect("details-task", pk=task.id)
+    return redirect("details-task", pk=task.pk)
 
