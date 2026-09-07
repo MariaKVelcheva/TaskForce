@@ -69,6 +69,7 @@ class CatalogueTaskView(LoginRequiredMixin, ListView):
     model = Task
     template_name = "tasks/catalogue-tasks.html"
     context_object_name = "tasks"
+    paginate_by = 20
 
     def get_queryset(self):
         return Task.objects.visible_to(self.request.user)
@@ -84,3 +85,23 @@ def complete_task(request, pk):
 
     return redirect("details-task", pk=task.pk)
 
+
+@login_required
+@require_POST
+def uncomplete_task(request, pk):
+    task = get_object_or_404(Task.objects.visible_to(request.user), pk=pk)
+
+    if not task.complete(request.user):
+        messages.error(request, "You can't un-complete an incomplete task!")
+
+    task.is_done = False
+    task.assigned_to = None
+    task.accomplished_at = None
+    task.user.avatar.points -= task.appointed_points
+
+    if task.assigned_to:
+        task.assigned_to.avatar.points -= task.appointed_points
+
+    task.save()
+
+    return redirect("details-task", pk=task.pk)
