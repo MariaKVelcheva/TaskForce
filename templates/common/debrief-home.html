@@ -316,14 +316,14 @@
         <div class="stat-value">{{ open_tasks_count }}</div>
         <div class="stat-label">Active missions</div>
     </div>
-    <div class="stat-card">
+    <a href="{% url 'all-tasks' %}?show=all" class="stat-card" style="text-decoration: none; display: block;">
         <div class="stat-value">{{ done_tasks_count }}</div>
         <div class="stat-label">Completed</div>
-    </div>
-    <div class="stat-card">
+    </a>
+    <a href="{% url 'inbox' %}" class="stat-card" style="text-decoration: none; display: block;">
         <div class="stat-value" style="color: var(--rust-light);">{{ unread_count }}</div>
         <div class="stat-label">Unread comms</div>
-    </div>
+    </a>
     <div class="stat-card">
         <div class="stat-value">{{ points }}</div>
         <div class="stat-label">Intel points</div>
@@ -350,10 +350,11 @@
         <div class="empty-section">No active missions</div>
         {% endif %}
 
-        <div class="quick-add">
+                <div class="quick-add">
             <form method="post" style="display: flex; gap: 0.5rem; width: 100%;">
                 {% csrf_token %}
-                <input type="text" name="name" placeholder="Quick add mission...">
+                <input type="text" name="name" placeholder="Quick add mission..."
+                       maxlength="100" required>
                 <button type="submit">Add</button>
             </form>
         </div>
@@ -383,8 +384,13 @@
             <a href="{% url 'inbox' %}" class="section-link">Inbox →</a>
         </div>
         {% if recent_messages %}
-    {% for message in recent_messages %}
-    <a href="{% url 'conversation' message.conversation.pk %}" class="comm-item">
+        {% for message in recent_messages %}
+    <a href="{% url 'conversation' message.conversation.pk %}" class="comm-item{% if message.is_unread %} unread{% endif %}">
+        {% if message.is_unread %}
+        <div class="comm-unread-dot"></div>
+        {% else %}
+        <div class="comm-read-dot"></div>
+        {% endif %}
         <span class="comm-item-sender">
             {% if message.sender == request.user %}You{% else %}{{ message.sender.username }}{% endif %}
         </span>

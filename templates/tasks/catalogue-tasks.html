@@ -28,6 +28,46 @@
         margin-top: 0.3rem;
     }
 
+    .filter-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-bottom: 1.5rem;
+    }
+
+    .filter-group {
+        display: flex;
+        gap: 0.4rem;
+        flex-wrap: wrap;
+    }
+
+    .filter-chip {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.65rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 0.3rem 0.7rem;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--khaki-dark);
+        color: var(--khaki-muted);
+        text-decoration: none;
+        white-space: nowrap;
+        transition: border-color 0.15s, color 0.15s;
+    }
+
+    .filter-chip:hover {
+        border-color: var(--khaki);
+        color: var(--khaki);
+    }
+
+    .filter-chip.active {
+        background: var(--khaki-dark);
+        border-color: var(--khaki);
+        color: var(--cream);
+    }
+
     .task-list {
         display: flex;
         flex-direction: column;
@@ -131,6 +171,36 @@
         flex-shrink: 0;
     }
 
+    .pagination {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+
+    .page-link {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.7rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--khaki);
+        text-decoration: none;
+        padding: 0.35rem 0.8rem;
+        border: 1px solid var(--khaki-dark);
+        border-radius: var(--radius-sm);
+    }
+
+    .page-link:hover { border-color: var(--khaki); }
+
+    .page-status {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.7rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+    }
+
     .empty-state {
         text-align: center;
         padding: 4rem 2rem;
@@ -161,10 +231,31 @@
 <div class="catalogue-header">
     <div>
         <h1 class="catalogue-title">Mission log</h1>
-        <p class="catalogue-count">{{ tasks.count }} mission{{ tasks.count|pluralize }} on record</p>
+        <p class="catalogue-count">
+            {{ page_obj.paginator.count }}
+            {% if not show_all %}active {% endif %}mission{{ page_obj.paginator.count|pluralize }} on record
+        </p>
     </div>
     <a href="{% url 'add-task' %}" class="btn btn-primary">+ New mission</a>
-</div>{% if tasks %}
+</div>
+
+<div class="filter-bar">
+    <div class="filter-group">
+        <a href="?{% querystring type=None page=None %}"
+           class="filter-chip {% if not active_type %}active{% endif %}">All</a>
+        {% for value, label in type_choices %}
+        <a href="?{% querystring type=value page=None %}"
+           class="filter-chip {% if active_type == value %}active{% endif %}">{{ label }}</a>
+        {% endfor %}
+        <a href="?{% querystring type='none' page=None %}"
+           class="filter-chip {% if active_type == 'none' %}active{% endif %}">Standing orders</a>
+    </div>
+    <a href="?{% querystring show=show_all|yesno:',all' page=None %}" class="filter-chip">
+        {% if show_all %}Hide accomplished{% else %}Show accomplished{% endif %}
+    </a>
+</div>
+
+{% if tasks %}
 <div class="task-list">
     {% for task in tasks %}
     <div class="task-row {% if task.is_done %}done{% endif %}">
@@ -187,11 +278,30 @@
     </div>
     {% endfor %}
 </div>
+
+{% if is_paginated %}
+<div class="pagination">
+    {% if page_obj.has_previous %}
+    <a href="?{% querystring page=page_obj.previous_page_number %}" class="page-link">&laquo; Prev</a>
+    {% endif %}
+    <span class="page-status">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+    <a href="?{% querystring page=page_obj.next_page_number %}" class="page-link">Next &raquo;</a>
+    {% endif %}
+</div>
+{% endif %}
+
 {% else %}
 <div class="empty-state">
+    {% if active_type %}
+    <div class="empty-state-title">No missions in this category</div>
+    <p class="empty-state-sub">Nothing to report here.</p>
+    <a href="?{% querystring type=None page=None %}" class="btn btn-ghost">Show all missions</a>
+    {% else %}
     <div class="empty-state-title">No missions on record</div>
     <p class="empty-state-sub">The field is quiet. Too quiet.</p>
     <a href="{% url 'add-task' %}" class="btn btn-ghost">Deploy first mission</a>
+    {% endif %}
 </div>
 {% endif %}
 

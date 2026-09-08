@@ -1,7 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth import get_user_model
-from django.db.models import Q, Exists, OuterRef, Count
+from django.db.models import Q, Exists, OuterRef, Count, F
 from django.shortcuts import render, redirect
 from django.views.generic import TemplateView
 
@@ -22,6 +22,7 @@ class DebriefHomeView(LoginRequiredMixin, TemplateView):
 
     RECENT_MESSAGES = 5
     VISIBLE_UNITS = 4
+    VISIBLE_TASKS = 5
 
     def post(self, request, *args, **kwargs):
         form = QuickCreateTaskForm(request.POST)
@@ -34,7 +35,7 @@ class DebriefHomeView(LoginRequiredMixin, TemplateView):
             for error in form.errors.get("name", []):
                 messages.error(request, error)
 
-        return redirect(request.path)
+        return redirect(request.get_full_path())
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -50,13 +51,17 @@ class DebriefHomeView(LoginRequiredMixin, TemplateView):
         return context
 
     def get_task_context(self):
-        tasks = Task.objects.filter(user=self.request.user)
+        tasks = Task.objects.visible_to(self.request.user)
         counts = tasks.aggregate(
-            open=Count("pk", filter=Q(is_done=False)),
-            done=Count("pk", filter=Q(is_done=True)),
+            open=Count("pk", filter=Q(is_done=False), distinct=True),
+            done=Count("pk", filter=Q(is_done=True), distinct=True),
         )
         return {
-            "open_tasks": tasks.filter(is_done=False),
+            "open_tasks": (
+                tasks.filter(is_done=False)
+                .order_by(F("due_date").asc(nulls_last=True), "-created_at")
+                [:self.VISIBLE_TASKS]
+            ),
             "open_tasks_count": counts["open"],
             "done_tasks_count": counts["done"],
         }
@@ -80,7 +85,3 @@ class DebriefHomeView(LoginRequiredMixin, TemplateView):
                 .order_by("-created_at")[:self.RECENT_MESSAGES]
             )
         }
-
-
-
-

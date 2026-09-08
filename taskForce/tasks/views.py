@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.exceptions import PermissionDenied
 from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse_lazy
 from django.views.decorators.http import require_POST
@@ -72,7 +73,30 @@ class CatalogueTaskView(LoginRequiredMixin, ListView):
     paginate_by = 20
 
     def get_queryset(self):
-        return Task.objects.visible_to(self.request.user)
+        queryset = Task.objects.visible_to(self.request.user)
+
+        task_type = self.request.GET.get("type")
+        if task_type == "none":
+            queryset = queryset.filter(type__isnull=True)
+        elif task_type:
+            queryset = queryset.filter(type=task_type)
+
+        if self.request.GET.get("show") != "all":
+            queryset = queryset.filter(is_done=False)
+
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(self.get_filter_context())
+        return context
+
+    def get_filter_context(self):
+        return {
+            "type_choices": Task.TYPE_CHOICES,
+            "active_type": self.request.GET.get("type", ""),
+            "show_all": self.request.GET.get("show") == "all",
+        }
 
 
 @login_required
@@ -91,17 +115,11 @@ def complete_task(request, pk):
 def uncomplete_task(request, pk):
     task = get_object_or_404(Task.objects.visible_to(request.user), pk=pk)
 
-    if not task.complete(request.user):
-        messages.error(request, "You can't un-complete an incomplete task!")
+    if request.user not in (task.assigned_to, task.user):
+        raise PermissionDenied
 
-    task.is_done = False
-    task.assigned_to = None
-    task.accomplished_at = None
-    task.user.avatar.points -= task.appointed_points
-
-    if task.assigned_to:
-        task.assigned_to.avatar.points -= task.appointed_points
-
-    task.save()
+    if not task.uncomplete():
+        messages.info(request, "That mission is not marked as accomplished.")
 
     return redirect("details-task", pk=task.pk)
+

@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from taskForce.comms.managers import ConversationManager
@@ -87,7 +88,7 @@ class ConversationRead(models.Model):
         related_name="conversation_reads",
     )
 
-    last_read_at = models.DateTimeField(auto_now=True)
+    last_read_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
         constraints = [

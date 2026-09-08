@@ -16,6 +16,16 @@ class BaseTaskForm(forms.ModelForm):
             units__in=Unit.objects.filter(users=user)
         ).distinct()
 
+    def clean(self):
+        cleaned = super().clean()
+        unit = cleaned.get("unit")
+        assigned_to = cleaned.get("assigned_to")
+        if assigned_to and not unit:
+            raise forms.ValidationError("Assign a unit before assigning an operative.")
+        if assigned_to and unit and not unit.users.filter(pk=assigned_to.pk).exists():
+            raise forms.ValidationError("That operative is not in the selected unit.")
+        return cleaned
+
     class Meta:
         model = Task
         fields = ["name", "type", "unit", "assigned_to", "appointed_points", "due_date", "is_done"]

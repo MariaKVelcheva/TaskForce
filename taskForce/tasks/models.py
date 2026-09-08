@@ -1,5 +1,7 @@
 from django.db import models, transaction
 from django.contrib.auth import get_user_model
+from django.db.models import Value
+from django.db.models.functions import Greatest
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
@@ -102,6 +104,26 @@ class Task(models.Model):
             Avatar.objects.filter(user=user).update(
                 points=models.F("points") + self.appointed_points
             )
+        return True
+
+    def uncomplete(self):
+        with transaction.atomic():
+            reverted = (
+                Task.objects
+                .filter(pk=self.pk, is_done=True)
+                .update(
+                    is_done=False,
+                    assigned_to=None,
+                    accomplished_at=None,
+                )
+            )
+            if not reverted:
+                return False
+
+            if self.assigned_to_id:
+                Avatar.objects.filter(user_id=self.assigned_to_id).update(
+                    points=Greatest(models.F("points") - self.appointed_points, Value(0))
+                )
         return True
 
     class Meta:
