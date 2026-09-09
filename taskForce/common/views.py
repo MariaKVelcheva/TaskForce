@@ -1,7 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth import get_user_model
-from django.db.models import Q, Exists, OuterRef, Count, F
+from django.db.models import Q, Exists, OuterRef, Count, F, Subquery
 from django.shortcuts import render, redirect
 from django.views.generic import TemplateView
 
@@ -77,11 +77,19 @@ class DebriefHomeView(LoginRequiredMixin, TemplateView):
 
     def get_message_context(self):
         user = self.request.user
+        last_read = ConversationRead.objects.filter(
+            conversation=OuterRef("conversation"),
+            user=user,
+        ).values("last_read_at")[:1]
 
         return {
             "recent_messages": (
                 Message.objects.filter(conversation__unit__memberships__user=user)
                 .select_related("sender", "conversation", "conversation__unit", "conversation__task")
+                .annotate(last_read_at=Subquery(last_read))
+                .annotate(
+                    is_read=Q(last_read_at__isnull=True) | Q(created_at__gt=F("last_read_at"))
+                )
                 .order_by("-created_at")[:self.RECENT_MESSAGES]
             )
         }

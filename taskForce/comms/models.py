@@ -88,7 +88,7 @@ class ConversationRead(models.Model):
         related_name="conversation_reads",
     )
 
-    last_read_at = models.DateTimeField(default=timezone.now)
+    last_read_at = models.DateTimeField(default=    timezone.now)
 
     class Meta:
         constraints = [
