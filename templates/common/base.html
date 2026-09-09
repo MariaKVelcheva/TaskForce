@@ -108,6 +108,54 @@
             border-radius: var(--radius-sm);
             letter-spacing: 0.04em;
         }
+            .nav-accordion {
+        position: relative;
+    }
+
+    .nav-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        min-width: 190px;
+        background: var(--olive-mid);
+        border: 1px solid var(--khaki-dark);
+        border-radius: var(--radius-sm);
+        padding: 0.35rem;
+        margin-top: 0.4rem;
+        display: none;
+        z-index: 50;
+    }
+
+    .nav-accordion:hover .nav-dropdown,
+    .nav-accordion:focus-within .nav-dropdown {
+        display: block;
+    }
+
+    .nav-dropdown-link {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 0.4rem 0.6rem;
+        border-radius: var(--radius-sm);
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.68rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--khaki-muted);
+        text-decoration: none;
+        transition: background 0.15s, color 0.15s;
+    }
+
+    .nav-dropdown-link:hover {
+        background: var(--olive);
+        color: var(--cream);
+    }
+
+    .nav-dropdown-count {
+        font-size: 0.62rem;
+        color: var(--muted);
+    }
 
         .nav-unread {
             display: inline-flex;
@@ -277,11 +325,27 @@
     <a href="{% url 'index' %}" class="nav-brand">Task<span>:</span> Force!</a>
     <ul class="nav-links">
         {% if user.is_authenticated %}
-            <li>
+            <li class="nav-accordion">
                 <a href="{% url 'all-tasks' %}"
                    class="{% if request.resolver_match.url_name == 'all-tasks' %}active{% endif %}">
                    Missions
                 </a>
+                {% if type_nav or unsorted_count %}
+                <div class="nav-dropdown">
+                    {% for entry in type_nav %}
+                    <a href="{% url 'all-tasks' %}?type={{ entry.value }}" class="nav-dropdown-link">
+                        <span>{{ entry.label }}</span>
+                        <span class="nav-dropdown-count">{{ entry.count }}</span>
+                    </a>
+                    {% endfor %}
+                    {% if unsorted_count %}
+                    <a href="{% url 'all-tasks' %}?type=none" class="nav-dropdown-link">
+                        <span>Standing orders</span>
+                        <span class="nav-dropdown-count">{{ unsorted_count }}</span>
+                    </a>
+                    {% endif %}
+                </div>
+                {% endif %}
             </li>
             <li>
                 <a href="{% url 'all-units' %}"

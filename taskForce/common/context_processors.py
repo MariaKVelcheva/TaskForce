@@ -1,5 +1,6 @@
-from django.db.models import OuterRef, Subquery, Q, F
+from django.db.models import OuterRef, Subquery, Q, F, Count
 from taskForce.comms.models import Message, ConversationRead
+from taskForce.tasks.models import Task
 
 
 def unread_count(request):
@@ -24,3 +25,29 @@ def unread_count(request):
     )
 
     return {"unread_count": count}
+
+
+def task_type_counts(request):
+    if not request.user.is_authenticated:
+        return {}
+
+    counts = dict(
+        Task.objects.visible_to(request.user)
+        .filter(is_done=False)
+        .values_list("type")
+        .annotate(total=Count("pk", distinct=True))
+    )
+
+    labels = dict(Task.TYPE_CHOICES)
+
+    type_nav = [
+        {"value": value, "label": labels[value], "count": counts[value]}
+        for value in labels if counts.get(value)
+    ]
+
+    return {"type_nav": type_nav, "unsorted_counts": counts.get(None, 0),}
+
+
+
+
+
