@@ -1,7 +1,4 @@
-import datetime
-
-from django.db.models import OuterRef, Subquery, Value, F
-from django.db.models.functions import Coalesce
+from django.db.models import OuterRef, Subquery, Q, F
 from taskForce.comms.models import Message, ConversationRead
 
 
@@ -19,13 +16,9 @@ def unread_count(request):
     count = (
         Message.objects.filter(conversation__unit__memberships__user=user)
         .exclude(sender=user)
-        .annotate(
-            last_read_at=Coalesce(
-                Subquery(my_read),
-                Value(datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)),
-            )
-        )
-        .filter(created_at__gt=F("last_read_at"))
+        .annotate(last_read_at=Subquery(my_read))
+        .filter(Q(last_read_at__isnull=True) | Q(created_at__gt=F("last_read_at")))
+        .values("conversation")
         .distinct()
         .count()
     )

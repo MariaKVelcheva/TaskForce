@@ -90,6 +90,10 @@ class DebriefHomeView(LoginRequiredMixin, TemplateView):
                 .annotate(
                     is_read=Q(last_read_at__isnull=True) | Q(created_at__gt=F("last_read_at"))
                 )
+                .annotate(
+                    is_unread=(Q(last_read_at__isnull=True) | Q(created_at__gt=F("last_read_at")))
+                              & ~Q(sender=user)
+                )
                 .order_by("-created_at")[:self.RECENT_MESSAGES]
             )
         }
