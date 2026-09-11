@@ -20,11 +20,13 @@
         text-transform: uppercase;
         color: var(--khaki);
         line-height: 1.1;
+        overflow-wrap: anywhere;
     }
 
     .detail-title.done {
         text-decoration: line-through;
         color: var(--khaki-muted);
+        overflow-wrap: anywhere;
     }
 
     .detail-actions {
@@ -129,7 +131,7 @@
 
 {% block content %}
 {% if task.unit %}
-<a href="{% url 'task-chat' task.pk %}" class="btn btn-ghost">Discussion</a>
+<a href="{% url 'task-chat' task.pk %}" class="btn btn-ghost" style="margin-bottom: 1.5rem;">Discussion</a>
 {% endif %}
 <div class="detail-header">
     <div>
@@ -212,6 +214,19 @@
 <form method="post" action="{% url 'complete-task' task.pk %}">
     {% csrf_token %}
     <button type="submit" class="btn btn-primary">Mark complete</button>
+</form>
+{% endif %}
+    {% if task.is_done %}
+    {% if request.user == task.assigned_to or request.user == task.user %}
+    <form method="post" action="{% url 'uncomplete-task' task.pk %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-ghost">Revoke completion</button>
+    </form>
+    {% endif %}
+{% else %}
+<form method="post" action="{% url 'complete-task' task.pk %}">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-primary">Mark accomplished</button>
 </form>
 {% endif %}
 

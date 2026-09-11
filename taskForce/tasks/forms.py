@@ -11,10 +11,14 @@ User = get_user_model()
 class BaseTaskForm(forms.ModelForm):
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["unit"].queryset = Unit.objects.filter(users=user)
-        self.fields["assigned_to"].queryset = User.objects.filter(
-            units__in=Unit.objects.filter(users=user)
-        ).distinct()
+
+        if "unit" in self.fields:
+            self.fields["unit"].queryset = Unit.objects.filter(users=user)
+
+        if "assigned_to" in self.fields:
+            self.fields["assigned_to"].queryset = User.objects.filter(
+                units__in=Unit.objects.filter(users=user)
+            ).distinct()
 
     def clean(self):
         cleaned = super().clean()

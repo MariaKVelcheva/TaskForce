@@ -31,7 +31,7 @@ def task_type_counts(request):
     if not request.user.is_authenticated:
         return {}
 
-    counts = dict(
+    counts: dict[str | None, int] = dict(
         Task.objects.visible_to(request.user)
         .filter(is_done=False)
         .values_list("type")
@@ -45,7 +45,10 @@ def task_type_counts(request):
         for value in labels if counts.get(value)
     ]
 
-    return {"type_nav": type_nav, "unsorted_counts": counts.get(None, 0),}
+    return {
+        "type_nav": type_nav,
+        "unsorted_count": counts.get(None, 0),
+    }
 
 
 

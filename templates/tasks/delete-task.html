@@ -15,7 +15,7 @@
         <div class="panel-header" style="color: var(--rust-light); border-color: rgba(184,92,56,0.3);">// Confirm abort</div>
 
         <p style="font-size: 0.92rem; color: var(--cream-dark); line-height: 1.6; margin-bottom: 1.5rem;">
-            Mission <strong style="color: var(--cream);">{{ object.name }}</strong> will be permanently removed from the log.
+            Mission <strong style="color: var(--cream); overflow-wrap: anywhere;">{{ object.name }}</strong> will be permanently removed from the log.
             {% if object.appointed_points %}
             {{ object.appointed_points }} intel point{% if object.appointed_points != 1 %}s{% endif %} will be lost.
             {% endif %}

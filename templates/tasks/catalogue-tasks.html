@@ -241,19 +241,21 @@
 
 <div class="filter-bar">
     <div class="filter-group">
-        <a href="?{% querystring type=None page=None %}"
+        <a href="{% querystring type=None page=None %}"
            class="filter-chip {% if not active_type %}active{% endif %}">All</a>
         {% for value, label in type_choices %}
-        <a href="?{% querystring type=value page=None %}"
+        <a href="{% querystring type=value page=None %}"
            class="filter-chip {% if active_type == value %}active{% endif %}">{{ label }}</a>
         {% endfor %}
-        <a href="?{% querystring type='none' page=None %}"
+        <a href="{% querystring type='none' page=None %}"
            class="filter-chip {% if active_type == 'none' %}active{% endif %}">Standing orders</a>
     </div>
-    <a href="?{% querystring show=show_all|yesno:',all' page=None %}" class="filter-chip">
-        {% if show_all %}Hide accomplished{% else %}Show accomplished{% endif %}
-    </a>
-</div>
+    {% if show_all %}
+    <a href="{% querystring show=None page=None %}" class="filter-chip">Hide accomplished</a>
+    {% else %}
+    <a href="{% querystring show='all' page=None %}" class="filter-chip">Show accomplished</a>
+    {% endif %}
+</div>  
 
 {% if tasks %}
 <div class="task-list">
@@ -282,11 +284,11 @@
 {% if is_paginated %}
 <div class="pagination">
     {% if page_obj.has_previous %}
-    <a href="?{% querystring page=page_obj.previous_page_number %}" class="page-link">&laquo; Prev</a>
+    <a href="{% querystring page=page_obj.previous_page_number %}" class="page-link">&laquo; Prev</a>
     {% endif %}
     <span class="page-status">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
     {% if page_obj.has_next %}
-    <a href="?{% querystring page=page_obj.next_page_number %}" class="page-link">Next &raquo;</a>
+    <a href="{% querystring page=page_obj.next_page_number %}" class="page-link">Next &raquo;</a>
     {% endif %}
 </div>
 {% endif %}
@@ -296,11 +298,11 @@
     {% if active_type %}
     <div class="empty-state-title">No missions in this category</div>
     <p class="empty-state-sub">Nothing to report here.</p>
-    <a href="?{% querystring type=None page=None %}" class="btn btn-ghost">Show all missions</a>
+    <a href="{% querystring type=None page=None %}" class="btn btn-ghost">Show all missions</a>
     {% else %}
     <div class="empty-state-title">No missions on record</div>
     <p class="empty-state-sub">The field is quiet. Too quiet.</p>
-    <a href="{% url 'add-task' %}" class="btn btn-ghost">Deploy first mission</a>
+    <a href="{% url 'add-task' %}" class="btn btn-ghost">Deploy a mission</a>
     {% endif %}
 </div>
 {% endif %}

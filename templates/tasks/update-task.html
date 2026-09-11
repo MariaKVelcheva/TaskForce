@@ -63,7 +63,8 @@
 
     <div style="margin-bottom: 2rem;">
         <h1 style="font-family: 'Barlow Condensed', sans-serif; font-size: 1.8rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--khaki);">Edit mission</h1>
-        <p style="font-family: 'Share Tech Mono', monospace; font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-top: 0.3rem;">{{ object.name }}</p>
+        <p style="font-family: 'Share Tech Mono', monospace; overflow-wrap: anywhere; font-size: 0.75rem; letter-spacing: 0.1em;
+         text-transform: uppercase; color: var(--muted); margin-top: 0.3rem;">{{ object.name }}</p>
     </div>
 
     <div class="panel">
@@ -72,7 +73,7 @@
         <form method="post" novalidate>
             {% csrf_token %}
 
-            <div class="form-group">
+            <div class="form-group" style="overflow-wrap: anywhere">
                 <label for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
                 {{ form.name }}
                 {% if form.name.errors %}
