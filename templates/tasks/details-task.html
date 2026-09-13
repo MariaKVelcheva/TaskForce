@@ -209,13 +209,7 @@
     <div class="timer-display" id="timer-display">{{ task.timer_duration }}</div>
 </div>
 {% endif %}
-
-{% if not task.is_done %}
-<form method="post" action="{% url 'complete-task' task.pk %}">
-    {% csrf_token %}
-    <button type="submit" class="btn btn-primary">Mark complete</button>
-</form>
-{% endif %}
+    
     {% if task.is_done %}
     {% if request.user == task.assigned_to or request.user == task.user %}
     <form method="post" action="{% url 'uncomplete-task' task.pk %}">
