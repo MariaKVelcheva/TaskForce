@@ -130,3 +130,44 @@ class Task(models.Model):
         verbose_name = _('task')
         verbose_name_plural = _('tasks')
         ordering = ["is_done", "-created_at"]
+
+
+class TaskItem(models.Model):
+    POSITION = 0
+
+    task = models.ForeignKey(
+        to=Task,
+        on_delete=models.CASCADE,
+        verbose_name=_('task'),
+        related_name='items',
+    )
+
+    name = models.CharField(
+        max_length=50,
+        verbose_name=_('name'),
+    )
+
+    is_done = models.BooleanField(
+        default=False,
+    )
+
+    position = models.PositiveSmallIntegerField()
+
+    class Meta:
+        abstract = True
+        ordering = ["position"]
+
+
+class GroceryItem(TaskItem):
+    quantity = models.PositiveSmallIntegerField()
+
+    brand = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True,
+    )
+
+    buying_frequency = models.TimeField(
+        null=True,
+        blank=True,
+    )
