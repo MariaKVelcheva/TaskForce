@@ -133,13 +133,11 @@ class Task(models.Model):
 
 
 class TaskItem(models.Model):
-    POSITION = 0
-
     task = models.ForeignKey(
         to=Task,
         on_delete=models.CASCADE,
         verbose_name=_('task'),
-        related_name='items',
+        related_name='%(class)s',
     )
 
     name = models.CharField(
@@ -151,23 +149,22 @@ class TaskItem(models.Model):
         default=False,
     )
 
-    position = models.PositiveSmallIntegerField()
+    position = models.PositiveSmallIntegerField(
+        default=0,
+    )
 
     class Meta:
         abstract = True
-        ordering = ["position"]
+        ordering = ["position", "pk"]
+
+    def save(self, *args, **kwargs):
+        last = self.__class__.objects.filter(task=self.task).order_by("-position").first()
+        if last:
+            self.position = last.position + 1
+        else:
+            self.position = 0
+        super().save(*args, **kwargs)
 
 
 class GroceryItem(TaskItem):
     quantity = models.PositiveSmallIntegerField()
-
-    brand = models.CharField(
-        max_length=50,
-        null=True,
-        blank=True,
-    )
-
-    buying_frequency = models.TimeField(
-        null=True,
-        blank=True,
-    )
