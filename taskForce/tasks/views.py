@@ -162,4 +162,17 @@ def toggle_item(request, task_pk, item_pk):
     return redirect("details-task", pk=task.pk)
 
 
+@login_required
+@require_POST
+def delete_item(request, task_pk, item_pk):
+    task = get_object_or_404(Task.objects.visible_to(request.user), pk=task_pk)
+
+    item_model = ITEM_MODELS.get(task.type)
+    if item_model is None:
+        raise Http404
+
+    item = get_object_or_404(item_model, pk=item_pk, task=task)
+    item.delete()
+
+    return redirect("details-task", pk=task.pk)
 

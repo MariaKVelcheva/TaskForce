@@ -11,5 +11,6 @@ urlpatterns = [
         path("complete/", views.complete_task, name="complete-task"),
         path("uncomplete/", views.uncomplete_task, name="uncomplete-task"),
     ])),
+    path("<int:task_pk>/items/<int:item_pk>/toggle/", views.toggle_item, name="toggle-item"),
     path("all-tasks/", views.CatalogueTaskView.as_view(), name="all-tasks"),
 ]
