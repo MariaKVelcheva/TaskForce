@@ -2,13 +2,15 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
+from django.http import Http404
 from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse_lazy
 from django.views.decorators.http import require_POST
 from django.views.generic import CreateView, DetailView, UpdateView, DeleteView, ListView
 
 from taskForce.tasks.forms import CreateTaskForm, UpdateTaskForm, QuickCreateTaskForm
-from taskForce.tasks.models import Task
+from taskForce.tasks.items import ITEM_MODELS, ITEM_FORMS
+from taskForce.tasks.models import Task, TaskItem
 
 
 class CreateTaskView(LoginRequiredMixin, CreateView):
@@ -36,6 +38,26 @@ class DetailTaskView(LoginRequiredMixin, DetailView):
 
     def get_queryset(self):
         return Task.objects.visible_to(self.request.user)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(self.get_item_context())
+        return context
+
+    def get_item_context(self):
+        item_model = ITEM_MODELS.get(self.object.type)
+
+        if item_model is None:
+            return {"items": None}
+
+        items = item_model.objects.filter(task=self.object)
+
+        return {
+            "items": items,
+            "item_form": ITEM_FORMS[self.object.type](),
+            "items_done": sum(1 for item in items if item.is_done),
+            "items_total": len(items),
+        }
 
 
 class UpdateTaskView(LoginRequiredMixin, UpdateView):
@@ -122,4 +144,22 @@ def uncomplete_task(request, pk):
         messages.info(request, "That mission is not marked as accomplished.")
 
     return redirect("details-task", pk=task.pk)
+
+
+@login_required
+@require_POST
+def toggle_item(request, task_pk, item_pk):
+    task = get_object_or_404(Task.objects.visible_to(request.user), pk=task_pk)
+
+    item_model = ITEM_MODELS.get(task.type)
+    if item_model is None:
+        raise Http404
+
+    item = get_object_or_404(item_model, pk=item_pk, task=task)
+    item.is_done = not item.is_done
+    item.save()
+
+    return redirect("details-task", pk=task.pk)
+
+
 

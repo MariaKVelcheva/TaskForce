@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth import get_user_model
-
-from taskForce.tasks.models import Task
+from django.utils.translation import gettext_lazy as _
+from taskForce.tasks.models import Task, TaskItem, GroceryItem
 from taskForce.units.models import Unit
 
 
@@ -87,3 +87,16 @@ class UpdateTaskForm(BaseTaskForm):
     class Meta(BaseTaskForm.Meta):
         fields = ["name", "type", "appointed_points", "due_date"]
 
+
+class GroceryItemForm(forms.ModelForm):
+    class Meta:
+        model = GroceryItem
+        fields = ("quantity", "name")
+        labels = {
+            "name": _("Grocery item"),
+            "quantity": _("Quantity"),
+        }
+        widgets = {
+            "name": forms.TextInput(attrs={"placeholder": "Add supply..."}),
+            "quantity": forms.TextInput(attrs={"placeholder": "500g"}),
+        }

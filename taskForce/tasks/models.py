@@ -167,4 +167,8 @@ class TaskItem(models.Model):
 
 
 class GroceryItem(TaskItem):
-    quantity = models.PositiveSmallIntegerField()
+    quantity = models.CharField(
+        max_length=50,
+        blank=True,
+        verbose_name=_("quantity")
+    )
