@@ -1,0 +1,38 @@
+<div class="items-block">
+    <div class="items-header">
+        <span class="items-title">// Supplies</span>
+        <span class="items-progress">{{ items_done }}/{{ items_total }}</span>
+    </div>
+
+    {% if items %}
+    <ul class="item-list">
+        {% for item in items %}
+        <li class="item-row {% if item.is_done %}done{% endif %}">
+            <form method="post" action="{% url 'toggle-item' task.pk item.pk %}" class="item-toggle-form">
+                {% csrf_token %}
+                <button type="submit" class="item-toggle" title="Toggle">
+                    <span class="item-box {% if item.is_done %}checked{% endif %}"></span>
+                </button>
+            </form>
+
+            <span class="item-name">{{ item.name }}</span>
+            {% if item.quantity %}<span class="item-qty">{{ item.quantity }}</span>{% endif %}
+
+            <form method="post" action="{% url 'delete-item' task.pk item.pk %}" class="item-delete-form">
+                {% csrf_token %}
+                <button type="submit" class="item-delete" title="Remove">&times;</button>
+            </form>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <div class="items-empty">No supplies listed</div>
+    {% endif %}
+
+    <form method="post" action="{% url 'add-item' task.pk %}" class="item-add">
+        {% csrf_token %}
+        <input type="text" name="name" placeholder="Add supply..." maxlength="50" required autofocus>
+        <input type="text" name="quantity" placeholder="Qty" maxlength="50" class="item-add-qty">
+        <button type="submit">+</button>
+    </form>
+</div>

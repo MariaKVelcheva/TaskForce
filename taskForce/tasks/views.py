@@ -2,6 +2,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
+from django.db.models import Count
 from django.http import Http404
 from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse_lazy
@@ -95,7 +96,10 @@ class CatalogueTaskView(LoginRequiredMixin, ListView):
     paginate_by = 20
 
     def get_queryset(self):
-        queryset = Task.objects.visible_to(self.request.user)
+        queryset = Task.objects.visible_to(self.request.user).annotate(
+            items_total=Count("groceryitems", distinct=True),
+            items_done=Count("groceryitems", filter=Q(groceryitems__is_done=True), distinct=True),
+        )
 
         task_type = self.request.GET.get("type")
         if task_type == "none":

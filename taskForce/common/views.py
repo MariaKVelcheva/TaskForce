@@ -39,7 +39,6 @@ class DebriefHomeView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["form"] = QuickCreateTaskForm()
 
         context.update(self.get_task_context())
         context.update(self.get_unit_context())

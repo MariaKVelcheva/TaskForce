@@ -1,7 +1,8 @@
 from django.contrib.auth import get_user_model
 from django.test import TestCase
+from django.urls import reverse
 
-from taskForce.tasks.models import Task
+from taskForce.tasks.models import Task, GroceryItem
 from taskForce.units.models import Unit, Membership
 
 User = get_user_model()
@@ -49,3 +50,19 @@ class TaskCompletionTests(TestCase):
     def test_task_not_visible_to_outsider(self):
         outsider = User.objects.create_user(username="outsider", password="x")
         self.assertNotIn(self.task, Task.objects.visible_to(outsider))
+
+    def test_outsider_cannot_toggle_item(self):
+        self.task.type = "groceries"
+        self.task.save()
+        item = GroceryItem.objects.create(task=self.task, name="Rations")
+
+        outsider = User.objects.create_user(username="outsider2", password="x")
+        self.client.force_login(outsider)
+
+        response = self.client.post(
+            reverse("toggle-item", kwargs={"task_pk": self.task.pk, "item_pk": item.pk})
+        )
+
+        self.assertEqual(response.status_code, 404)
+        item.refresh_from_db()
+        self.assertFalse(item.is_done)

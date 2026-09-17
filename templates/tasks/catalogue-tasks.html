@@ -265,6 +265,9 @@
             <div class="task-status {% if task.is_done %}done{% endif %}"></div>
             <span class="task-name">{{ task.name }}</span>
             <div class="task-meta">
+                            {% if task.items_total %}
+                <span class="task-tag">{{ task.items_done }}/{{ task.items_total }}</span>
+                {% endif %}
                 {% if task.type %}
                 <span class="task-tag">{{ task.get_type_display }}</span>
                 {% endif %}
