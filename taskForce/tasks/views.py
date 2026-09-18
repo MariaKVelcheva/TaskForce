@@ -2,7 +2,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.http import Http404
 from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse_lazy
@@ -97,8 +97,9 @@ class CatalogueTaskView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         queryset = Task.objects.visible_to(self.request.user).annotate(
-            items_total=Count("groceryitems", distinct=True),
-            items_done=Count("groceryitems", filter=Q(groceryitems__is_done=True), distinct=True),
+            items_total=Count("groceryitem", distinct=True),
+            items_done=Count("groceryitem",
+                             filter=Q(groceryitem__is_done=True), distinct=True),
         )
 
         task_type = self.request.GET.get("type")
@@ -177,6 +178,27 @@ def delete_item(request, task_pk, item_pk):
 
     item = get_object_or_404(item_model, pk=item_pk, task=task)
     item.delete()
+
+    return redirect("details-task", pk=task.pk)
+
+
+@login_required
+@require_POST
+def add_item(request, task_pk):
+    task = get_object_or_404(Task.objects.visible_to(request.user), pk=task_pk)
+
+    form_class = ITEM_FORMS.get(task.type)
+    if form_class is None:
+        raise Http404
+
+    form = form_class(request.POST)
+    if form.is_valid():
+        item = form.save(commit=False)
+        item.task = task
+        item.save()
+    else:
+        for error in form.errors.values():
+            messages.error(request, error[0])
 
     return redirect("details-task", pk=task.pk)
 
