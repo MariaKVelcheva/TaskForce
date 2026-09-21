@@ -324,9 +324,12 @@
         <p class="home-subtitle">Operative: {{ user.username }}</p>
     </div>
     <a href="{% url 'add-task' %}" class="btn btn-primary" style="font-size: 0.85rem;">+ New mission</a>
+    {% if items is not None %}
+    {% include "common/partials/_items.html" %}
+{% endif %}
 </div>
 
-    
+
 <div class="stats-row">
     <div class="stat-card">
         <div class="stat-value">{{ open_tasks_count }}</div>
