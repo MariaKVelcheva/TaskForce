@@ -121,11 +121,12 @@
 
     .task-item:last-child { border-bottom: none; }
 
-    .task-item:hover .task-item-name { color: var(--khaki); }
+    .task-item:hover { color: var(--khaki); }
 
     .task-item-name {
         flex: 1;
         min-width: 0;
+        color: var(--khaki);
     }
 
 
@@ -324,9 +325,7 @@
         <p class="home-subtitle">Operative: {{ user.username }}</p>
     </div>
     <a href="{% url 'add-task' %}" class="btn btn-primary" style="font-size: 0.85rem;">+ New mission</a>
-    {% if items is not None %}
-    {% include "common/partials/_items.html" %}
-{% endif %}
+
 </div>
 
 

@@ -275,6 +275,9 @@
         {% endif %}
     </div>
 </div>
+    {% if items is not None %}
+    {% include "common/partials/_items.html" %}
+{% endif %}
 
 <div class="detail-grid">
 
@@ -322,9 +325,6 @@
         <div class="detail-field-value">{{ object.due_date|date:"d M Y, H:i" }}</div>
     </div>
     {% endif %}
-{% if items is not None %}
-    {% include "common/partials/_items.html" %}
-{% endif %}
 
     {% if object.accomplished_at %}
     <div class="detail-field">
@@ -335,12 +335,6 @@
 
 </div>
 
-{% if task.timer_duration and not task.is_done %}
-<div class="timer-section">
-    <div class="timer-label">// Mission timer</div>
-    <div class="timer-display" id="timer-display">{{ task.timer_duration }}</div>
-</div>
-{% endif %}
     
     {% if task.is_done %}
     {% if request.user == task.assigned_to or request.user == task.user %}
@@ -361,33 +355,4 @@
     <a href="{% url 'all-tasks' %}" class="btn btn-ghost" style="font-size: 0.82rem;">Back to log</a>
 </div>
 
-{% endblock %}
-
-{% block extra_js %}
-{% if task.timer_duration and not task.is_done %}
-<script>
-    const timerDisplayElement = document.getElementById("timer-display");
-    const parts = timerDisplayElement.textContent.trim().split(":");
-    let totalSeconds = parseInt(parts[0]) * 3600 + parseInt(parts[1]) * 60 + parseInt(parts[2]);
-    const pad = n => String(n).padStart(2, "0");
-
-    const interval = setInterval(() => {
-        totalSeconds -= 1;
-        let currentSeconds = totalSeconds;
-
-        let totalHours = Math.floor(currentSeconds / 3600);
-        currentSeconds -= totalHours * 3600;
-
-        let totalMinutes = Math.floor(currentSeconds / 60);
-        currentSeconds -= totalMinutes * 60;
-        timerDisplayElement.textContent = `${pad(totalHours)}:${pad(totalMinutes)}:${pad(currentSeconds)}`;
-
-        if (totalSeconds <= 0) {
-            clearInterval(interval);
-            timerDisplayElement.textContent = "Mission over!";
-        }
-    }, 1000);
-
-</script>
-{% endif %}
 {% endblock %}
