@@ -268,30 +268,6 @@
         color: var(--muted);
     }
 
-    .quick-add {
-        display: flex;
-        gap: 0.5rem;
-        margin-top: 1rem;
-        padding-top: 1rem;
-        border-top: 1px solid var(--olive);
-    }
-
-    .quick-add input {
-        flex: 1;
-        background: var(--olive-dark);
-        border: 1px solid var(--khaki-dark);
-        border-radius: var(--radius-sm);
-        padding: 0.45rem 0.75rem;
-        color: var(--cream);
-        font-family: 'Barlow', sans-serif;
-        font-size: 0.85rem;
-        outline: none;
-        transition: border-color 0.15s;
-    }
-
-    .quick-add input:focus { border-color: var(--khaki); }
-    .quick-add input::placeholder { color: var(--muted); }
-
     .quick-add button {
         font-family: 'Barlow Condensed', sans-serif;
         font-size: 0.85rem;
@@ -308,8 +284,77 @@
         flex-shrink: 0;
     }
 
-    .quick-add button:hover { background: var(--khaki-dark); }
+    .quick-add-form {
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+        width: 100%;
+    }
 
+    .quick-add-row {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .quick-add input[type="text"] {
+        flex: 1;
+        min-width: 0;
+        background: var(--olive-dark);
+        border: 1px solid var(--khaki-dark);
+        border-radius: var(--radius-sm);
+        padding: 0.45rem 0.75rem;
+        color: var(--cream);
+        font-family: 'Barlow', sans-serif;
+        font-size: 0.85rem;
+        outline: none;
+        transition: border-color 0.15s;
+    }
+
+    .quick-add input[type="text"]:focus { border-color: var(--khaki); }
+    .quick-add input[type="text"]::placeholder { color: var(--muted); }
+
+    .quick-add-types {
+        display: flex;
+        gap: 0.35rem;
+        flex-wrap: wrap;
+    }
+
+    .quick-add-types input[type="radio"] {
+        position: absolute;
+        opacity: 0;
+        width: 1px;
+        height: 1px;
+        pointer-events: none;
+    }
+
+    .quick-add-types label {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.62rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 0.25rem 0.6rem;
+        border: 1px solid var(--khaki-dark);
+        border-radius: var(--radius-sm);
+        color: var(--khaki-muted);
+        cursor: pointer;
+        transition: border-color 0.15s, color 0.15s, background 0.15s;
+    }
+
+    .quick-add-types label:hover {
+        border-color: var(--khaki);
+        color: var(--khaki);
+    }
+
+    .quick-add-types input:checked + label {
+        background: var(--khaki-dark);
+        border-color: var(--khaki);
+        color: var(--cream);
+    }
+
+    .quick-add-types input:focus-visible + label {
+        outline: 1px solid var(--khaki);
+        outline-offset: 2px;
+    }
     @media (max-width: 620px) {
         .stats-row { grid-template-columns: repeat(2, 1fr); }
         .dashboard-grid { grid-template-columns: 1fr; }
@@ -368,15 +413,24 @@
         <div class="empty-section">No active missions</div>
         {% endif %}
 
-                <div class="quick-add">
-            <form method="post" style="display: flex; gap: 0.5rem; width: 100%;">
+        <div class="quick-add">
+            <form method="post" class="quick-add-form">
                 {% csrf_token %}
-                <input type="text" name="name" placeholder="Quick add mission..."
-                       maxlength="100" required>
-                <button type="submit">Add</button>
+                <div class="quick-add-types">
+                    <input type="radio" name="type" value="" id="qa-type-none" checked>
+                    <label for="qa-type-none">Mission</label>
+                    {% for value, label in quick_types %}
+                    <input type="radio" name="type" value="{{ value }}" id="qa-type-{{ value }}">
+                    <label for="qa-type-{{ value }}">{{ label }}</label>
+                    {% endfor %}
+                </div>
+                <div class="quick-add-row">
+                    <input type="text" name="name" placeholder="Quick add mission..."
+                           maxlength="100" required>
+                    <button type="submit">Add</button>
+                </div>
             </form>
         </div>
-    </div>
 
     <div class="dashboard-section">
         <div class="section-header">

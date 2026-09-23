@@ -80,7 +80,7 @@ class CreateTaskForm(BaseTaskForm):
 class QuickCreateTaskForm(forms.ModelForm):
     class Meta:
         model = Task
-        fields = ("name", )
+        fields = ("name", "type", )
 
 
 class UpdateTaskForm(BaseTaskForm):

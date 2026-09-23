@@ -7,6 +7,7 @@ from django.views.generic import TemplateView
 
 from taskForce.comms.models import Message, ConversationRead
 from taskForce.tasks.forms import QuickCreateTaskForm
+from taskForce.tasks.items import ITEM_MODELS
 from taskForce.tasks.models import Task
 from taskForce.units.models import Unit
 
@@ -31,6 +32,8 @@ class DebriefHomeView(LoginRequiredMixin, TemplateView):
             task = form.save(commit=False)
             task.user = request.user
             task.save()
+            if task.type in ITEM_MODELS:
+                return redirect("details-task", pk=task.pk)
         else:
             for error in form.errors.get("name", []):
                 messages.error(request, error)
@@ -61,6 +64,10 @@ class DebriefHomeView(LoginRequiredMixin, TemplateView):
                 .order_by(F("due_date").asc(nulls_last=True), "-created_at")
                 [:self.VISIBLE_TASKS]
             ),
+            "quick_types": [
+                (value, label) for value, label in Task.TYPE_CHOICES
+                if value in ITEM_MODELS
+            ],
             "open_tasks_count": counts["open"],
             "done_tasks_count": counts["done"],
         }
