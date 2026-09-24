@@ -29,10 +29,13 @@
     <div class="items-empty">No supplies listed</div>
     {% endif %}
 
-    <form method="post" action="{% url 'add-item' task.pk %}" class="item-add">
+       <form method="post" action="{% url 'add-item' task.pk %}" class="item-add">
         {% csrf_token %}
-        <input type="text" name="name" placeholder="Add supply..." maxlength="50" required autofocus>
-        <input type="text" name="quantity" placeholder="Qty" maxlength="50" class="item-add-qty">
-        <button type="submit">+</button>
+        <span class="item-add-box"></span>
+        <input type="text" name="name" class="item-add-name"
+               placeholder="Add supply..." maxlength="50" required autofocus>
+        <input type="text" name="quantity" class="item-add-qty"
+               placeholder="Qty" maxlength="50">
+        <button type="submit">Add</button>
     </form>
 </div>

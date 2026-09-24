@@ -129,10 +129,20 @@
     
         .items-block {
         margin-top: 1.5rem;
+        margin-bottom: 2rem;
         padding-top: 1.25rem;
         border-top: 1px solid var(--olive);
     }
 
+    .items-empty {
+        padding: 1rem 0;
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.7rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+    }
+        
     .items-header {
         display: flex;
         align-items: center;
@@ -223,27 +233,58 @@
 
     .item-delete:hover { color: var(--rust-light); }
 
-    .item-add {
+        .item-add {
         display: flex;
-        gap: 0.5rem;
-        margin-top: 0.9rem;
-    }
-
-    .item-add input {
-        flex: 1;
-        min-width: 0;
+        align-items: center;
+        gap: 0.7rem;
+        margin-top: 0.5rem;
+        padding: 0.7rem 0.8rem;
         background: var(--olive-dark);
         border: 1px solid var(--khaki-dark);
         border-radius: var(--radius-sm);
-        padding: 0.4rem 0.7rem;
-        color: var(--cream);
-        font-family: 'Barlow', sans-serif;
-        font-size: 0.85rem;
-        outline: none;
+        transition: border-color 0.15s, background 0.15s;
     }
 
-    .item-add input:focus { border-color: var(--khaki); }
-    .item-add-qty { flex: 0 0 80px; }
+    .item-add:focus-within {
+        border-color: var(--khaki);
+        background: var(--olive);
+    }
+
+    .item-add-box {
+        width: 13px;
+        height: 13px;
+        border: 1px dashed var(--khaki-dark);
+        border-radius: 2px;
+        flex-shrink: 0;
+        transition: border-color 0.15s;
+    }
+
+    .item-add:focus-within .item-add-box { border-color: var(--khaki); }
+
+    .item-add input {
+        background: none;
+        border: none;
+        outline: none;
+        color: var(--cream);
+        font-family: 'Barlow', sans-serif;
+        font-size: 0.95rem;
+        padding: 0;
+    }
+
+    .item-add input::placeholder { color: var(--muted); }
+
+    .item-add-name {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .item-add-qty {
+        flex: 0 0 70px;
+        font-family: 'Share Tech Mono', monospace !important;
+        font-size: 0.78rem !important;
+        text-align: right;
+        color: var(--khaki-muted) !important;
+    }
 
     .item-add button {
         flex-shrink: 0;
@@ -251,10 +292,19 @@
         color: var(--ink);
         border: none;
         border-radius: var(--radius-sm);
-        padding: 0.4rem 0.9rem;
+        padding: 0.35rem 0.9rem;
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 0.8rem;
         font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
         cursor: pointer;
+        transition: background 0.15s;
     }
+
+    .item-add button:hover { background: var(--khaki-dark); }
+
+    .item-add input:focus { border-color: var(--khaki); }
 </style>
 {% endblock %}
 
