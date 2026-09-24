@@ -11,7 +11,17 @@ from django.views.generic import CreateView, DetailView, UpdateView, DeleteView,
 
 from taskForce.tasks.forms import CreateTaskForm, UpdateTaskForm, QuickCreateTaskForm
 from taskForce.tasks.items import ITEM_MODELS, ITEM_FORMS
-from taskForce.tasks.models import Task, TaskItem
+from taskForce.tasks.models import Task
+
+
+def get_task_and_item_model(user, task_pk):
+    task = get_object_or_404(Task.objects.visible_to(user), pk=task_pk)
+
+    item_model = ITEM_MODELS.get(task.type)
+    if item_model is None:
+        raise Http404
+
+    return task, item_model
 
 
 class CreateTaskView(LoginRequiredMixin, CreateView):
@@ -154,11 +164,7 @@ def uncomplete_task(request, pk):
 @login_required
 @require_POST
 def toggle_item(request, task_pk, item_pk):
-    task = get_object_or_404(Task.objects.visible_to(request.user), pk=task_pk)
-
-    item_model = ITEM_MODELS.get(task.type)
-    if item_model is None:
-        raise Http404
+    task, item_model = get_task_and_item_model(request.user, task_pk)
 
     item = get_object_or_404(item_model, pk=item_pk, task=task)
     item.is_done = not item.is_done
@@ -170,9 +176,8 @@ def toggle_item(request, task_pk, item_pk):
 @login_required
 @require_POST
 def delete_item(request, task_pk, item_pk):
-    task = get_object_or_404(Task.objects.visible_to(request.user), pk=task_pk)
+    task, item_model = get_task_and_item_model(request.user, task_pk)
 
-    item_model = ITEM_MODELS.get(task.type)
     if item_model is None:
         raise Http404
 
@@ -185,13 +190,11 @@ def delete_item(request, task_pk, item_pk):
 @login_required
 @require_POST
 def add_item(request, task_pk):
-    task = get_object_or_404(Task.objects.visible_to(request.user), pk=task_pk)
+    task, _ = get_task_and_item_model(request.user, task_pk)
 
     form_class = ITEM_FORMS.get(task.type)
-    if form_class is None:
-        raise Http404
-
     form = form_class(request.POST)
+
     if form.is_valid():
         item = form.save(commit=False)
         item.task = task
