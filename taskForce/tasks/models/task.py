@@ -8,7 +8,8 @@ from django.utils.translation import gettext_lazy as _
 from taskForce.accounts.models import Avatar
 from taskForce.tasks.manager import TaskManager
 
-User = get_user_model()
+
+TaskUser = get_user_model()
 
 
 class Task(models.Model):
@@ -25,7 +26,7 @@ class Task(models.Model):
     )
 
     assigned_to = models.ForeignKey(
-        to=User,
+        to=TaskUser,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -34,7 +35,7 @@ class Task(models.Model):
     )
 
     user = models.ForeignKey(
-        to=User,
+        to=TaskUser,
         on_delete=models.CASCADE,
         related_name='tasks',
         verbose_name=_('user'),
@@ -130,45 +131,3 @@ class Task(models.Model):
         verbose_name = _('task')
         verbose_name_plural = _('tasks')
         ordering = ["is_done", "-created_at"]
-
-
-class TaskItem(models.Model):
-    task = models.ForeignKey(
-        to=Task,
-        on_delete=models.CASCADE,
-        verbose_name=_('task'),
-        related_name='%(class)s',
-    )
-
-    name = models.CharField(
-        max_length=50,
-        verbose_name=_('name'),
-    )
-
-    is_done = models.BooleanField(
-        default=False,
-    )
-
-    position = models.PositiveSmallIntegerField(
-        default=0,
-    )
-
-    class Meta:
-        abstract = True
-        ordering = ["position", "pk"]
-
-    def save(self, *args, **kwargs):
-        last = self.__class__.objects.filter(task=self.task).order_by("-position").first()
-        if last:
-            self.position = last.position + 1
-        else:
-            self.position = 0
-        super().save(*args, **kwargs)
-
-
-class GroceryItem(TaskItem):
-    quantity = models.CharField(
-        max_length=50,
-        blank=True,
-        verbose_name=_("quantity")
-    )
