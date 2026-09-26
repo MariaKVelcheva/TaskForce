@@ -1,0 +1,44 @@
+<div class="items-block">
+    <div class="items-header">
+        <span class="items-title">// Trainings</span>
+        <span class="items-progress">{{ items_done }}/{{ items_total }}</span>
+    </div>
+
+    {% if items %}
+    <ul class="item-list">
+        {% for item in items %}
+        <li class="item-row {% if item.is_done %}done{% endif %}">
+            <form method="post" action="{% url 'toggle-item' task.pk item.pk %}" class="item-toggle-form">
+                {% csrf_token %}
+                <button type="submit" class="item-toggle" title="Toggle">
+                    <span class="item-box {% if item.is_done %}checked{% endif %}"></span>
+                </button>
+            </form>
+
+            <span class="item-name">{{ item.name }}</span>
+            {% if item.reps %}<span class="item-reps">{{ item.reps }}</span>{% endif %}
+        {% if item.weight %}<span class="item-weight">{{ item.weight }}</span>{% endif %}
+
+            <form method="post" action="{% url 'delete-item' task.pk item.pk %}" class="item-delete-form">
+                {% csrf_token %}
+                <button type="submit" class="item-delete" title="Remove">&times;</button>
+            </form>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <div class="items-empty">No training listed</div>
+    {% endif %}
+
+       <form method="post" action="{% url 'add-item' task.pk %}" class="item-add">
+        {% csrf_token %}
+        <span class="item-add-box"></span>
+        <input type="text" name="name" class="item-add-name"
+               placeholder="Add a drill..." maxlength="50" required autofocus>
+        <input type="text" name="reps" class="item-add-reps"
+               placeholder="Reps" maxlength="50">
+                   <input type="text" name="weight" class="item-add-weight"
+               placeholder="Weight" maxlength="50">
+        <button type="submit">Add</button>
+    </form>
+</div>

@@ -217,7 +217,7 @@
         color: var(--muted);
     }
 
-    .item-qty {
+    .item-qty, .item-reps, .item-weight {
         font-family: 'Share Tech Mono', monospace;
         font-size: 0.68rem;
         color: var(--khaki-muted);
@@ -278,7 +278,7 @@
         min-width: 0;
     }
 
-    .item-add-qty {
+    .item-add-qty, .item-add-reps, .item-add-weight {
         flex: 0 0 70px;
         font-family: 'Share Tech Mono', monospace !important;
         font-size: 0.78rem !important;
@@ -326,7 +326,7 @@
     </div>
 </div>
     {% if items is not None %}
-    {% include "common/partials/_items.html" %}
+    {% include "common/partials/partials/_supplies.html" %}
 {% endif %}
 
 <div class="detail-grid">
