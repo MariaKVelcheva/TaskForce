@@ -10,7 +10,7 @@ from django.views.decorators.http import require_POST
 from django.views.generic import CreateView, DetailView, UpdateView, DeleteView, ListView
 
 from taskForce.tasks.forms import CreateTaskForm, UpdateTaskForm, QuickCreateTaskForm
-from taskForce.tasks.items import ITEM_MODELS, ITEM_FORMS
+from taskForce.tasks.items import ITEM_MODELS, ITEM_FORMS, ITEM_PARTIALS
 from taskForce.tasks.models import Task
 
 
@@ -57,6 +57,7 @@ class DetailTaskView(LoginRequiredMixin, DetailView):
 
     def get_item_context(self):
         item_model = ITEM_MODELS.get(self.object.type)
+        item_partial = ITEM_PARTIALS.get(self.object.type)
 
         if item_model is None:
             return {"items": None}
@@ -68,6 +69,7 @@ class DetailTaskView(LoginRequiredMixin, DetailView):
             "item_form": ITEM_FORMS[self.object.type](),
             "items_done": sum(1 for item in items if item.is_done),
             "items_total": len(items),
+            "items_partial": item_partial,
         }
 
 
@@ -106,11 +108,7 @@ class CatalogueTaskView(LoginRequiredMixin, ListView):
     paginate_by = 20
 
     def get_queryset(self):
-        queryset = Task.objects.visible_to(self.request.user).annotate(
-            items_total=Count("groceryitem", distinct=True),
-            items_done=Count("groceryitem",
-                             filter=Q(groceryitem__is_done=True), distinct=True),
-        )
+        queryset = Task.objects.visible_to(self.request.user)
 
         task_type = self.request.GET.get("type")
         if task_type == "none":

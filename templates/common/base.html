@@ -56,6 +56,56 @@
             z-index: 100;
         }
 
+            .nav-left {
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+    }
+
+    .mode-switch {
+        display: flex;
+        border: 1.5px solid var(--khaki-dark);
+        margin-top: 0.3rem;
+        border-radius: var(--radius-sm);
+        overflow: hidden;
+    }
+
+    .mode-option {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.8rem;
+        font-weight: bold;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        padding: 0.28rem 0.7rem;
+        color: var(--khaki-muted);
+        text-decoration: none;
+        transition: background 0.15s, color 0.15s;
+    }
+
+    .mode-option + .mode-option {
+        border-left: 1.5px solid var(--khaki-dark);
+    }
+
+    a.mode-option:hover {
+        background: var(--olive);
+        color: var(--khaki);
+    }
+
+    .mode-option.active {
+        background: var(--khaki-dark);
+        color: var(--cream);
+    }
+
+    .mode-option.disabled {
+        color: var(--muted);
+        opacity: 0.45;
+        cursor: default;
+    }
+
+    @media (max-width: 620px) {
+        .mode-switch { display: none; }
+    }
+
         .nav-brand {
             font-family: 'Barlow Condensed', sans-serif;
             font-size: 1.4rem;
@@ -202,7 +252,6 @@
             padding: 2.5rem 1.5rem;
         }
 
-        /* PANELS */
         .panel {
             background: var(--olive-mid);
             border: 1px solid var(--khaki-dark);
@@ -221,7 +270,6 @@
             border-bottom: 1px solid var(--olive);
         }
 
-        /* FORMS */
         .form-group { margin-bottom: 1.25rem; }
 
         label {
@@ -259,7 +307,6 @@
             font-family: 'Share Tech Mono', monospace;
         }
 
-        /* BUTTONS */
         .btn {
             display: inline-block;
             font-family: 'Barlow Condensed', sans-serif;
@@ -282,7 +329,6 @@
         .btn-danger { background: transparent; color: var(--rust-light); border-color: var(--rust); }
         .btn-danger:hover { background: var(--rust); color: var(--cream); }
 
-        /* DJANGO MESSAGES */
         .messages { list-style: none; margin-bottom: 1.5rem; }
 
         .messages li {
@@ -298,7 +344,6 @@
         .messages .error   { border-color: var(--rust); background: rgba(184,92,56,0.1); color: var(--rust-light); }
         .messages .info    { border-color: var(--khaki); background: rgba(200,185,122,0.1); color: var(--khaki); }
 
-        /* FOOTER */
         footer {
             border-top: 1px solid var(--olive-mid);
             padding: 1rem 2rem;
@@ -310,7 +355,6 @@
             text-transform: uppercase;
         }
 
-        /* UTILS */
         .text-muted { color: var(--muted); }
         .text-mono  { font-family: 'Share Tech Mono', monospace; }
         .mt-1 { margin-top: 1rem; }
@@ -322,7 +366,16 @@
 <body>
 
 <nav>
-    <a href="{% url 'index' %}" class="nav-brand">Task<span>:</span> Force!</a>
+        <div class="nav-left">
+        <a href="{% url 'index' %}" class="nav-brand">Task<span>:</span> Force!</a>
+        {% if user.is_authenticated %}
+        <div class="mode-switch">
+            <a href="{% url 'home' %}"
+               class="mode-option {% if request.resolver_match.url_name == 'home' %}active{% endif %}">Debrief</a>
+            <span class="mode-option disabled" title="Not yet deployed">Deploy</span>
+        </div>
+        {% endif %}
+    </div>
     <ul class="nav-links">
         {% if user.is_authenticated %}
             <li class="nav-accordion">

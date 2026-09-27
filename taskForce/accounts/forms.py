@@ -75,5 +75,5 @@ class LoginCustomForm(AuthenticationForm):
 
     error_messages = {
         **AuthenticationForm.error_messages,
-        "invalid_login": _("Wrong credentials, operative. Check and try again."),
+        "invalid_login": _("Wrong credentials, operative. Try again."),
     }

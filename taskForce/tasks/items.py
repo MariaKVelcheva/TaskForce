@@ -3,11 +3,17 @@ from taskForce.tasks.models import GroceryItem, WorkoutItem
 
 ITEM_MODELS = {
     "groceries": GroceryItem,
-    "workouts": WorkoutItem,
+    "workout": WorkoutItem,
 }
 
 
 ITEM_FORMS = {
     "groceries": GroceryItemForm,
-    "workouts": WorkoutItemForm,
+    "workout": WorkoutItemForm,
+}
+
+
+ITEM_PARTIALS = {
+    "groceries": "tasks/partials/_supplies.html",
+    "workout": "tasks/partials/_workouts.html",
 }
