@@ -1,5 +1,8 @@
+from datetime import timedelta
+
 from django.db import models
-from django.db.models import Q
+from django.db.models import Q, F
+from django.utils import timezone
 
 
 class TaskManager(models.Manager):
@@ -10,4 +13,9 @@ class TaskManager(models.Manager):
         return self.filter(Q(user=user) | Q(unit__users=user)).distinct().select_related("unit", "assigned_to", "user")
 
 
-
+class ChoreItemManager(models.Manager):
+    def with_due_date(self):
+        return self.annotate(
+            is_due=Q(last_done_at__isnull=True)
+            | Q(last_done_at__lte=timezone.now() - F("frequency_days") * timedelta(days=1))
+        )
