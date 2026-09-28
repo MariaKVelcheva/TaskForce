@@ -62,7 +62,7 @@ class DetailTaskView(LoginRequiredMixin, DetailView):
         if item_model is None:
             return {"items": None}
 
-        items = item_model.objects.filter(task=self.object)
+        items = item_model.objects.with_due_state().filter(task=self.object)
 
         return {
             "items": items,

@@ -4,7 +4,15 @@ from taskForce.tasks.manager import ChoreItemManager
 from taskForce.tasks.models import TaskItem
 
 
-class ChoresItem(TaskItem):
+class ChoreItem(TaskItem):
+    ROOM_CHOICES = (
+        ("kitchen", "Kitchen"),
+        ("bathroom", "Bathroom"),
+        ("bedroom", "Bedroom"),
+        ("living", "Living room"),
+        ("outdoor", "Outdoor"),
+    )
+
     minutes = models.PositiveSmallIntegerField(
         null=True,
         blank=True,
@@ -13,6 +21,7 @@ class ChoresItem(TaskItem):
     room = models.CharField(
         max_length=100,
         blank=True,
+        choices=ROOM_CHOICES,
     )
 
     frequency_days = models.PositiveSmallIntegerField(
@@ -25,4 +34,5 @@ class ChoresItem(TaskItem):
         blank=True,
     )
 
-    objects = ChoreItemManager
+    objects = ChoreItemManager()
+

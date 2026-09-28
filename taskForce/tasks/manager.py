@@ -1,8 +1,7 @@
-from datetime import timedelta
-
 from django.db import models
-from django.db.models import Q, F
-from django.utils import timezone
+from django.db.models import Q, F, ExpressionWrapper, DateTimeField
+from django.db.models.functions import Now
+from datetime import timedelta
 
 
 class TaskManager(models.Manager):
@@ -13,9 +12,20 @@ class TaskManager(models.Manager):
         return self.filter(Q(user=user) | Q(unit__users=user)).distinct().select_related("unit", "assigned_to", "user")
 
 
-class ChoreItemManager(models.Manager):
-    def with_due_date(self):
+class TaskItemManager(models.Manager):
+    def with_due_state(self):
+        return self.get_queryset()
+
+
+class ChoreItemManager(TaskItemManager):
+    def with_due_state(self):
+        due_at = ExpressionWrapper(
+            F("last_done_at") + timedelta(days=1) * F("frequency_days"),
+            output_field=DateTimeField(),
+        )
         return self.annotate(
-            is_due=Q(last_done_at__isnull=True)
-            | Q(last_done_at__lte=timezone.now() - F("frequency_days") * timedelta(days=1))
+            due_at=due_at,
+        ).annotate(
+            is_due=Q(frequency_days__isnull=False)
+            & (Q(last_done_at__isnull=True) | Q(due_at__lte=Now()))
         )

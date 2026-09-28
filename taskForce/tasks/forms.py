@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
-from taskForce.tasks.models import Task, TaskItem, GroceryItem, WorkoutItem
+from taskForce.tasks.models import Task, TaskItem, GroceryItem, WorkoutItem, ChoreItem
 from taskForce.units.models import Unit
 
 
@@ -117,4 +117,22 @@ class WorkoutItemForm(forms.ModelForm):
             "reps": forms.TextInput(attrs={"placeholder": "8 reps"}),
             "weight": forms.TextInput(attrs={"placeholder": "10 kgs"})
 
+        }
+
+
+class ChoreItemForm(forms.ModelForm):
+    class Meta:
+        model = ChoreItem
+        fields = ("name", "minutes", "frequency_days", "room", )
+        labels = {
+            "name": _("Duty name"),
+            "minutes": _("Minutes"),
+            "frequency_days": _("Frequency in days"),
+            "room": _("Sector"),
+        }
+        widgets = {
+            "name": forms.TextInput(attrs={"placeholder": "Add duty..."}),
+            "minutes": forms.NumberInput(attrs={"min": 1, "max": 480}),
+            "frequency_days": forms.NumberInput(attrs={"min": 1, "max": 365}),
+            "room": forms.Select(),
         }
