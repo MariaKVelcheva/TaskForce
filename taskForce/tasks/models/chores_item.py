@@ -6,6 +6,7 @@ from taskForce.tasks.models import TaskItem
 
 class ChoreItem(TaskItem):
     ROOM_CHOICES = (
+        ("", "Section"),
         ("kitchen", "Kitchen"),
         ("bathroom", "Bathroom"),
         ("bedroom", "Bedroom"),

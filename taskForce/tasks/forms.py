@@ -134,5 +134,5 @@ class ChoreItemForm(forms.ModelForm):
             "name": forms.TextInput(attrs={"placeholder": "Add duty..."}),
             "minutes": forms.NumberInput(attrs={"min": 1, "max": 480}),
             "frequency_days": forms.NumberInput(attrs={"min": 1, "max": 365}),
-            "room": forms.Select(),
+            "room": forms.Select(attrs={"class": "item-add-room"}),
         }
