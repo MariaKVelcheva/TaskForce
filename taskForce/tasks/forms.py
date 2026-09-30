@@ -136,3 +136,5 @@ class ChoreItemForm(forms.ModelForm):
             "frequency_days": forms.NumberInput(attrs={"min": 1, "max": 365}),
             "room": forms.Select(attrs={"class": "item-add-room"}),
         }
+
+
