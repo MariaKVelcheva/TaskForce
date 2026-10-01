@@ -32,6 +32,10 @@ class TaskItem(models.Model):
         abstract = True
         ordering = ["position", "pk"]
 
+    def toggle(self):
+        self.is_done = not self.is_done
+        self.save(update_fields=['is_done'])
+
     def save(self, *args, **kwargs):
         last = self.__class__.objects.filter(task=self.task).order_by("-position").first()
         if last:

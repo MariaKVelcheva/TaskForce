@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, transaction
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
@@ -41,11 +41,34 @@ class ChoreItem(TaskItem):
         verbose_name=_("Last done at"),
     )
 
+    objects = ChoreItemManager()
+
+    def toggle(self):
+        if not self.is_recurring:
+            return super().toggle()
+
+        with transaction.atomic():
+            latest = self.completions.first()
+
+            if latest and not self.is_due:
+                latest.delete()
+                remaining = self.completions.first()
+                self.last_done_at = remaining.done_at if remaining else None
+            else:
+                completion = self.completions.create()
+                self.last_done_at = completion.done_at
+
+            self.save(update_fields=["last_done_at"])
+
     @property
     def is_recurring(self):
         return self.frequency_days is not None
 
-    objects = ChoreItemManager()
+    @property
+    def is_satisfied(self):
+        if not self.is_recurring:
+            return self.is_done
+        return not getattr(self, "is_due", True)
 
 
 class ChoreCompletion(models.Model):

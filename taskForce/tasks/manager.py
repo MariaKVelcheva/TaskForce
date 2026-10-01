@@ -1,5 +1,5 @@
 from django.db import models
-from django.db.models import Q, F, ExpressionWrapper, DateTimeField
+from django.db.models import Q, F, ExpressionWrapper, DateTimeField, Case, When, Value
 from django.db.models.functions import Now
 from datetime import timedelta
 
@@ -23,6 +23,7 @@ class ChoreItemManager(TaskItemManager):
             F("last_done_at") + timedelta(days=1) * F("frequency_days"),
             output_field=DateTimeField(),
         )
+
         return self.annotate(
             due_at=due_at,
         ).annotate(

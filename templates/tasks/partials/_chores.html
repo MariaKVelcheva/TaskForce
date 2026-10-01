@@ -7,11 +7,11 @@
     {% if items %}
     <ul class="item-list">
         {% for item in items %}
-        <li class="item-row {% if item.is_done %}done{% endif %}{% if item.is_due %} due{% endif %}">
+        <li class="item-row {% if item.is_satisfied %}done{% endif %}{% if item.is_due %} due{% endif %}">
             <form method="post" action="{% url 'toggle-item' task.pk item.pk %}" class="item-toggle-form">
                 {% csrf_token %}
                 <button type="submit" class="item-toggle" title="Toggle">
-                    <span class="item-box {% if item.is_done %}checked{% endif %}"></span>
+                    <span class="item-box {% if item.is_satisfied %}checked{% endif %}"></span>
                 </button>
             </form>
 

@@ -164,7 +164,9 @@ def uncomplete_task(request, pk):
 def toggle_item(request, task_pk, item_pk):
     task, item_model = get_task_and_item_model(request.user, task_pk)
 
-    item = get_object_or_404(item_model, pk=item_pk, task=task)
+    item = get_object_or_404(item_model.objects.with_due_state(), pk=item_pk, task=task)
+    item.toggle()
+
     item.is_done = not item.is_done
     item.save()
 
