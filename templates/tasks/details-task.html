@@ -51,7 +51,7 @@
 
     .detail-field-label {
         font-family: 'Share Tech Mono', monospace;
-        font-size: 0.65rem;
+        font-size: 0.7rem;
         letter-spacing: 0.12em;
         text-transform: uppercase;
         color: var(--muted);
@@ -165,6 +165,44 @@
         flex-direction: column;
         align-items: stretch;
         gap: 0.55rem;
+    }
+
+        .item-add-unit {
+        display: flex;
+        align-items: baseline;
+        gap: 0.3rem;
+    }
+
+            .item-add-sep {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.65rem;
+        color: var(--khaki-dark);
+        flex-shrink: 0;
+    }
+
+    .item-add-unit label {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.65rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--muted);
+        white-space: nowrap;
+    }
+
+    .item-add-num {
+        flex: 0 0 48px;
+        text-align: center;
+    }
+
+    .item-add-num::-webkit-outer-spin-button,
+    .item-add-num::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    .item-add-num {
+        -moz-appearance: textfield;
+        appearance: textfield;
     }
 
     .item-add-line {
@@ -319,10 +357,7 @@
         transition: border-color 0.15s, background 0.15s;
     }
 
-    .item-add:focus-within {
-        border-color: var(--khaki);
-        background: var(--olive);
-    }
+
 
     .item-add-box {
         width: 13px;

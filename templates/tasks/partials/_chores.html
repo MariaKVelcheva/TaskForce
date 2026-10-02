@@ -44,12 +44,29 @@
                    placeholder="Add duty..." maxlength="50" required autofocus>
             <button type="submit">Add</button>
         </div>
-        <div class="item-add-line secondary">
-            {{ item_form.room }}
-            <input type="number" name="minutes" class="item-add-num"
-                   placeholder="Min" min="1" max="480">
-            <input type="number" name="frequency_days" class="item-add-num"
-                   placeholder="Every … days" min="1" max="365">
+                      <div class="item-add-line secondary">
+            <span class="item-add-unit">
+                <label for="id_chore_minutes">takes</label>
+                <input type="number" name="minutes" id="id_chore_minutes" class="item-add-num"
+                       placeholder="—" min="1" max="480" aria-label="Minutes the duty takes">
+                <label for="id_chore_minutes">mins</label>
+            </span>
+
+            <span class="item-add-sep">·</span>
+
+            <span class="item-add-unit">
+                <label for="id_chore_frequency">repeat every</label>
+                <input type="number" name="frequency_days" id="id_chore_frequency" class="item-add-num"
+                       placeholder="—" min="1" max="365" aria-label="Repeat frequency in days">
+                <label for="id_chore_frequency">days</label>
+            </span>
+
+            <span class="item-add-sep">·</span>
+
+            <span class="item-add-unit">
+                <label for="{{ item_form.room.id_for_label }}">in</label>
+                {{ item_form.room }}
+            </span>
         </div>
     </form>
 </div>
