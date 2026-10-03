@@ -31,4 +31,8 @@ class ChoreItemManager(TaskItemManager):
         return self.annotate(due_at=self.DUE_AT).annotate(is_due=self.IS_DUE)
 
     def due(self):
-        return self.annotate(due_at=self.DUE_AT).filter(self.IS_DUE)
+        return (
+            self.annotate(due_at=self.DUE_AT)
+            .filter(self.IS_DUE)
+            .exclude(task__is_done=True)
+        )

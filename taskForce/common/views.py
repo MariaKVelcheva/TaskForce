@@ -1,9 +1,12 @@
+from datetime import timedelta
+
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth import get_user_model
 from django.db.models import Q, Exists, OuterRef, Count, F, Subquery
 from django.shortcuts import render, redirect
 from django.urls import reverse
+from django.utils import timezone
 from django.views.generic import TemplateView
 
 from taskForce.comms.models import Message, ConversationRead
@@ -25,6 +28,7 @@ class DebriefHomeView(LoginRequiredMixin, TemplateView):
     RECENT_MESSAGES = 5
     VISIBLE_UNITS = 4
     VISIBLE_TASKS = 5
+    VISIBLE_OVERDUE = 5
 
     def post(self, request, *args, **kwargs):
         form = QuickCreateTaskForm(request.POST)
@@ -47,6 +51,7 @@ class DebriefHomeView(LoginRequiredMixin, TemplateView):
         context.update(self.get_task_context())
         context.update(self.get_unit_context())
         context.update(self.get_message_context())
+        context.update(self.get_overdue_context())
 
         avatar = getattr(self.request.user, "avatar", None)
         context["points"] = avatar.points if avatar else 0
@@ -102,5 +107,14 @@ class DebriefHomeView(LoginRequiredMixin, TemplateView):
                               & ~Q(sender=user)
                 )
                 .order_by("-created_at")[:self.RECENT_MESSAGES]
+            )
+        }
+
+    def get_overdue_context(self):
+        return {
+            "overdue_tasks": (
+                Task.objects.visible_to(self.request.user)
+                .filter(is_done=False, due_date__lt=timezone.now())
+                .order_by("due_date")[:self.VISIBLE_OVERDUE]
             )
         }
