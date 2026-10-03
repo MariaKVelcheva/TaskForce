@@ -381,7 +381,10 @@
             <li class="nav-accordion">
                 <a href="{% url 'all-tasks' %}"
                    class="{% if request.resolver_match.url_name == 'all-tasks' %}active{% endif %}">
-                   Missions
+                    Missions
+                   {% if due_count %}
+                   <span class="nav-unread">{{ due_count }}</span>
+                   {% endif %}
                 </a>
                 {% if type_nav or unsorted_count %}
                 <div class="nav-dropdown">

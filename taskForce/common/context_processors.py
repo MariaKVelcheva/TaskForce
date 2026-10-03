@@ -1,6 +1,10 @@
+from datetime import timedelta
+
 from django.db.models import OuterRef, Subquery, Q, F, Count
+from django.utils import timezone
+
 from taskForce.comms.models import Message, ConversationRead
-from taskForce.tasks.models import Task
+from taskForce.tasks.models import Task, ChoreItem
 
 
 def unread_count(request):
@@ -51,6 +55,24 @@ def task_type_counts(request):
     }
 
 
+def due_count(request):
+    if not request.user.is_authenticated:
+        return {}
+
+    user = request.user
+    horizon = timezone.now() + timedelta(hours=48)
+
+    missions = Task.objects.visible_to(user).filter(
+        is_done=False,
+        due_date__isnull=False,
+        due_date__lte=horizon,
+    ).count()
+
+    chores = ChoreItem.objects.due().filter(
+        task__in=Task.objects.visible_to(user)
+    ).count()
+
+    return {"due_count": missions + chores}
 
 
 

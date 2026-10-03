@@ -57,6 +57,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 "taskForce.common.context_processors.unread_count",
                 "taskForce.common.context_processors.task_type_counts",
+                "taskForce.common.context_processors.due_count",
             ],
         },
     },

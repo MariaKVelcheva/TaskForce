@@ -18,15 +18,17 @@ class TaskItemManager(models.Manager):
 
 
 class ChoreItemManager(TaskItemManager):
-    def with_due_state(self):
-        due_at = ExpressionWrapper(
-            F("last_done_at") + timedelta(days=1) * F("frequency_days"),
-            output_field=DateTimeField(),
-        )
+    DUE_AT = ExpressionWrapper(
+        F("last_done_at") + timedelta(days=1) * F("frequency_days"),
+        output_field=DateTimeField(),
+    )
 
-        return self.annotate(
-            due_at=due_at,
-        ).annotate(
-            is_due=Q(frequency_days__isnull=False)
-            & (Q(last_done_at__isnull=True) | Q(due_at__lte=Now()))
-        )
+    IS_DUE = Q(frequency_days__isnull=False) & (
+        Q(last_done_at__isnull=True) | Q(due_at__lte=Now())
+    )
+
+    def with_due_state(self):
+        return self.annotate(due_at=self.DUE_AT).annotate(is_due=self.IS_DUE)
+
+    def due(self):
+        return self.annotate(due_at=self.DUE_AT).filter(self.IS_DUE)
