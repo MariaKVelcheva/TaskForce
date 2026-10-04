@@ -73,6 +73,10 @@ class BaseTaskForm(forms.ModelForm):
 
 
 class CreateTaskForm(BaseTaskForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["type"].choices = [("", "Standing order (Default type)")] + list(Task.TYPE_CHOICES)
+
     class Meta(BaseTaskForm.Meta):
         fields = ["name", "type", "unit", "appointed_points", "due_date"]
 

@@ -36,3 +36,4 @@ class ChoreItemManager(TaskItemManager):
             .filter(self.IS_DUE)
             .exclude(task__is_done=True)
         )
+

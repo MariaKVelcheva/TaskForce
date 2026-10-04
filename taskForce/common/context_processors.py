@@ -38,6 +38,7 @@ def task_type_counts(request):
     counts: dict[str | None, int] = dict(
         Task.objects.visible_to(request.user)
         .filter(is_done=False)
+        .order_by()
         .values_list("type")
         .annotate(total=Count("pk", distinct=True))
     )
