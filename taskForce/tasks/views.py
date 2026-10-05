@@ -167,9 +167,6 @@ def toggle_item(request, task_pk, item_pk):
     item = get_object_or_404(item_model.objects.with_due_state(), pk=item_pk, task=task)
     item.toggle()
 
-    item.is_done = not item.is_done
-    item.save()
-
     return redirect("details-task", pk=task.pk)
 
 

@@ -37,9 +37,7 @@ class TaskItem(models.Model):
         self.save(update_fields=['is_done'])
 
     def save(self, *args, **kwargs):
-        last = self.__class__.objects.filter(task=self.task).order_by("-position").first()
-        if last:
-            self.position = last.position + 1
-        else:
-            self.position = 0
+        if not self.pk:
+            last = self.__class__.objects.filter(task=self.task).order_by("-position").first()
+            self.position = (last.position + 1) if last else 0
         super().save(*args, **kwargs)

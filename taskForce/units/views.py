@@ -1,13 +1,11 @@
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import Http404
-from django.shortcuts import render, redirect
+from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, UpdateView, DeleteView, DetailView, ListView, FormView
 from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
-from taskForce.units.forms import CreateUnitForm, JoinUnitForm, RenameUnitForm
+from taskForce.units.forms import CreateUnitForm, JoinUnitForm, RenameUnitForm, ChangeCommanderForm
 from taskForce.units.models import Unit, Membership
 
 TaskUser = get_user_model()
@@ -130,3 +128,12 @@ class JoinUnitView(LoginRequiredMixin, FormView):
             messages.info(self.request, _("You are already a member of this unit."))
 
         return redirect("details-unit", pk=unit.pk)
+
+
+class ChangeCommanderView(LoginRequiredMixin, UpdateView):
+    model = Membership
+    form_class = ChangeCommanderForm
+    template_name = "units/change-commander.html"
+
+    def get_object(self, queryset=None):
+        pass

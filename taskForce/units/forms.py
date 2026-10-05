@@ -1,7 +1,7 @@
 from django import forms
 from django.utils.translation import gettext_lazy as _
 
-from taskForce.units.models import Unit
+from taskForce.units.models import Unit, Membership
 
 
 class BaseUnitForm(forms.ModelForm):
@@ -41,3 +41,9 @@ class JoinUnitForm(forms.Form):
             raise forms.ValidationError(_("No unit matches this clearance code."))
 
         return code
+
+
+class ChangeCommanderForm(forms.ModelForm):
+    class Meta:
+        model = Membership
+        fields = ("role", )
