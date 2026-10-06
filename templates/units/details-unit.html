@@ -212,7 +212,7 @@
     <div>
         <h1 class="detail-title">{{ unit.name }}</h1>
         <p style="font-family: 'Share Tech Mono', monospace; font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-top: 0.4rem;">
-            {{ member_count }} operative{{ member_count|pluralize }}
+            {{ memberships|length }} operative{{ memberships|length|pluralize }}
         </p>
     </div>
     <div class="detail-actions">
@@ -222,13 +222,50 @@
         {% endif %}
     </div>
 </div>
-
 <div class="section-label">// Operatives</div>
 <div class="member-list">
     {% for membership in memberships %}
     <div class="member-row">
-        <span class="member-name">{{ membership.user.username }}</span>
-        <span class="member-role {{ membership.role }}">{{ membership.role }}</span>
+        <span class="member-name">
+            {{ membership.user.username }}
+            {% if membership.user == request.user %}<span class="member-you">you</span>{% endif %}
+        </span>
+
+        <div class="member-controls">
+            <span class="member-role {{ membership.role }}">{{ membership.get_role_display }}</span>
+
+            {% if is_commander %}
+                {% if membership.role == "commander" %}
+                    {% if commander_count > 1 %}
+                    <form method="post" action="{% url 'change-role' unit.pk membership.pk %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="role" value="operative">
+                        <button type="submit" class="member-btn">Demote</button>
+                    </form>
+                    {% endif %}
+                {% else %}
+                <form method="post" action="{% url 'change-role' unit.pk membership.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="role" value="commander">
+                    <button type="submit" class="member-btn">Promote</button>
+                </form>
+                {% endif %}
+
+                {% if membership.user != request.user %}
+                <form method="post" action="{% url 'remove-member' unit.pk membership.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="member-btn danger" title="Remove from unit">&times;</button>
+                </form>
+                {% endif %}
+            {% endif %}
+
+            {% if membership.user == request.user and commander_count > 1 or membership.user == request.user and not is_commander %}
+            <form method="post" action="{% url 'leave-unit' unit.pk %}">
+                {% csrf_token %}
+                <button type="submit" class="member-btn danger">Leave</button>
+            </form>
+            {% endif %}
+        </div>
     </div>
     {% endfor %}
 </div>

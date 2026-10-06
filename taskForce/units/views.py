@@ -78,12 +78,9 @@ class DetailUnitView(LoginRequiredMixin, DetailView):
         if context["is_commander"]:
             context["invite_url"] = self.object.get_invite_url(self.request)
 
-        context["tasks"] = tasks
-        context["unit"] = unit
         context["memberships"] = memberships
-        context["memberships_count"] = memberships.count()
         context["active_tasks"] = tasks.filter(is_done=False)
-        context["finished_tasks"] = tasks.filter(is_done=False)
+        context["finished_tasks"] = tasks.filter(is_done=True)
 
         return context
 
