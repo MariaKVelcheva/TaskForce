@@ -88,7 +88,12 @@ class Membership(models.Model):
         verbose_name_plural = _('memberships')
         constraints = [
             models.UniqueConstraint(
-                fields=['user', 'unit'],
-                name='unique_membership',
-            )
+                fields=["user", "unit"],
+                name="unique_membership",
+            ),
+            models.UniqueConstraint(
+                fields=["unit"],
+                condition=models.Q(role="commander"),
+                name="unique_commander_per_unit",
+            ),
         ]

@@ -1,7 +1,10 @@
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.shortcuts import redirect
+from django.core.exceptions import PermissionDenied
+from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse_lazy
+from django.views.decorators.http import require_POST
 from django.views.generic import CreateView, UpdateView, DeleteView, DetailView, ListView, FormView
 from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
@@ -70,14 +73,12 @@ class DetailUnitView(LoginRequiredMixin, DetailView):
         tasks = unit.tasks.all()
         memberships = unit.memberships.select_related("user").order_by("role", "user__username")
 
-        context["is_commander"] = self.object.memberships.filter(
-            user=self.request.user,
-            role="commander"
-        ).exists()
+        is_commander = any(
+            m.role == "commander" and m.user == self.request.user for m in memberships
+        )
 
-        if context["is_commander"]:
-            context["invite_url"] = self.object.get_invite_url(self.request)
-
+        context["is_commander"] = is_commander
+        context["can_leave"] = not is_commander
         context["memberships"] = memberships
         context["active_tasks"] = tasks.filter(is_done=False)
         context["finished_tasks"] = tasks.filter(is_done=True)
@@ -134,3 +135,18 @@ class ChangeCommanderView(LoginRequiredMixin, UpdateView):
 
     def get_object(self, queryset=None):
         pass
+
+
+@login_required
+@require_POST
+def leave_unit(request, unit_pk):
+    unit = get_object_or_404(
+        Unit.objects.filter(memberships__user=request.user), pk=unit_pk
+    )
+
+    if unit.memberships.filter(user=request.user, role="commander").exists():
+        raise PermissionDenied
+
+    unit.memberships.filter(user=request.user).delete()
+
+    return redirect("all-units")

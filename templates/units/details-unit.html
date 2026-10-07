@@ -4,6 +4,79 @@
 
 {% block extra_css %}
 <style>
+    .member-controls {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-shrink: 0;
+    }
+
+    .member-controls form {
+        display: flex;
+    }
+
+    .member-you {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.6rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-left: 0.5rem;
+    }
+
+    .member-btn {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.62rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        background: transparent;
+        border: 1px solid var(--khaki-dark);
+        border-radius: var(--radius-sm);
+        color: var(--khaki-muted);
+        padding: 0.2rem 0.6rem;
+        cursor: pointer;
+        transition: border-color 0.15s, color 0.15s;
+    }
+
+    .member-btn:hover {
+        border-color: var(--khaki);
+        color: var(--khaki);
+    }
+
+    .member-btn.danger:hover {
+        border-color: var(--rust-light);
+        color: var(--rust-light);
+    }
+
+    .member-name {
+        flex: 1;
+        min-width: 0;
+        font-size: 0.92rem;
+        color: var(--cream);
+    }
+    
+        .member-note {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.6rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--muted);
+        padding: 0.2rem 0.5rem;
+        border: 1px dashed var(--khaki-dark);
+        border-radius: var(--radius-sm);
+        cursor: default;
+    }
+
+    .member-hint {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.65rem;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+        margin: -1.5rem 0 2rem;
+        padding-left: 0.2rem;
+        line-height: 1.5;
+    }
+
     .chat-icon {
         font-size: 0.95rem;
         text-decoration: none;
@@ -259,12 +332,16 @@
                 {% endif %}
             {% endif %}
 
-            {% if membership.user == request.user and commander_count > 1 or membership.user == request.user and not is_commander %}
+{% if membership.user == request.user %}
+                {% if can_leave %}
             <form method="post" action="{% url 'leave-unit' unit.pk %}">
                 {% csrf_token %}
                 <button type="submit" class="member-btn danger">Leave</button>
             </form>
+                {% else %}
+                <p class="member-hint">You hold command of this unit. Transfer command to another operative before standing down.</p>
             {% endif %}
+        {% endif %}
         </div>
     </div>
     {% endfor %}
