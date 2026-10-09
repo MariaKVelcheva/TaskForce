@@ -2,12 +2,15 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
+from django.db import transaction
 from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse_lazy
 from django.views.decorators.http import require_POST
 from django.views.generic import CreateView, UpdateView, DeleteView, DetailView, ListView, FormView
 from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
+
+from taskForce.tasks.models import Task
 from taskForce.units.forms import CreateUnitForm, JoinUnitForm, RenameUnitForm, ChangeCommanderForm
 from taskForce.units.models import Unit, Membership
 
@@ -128,13 +131,52 @@ class JoinUnitView(LoginRequiredMixin, FormView):
         return redirect("details-unit", pk=unit.pk)
 
 
-class ChangeCommanderView(LoginRequiredMixin, UpdateView):
-    model = Membership
-    form_class = ChangeCommanderForm
-    template_name = "units/change-commander.html"
+@login_required
+@require_POST
+def remove_member(request, pk, membership_pk):
+    unit = get_object_or_404(Unit.objects.filter(
+        memberships__user=request.user,
+        memberships__role="commander",
+    ), pk=pk)
 
-    def get_object(self, queryset=None):
-        pass
+    membership = get_object_or_404(
+        unit.memberships, pk=membership_pk
+    )
+
+    if membership.user == request.user:
+        messages.info(request, "Use Leave to stand down from a unit.")
+        return redirect("details-unit", pk=unit.pk)
+
+    with transaction.atomic():
+        Task.objects.filter(unit=unit, assigned_to=membership.user).update(assigned_to=None)
+        membership.delete()
+
+    return redirect("details-unit", pk=unit.pk)
+
+
+@login_required
+@require_POST
+def transfer_command(request, pk, membership_pk):
+    commander = request.user
+
+    unit = get_object_or_404(
+        Unit.objects.filter(
+                            memberships__user=commander,
+                            memberships__role="commander"),
+        pk=pk,
+    )
+
+    membership = get_object_or_404(
+        unit.memberships, pk=membership_pk,
+
+    )
+
+    with transaction.atomic():
+        unit.memberships.filter(role="commander").update(role="operative")
+        membership.role = "commander"
+        membership.save(update_fields=["role"])
+
+    return redirect("details-unit", pk=unit.pk)
 
 
 @login_required
@@ -147,6 +189,12 @@ def leave_unit(request, unit_pk):
     if unit.memberships.filter(user=request.user, role="commander").exists():
         raise PermissionDenied
 
-    unit.memberships.filter(user=request.user).delete()
+    with transaction.atomic():
+        Task.objects.filter(
+            unit=unit,
+            assigned_to=request.user,
+            is_done=False,
+        ).update(assigned_to=None)
+        unit.memberships.filter(user=request.user).delete()
 
     return redirect("all-units")

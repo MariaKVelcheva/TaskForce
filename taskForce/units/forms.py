@@ -46,4 +46,4 @@ class JoinUnitForm(forms.Form):
 class ChangeCommanderForm(forms.ModelForm):
     class Meta:
         model = Membership
-        fields = ("role", )
+        fields = ("role",)
