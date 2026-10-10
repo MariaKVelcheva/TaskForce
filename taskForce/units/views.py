@@ -181,9 +181,9 @@ def transfer_command(request, pk, membership_pk):
 
 @login_required
 @require_POST
-def leave_unit(request, unit_pk):
+def leave_unit(request, pk):
     unit = get_object_or_404(
-        Unit.objects.filter(memberships__user=request.user), pk=unit_pk
+        Unit.objects.filter(memberships__user=request.user), pk=pk
     )
 
     if unit.memberships.filter(user=request.user, role="commander").exists():

@@ -310,14 +310,14 @@
             {% if is_commander %}
                 {% if membership.role == "commander" %}
                     {% if commander_count > 1 %}
-                    <form method="post" action="{% url 'change-role' unit.pk membership.pk %}">
+                    <form method="post" action="{% url 'transfer-command' unit.pk membership.pk %}">
                         {% csrf_token %}
                         <input type="hidden" name="role" value="operative">
                         <button type="submit" class="member-btn">Demote</button>
                     </form>
                     {% endif %}
                 {% else %}
-                <form method="post" action="{% url 'change-role' unit.pk membership.pk %}">
+                <form method="post" action="{% url 'transfer-command' unit.pk membership.pk %}">
                     {% csrf_token %}
                     <input type="hidden" name="role" value="commander">
                     <button type="submit" class="member-btn">Promote</button>
