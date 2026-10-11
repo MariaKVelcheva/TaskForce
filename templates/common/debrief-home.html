@@ -359,12 +359,20 @@
         .overdue-section {
         border-color: var(--rust-light);
     }
+        
+    .due-section {
+        border-color: var(--rust-light);
+    }
 
     .overdue-section .section-title {
         color: var(--rust-light);
     }
+    
+        .due-section .section-title {
+        color: var(--rust-light);
+    }
 
-    .overdue-item {
+    .over-due-item {
         display: flex;
         align-items: center;
         gap: 0.75rem;
@@ -374,11 +382,11 @@
         transition: color 0.15s;
     }
 
-    .overdue-item:last-child { border-bottom: none; }
+    .over-due-item:last-child { border-bottom: none; }
 
-    .overdue-item:hover .overdue-name { color: var(--khaki); }
+    .over-due-item:hover .over-due-name { color: var(--khaki); }
 
-    .overdue-marker {
+    .over-due-marker {
         width: 8px;
         height: 8px;
         border-radius: 50%;
@@ -386,7 +394,7 @@
         flex-shrink: 0;
     }
 
-    .overdue-name {
+    .over-due-name {
         flex: 1;
         min-width: 0;
         font-size: 0.88rem;
@@ -397,7 +405,7 @@
         transition: color 0.15s;
     }
 
-    .overdue-type {
+    .over-due-type {
         font-family: 'Share Tech Mono', monospace;
         font-size: 0.62rem;
         letter-spacing: 0.08em;
@@ -409,7 +417,7 @@
         flex-shrink: 0;
     }
 
-    .overdue-late {
+    .over-due-late {
         font-family: 'Share Tech Mono', monospace;
         font-size: 0.65rem;
         letter-spacing: 0.06em;
@@ -513,6 +521,24 @@
         {% endif %}
     </div>
 
+    {% if due_tasks %}
+    <div class="dashboard-section due-section" style="grid-column: 1 / -1;">
+        <div class="section-header">
+            <span class="section-title">// Due soon</span>
+            <a href="{% url 'all-tasks' %}" class="section-link">Mission log →</a>
+        </div>
+
+        {% for task in due_tasks %}
+        <a href="{% url 'details-task' task.pk %}" class="over-due-item">
+            <div class="over-due-marker"></div>
+            <span class="over-due-name">{{ task.name }}</span>
+            {% if task.type %}<span class="over-due-type">{{ task.get_type_display }}</span>{% endif %}
+            <span class="due-time">in {{ task.due_date|timeuntil }}</span>
+        </a>
+        {% endfor %}
+    </div>
+    {% endif %}
+
     {% if overdue_tasks %}
     <div class="dashboard-section overdue-section" style="grid-column: 1 / -1;">
         <div class="section-header">
@@ -521,15 +547,16 @@
         </div>
 
         {% for task in overdue_tasks %}
-        <a href="{% url 'details-task' task.pk %}" class="overdue-item">
-            <div class="overdue-marker"></div>
-            <span class="overdue-name">{{ task.name }}</span>
-            {% if task.type %}<span class="overdue-type">{{ task.get_type_display }}</span>{% endif %}
-            <span class="overdue-late">{{ task.due_date|timesince }} late</span>
+        <a href="{% url 'details-task' task.pk %}" class="over-due-item">
+            <div class="over-due-marker"></div>
+            <span class="over-due-name">{{ task.name }}</span>
+            {% if task.type %}<span class="over-due-type">{{ task.get_type_display }}</span>{% endif %}
+            <span class="over-due-late">{{ task.due_date|timesince }} late</span>
         </a>
         {% endfor %}
     </div>
     {% endif %}
+
 
     <div class="dashboard-section" style="grid-column: 1 / -1;">
         <div class="section-header">

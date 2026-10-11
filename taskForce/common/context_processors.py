@@ -35,45 +35,36 @@ def task_type_counts(request):
     if not request.user.is_authenticated:
         return {}
 
+    visible_tasks = Task.objects.visible_to(request.user)
+
     counts: dict[str | None, int] = dict(
-        Task.objects.visible_to(request.user)
+        visible_tasks
         .filter(is_done=False)
         .order_by()
         .values_list("type")
         .annotate(total=Count("pk", distinct=True))
     )
 
+    due_types = set(
+        ChoreItem.objects.due()
+        .filter(task__in=visible_tasks, task__is_done=False)
+        .values_list("task__type", flat=True)
+    )
+
     labels = dict(Task.TYPE_CHOICES)
 
     type_nav = [
-        {"value": value, "label": labels[value], "count": counts[value]}
+        {
+            "value": value,
+            "label": labels[value],
+            "count": counts[value],
+            "attention": value in due_types,
+        }
         for value in labels if counts.get(value)
     ]
 
     return {
         "type_nav": type_nav,
         "unsorted_count": counts.get(None, 0),
+        "any_attention": bool(due_types),
     }
-
-
-def due_count(request):
-    if not request.user.is_authenticated:
-        return {}
-
-    user = request.user
-    horizon = timezone.now() + timedelta(hours=48)
-
-    missions = Task.objects.visible_to(user).filter(
-        is_done=False,
-        due_date__isnull=False,
-        due_date__lte=horizon,
-    ).count()
-
-    chores = ChoreItem.objects.due().filter(
-        task__in=Task.objects.visible_to(user)
-    ).count()
-
-    return {"due_count": missions + chores}
-
-
-

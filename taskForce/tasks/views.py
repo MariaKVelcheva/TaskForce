@@ -11,7 +11,7 @@ from django.views.generic import CreateView, DetailView, UpdateView, DeleteView,
 
 from taskForce.tasks.forms import CreateTaskForm, UpdateTaskForm, QuickCreateTaskForm
 from taskForce.tasks.items import ITEM_MODELS, ITEM_FORMS, ITEM_PARTIALS
-from taskForce.tasks.models import Task
+from taskForce.tasks.models import Task, ChoreItem
 
 
 def get_task_and_item_model(user, task_pk):
@@ -108,7 +108,11 @@ class CatalogueTaskView(LoginRequiredMixin, ListView):
     paginate_by = 20
 
     def get_queryset(self):
-        queryset = Task.objects.visible_to(self.request.user)
+        due_chore_tasks = ChoreItem.objects.due().values_list("task_id", flat=True)
+
+        queryset = Task.objects.visible_to(self.request.user).annotate(
+            needs_attention=Q(pk__in=due_chore_tasks)
+        )
 
         task_type = self.request.GET.get("type")
         if task_type == "none":

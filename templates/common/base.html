@@ -17,7 +17,7 @@
             --olive-dark:   #2e3228;
             --olive-mid:    #3a4030;
             --rust:         #b85c38;
-            --rust-light:   #d4704a;
+            --rust-light: #d3ae4e;
             --cream:        #f0e8d0;
             --cream-dark:   #d8ceb0;
             --ink:          #1a1c18;
@@ -206,6 +206,11 @@
         font-size: 0.62rem;
         color: var(--muted);
     }
+    
+        .nav-attention {
+        color: var(--rust-light);
+        font-weight: 700;
+    }
 
         .nav-unread {
             display: inline-flex;
@@ -381,16 +386,13 @@
             <li class="nav-accordion">
                 <a href="{% url 'all-tasks' %}"
                    class="{% if request.resolver_match.url_name == 'all-tasks' %}active{% endif %}">
-                    Missions
-                   {% if due_count %}
-                   <span class="nav-unread">{{ due_count }}</span>
-                   {% endif %}
+                   Missions{% if any_attention %} <span class="nav-attention">!</span>{% endif %}
                 </a>
                 {% if type_nav or unsorted_count %}
                 <div class="nav-dropdown">
                     {% for entry in type_nav %}
                     <a href="{% url 'all-tasks' %}?type={{ entry.value }}" class="nav-dropdown-link">
-                        <span>{{ entry.label }}</span>
+                        <span>{{ entry.label }}{% if entry.attention %} <span class="nav-attention">!</span>{% endif %}</span>
                         <span class="nav-dropdown-count">{{ entry.count }}</span>
                     </a>
                     {% endfor %}

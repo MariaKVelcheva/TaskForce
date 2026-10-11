@@ -28,7 +28,7 @@ class DebriefHomeView(LoginRequiredMixin, TemplateView):
     RECENT_MESSAGES = 5
     VISIBLE_UNITS = 4
     VISIBLE_TASKS = 5
-    VISIBLE_OVERDUE = 5
+    VISIBLE_OVER_DUE = 5
 
     def post(self, request, *args, **kwargs):
         form = QuickCreateTaskForm(request.POST)
@@ -52,6 +52,7 @@ class DebriefHomeView(LoginRequiredMixin, TemplateView):
         context.update(self.get_unit_context())
         context.update(self.get_message_context())
         context.update(self.get_overdue_context())
+        context.update(self.get_soon_due_context())
 
         avatar = getattr(self.request.user, "avatar", None)
         context["points"] = avatar.points if avatar else 0
@@ -115,6 +116,14 @@ class DebriefHomeView(LoginRequiredMixin, TemplateView):
             "overdue_tasks": (
                 Task.objects.visible_to(self.request.user)
                 .filter(is_done=False, due_date__lt=timezone.now())
-                .order_by("due_date")[:self.VISIBLE_OVERDUE]
+                .order_by("due_date")[:self.VISIBLE_OVER_DUE]
             )
         }
+
+    def get_soon_due_context(self):
+        horizon = timezone.now() + timedelta(days=2)
+        due_tasks = (Task.objects.visible_to(self.request.user)
+                     .filter(is_done=False, due_date__gte=timezone.now(), due_date__lte=horizon)
+                     .order_by("due_date")[:self.VISIBLE_OVER_DUE]
+                     )
+        return {"due_tasks": due_tasks}
