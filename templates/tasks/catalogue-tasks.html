@@ -152,7 +152,7 @@
 
         .task-seal {
         font-family: 'Share Tech Mono', monospace;
-        font-size: 0.58rem;
+        font-size: 1rem;
         letter-spacing: 0.12em;
         text-transform: uppercase;
         padding: 0.15rem 0.5rem;
@@ -280,10 +280,11 @@
             <span class="task-name">{{ task.name }}</span>
             <div class="task-meta">
                 {% if task.type %}
-                <span class="task-tag">{{ task.get_type_display }}</span>
-                                    {% if task.needs_attention %}
+                                                        {% if task.needs_attention %}
                 <span class="task-seal">Requires attention</span>
                 {% endif %}
+                <span class="task-tag">{{ task.get_type_display }}</span>
+
                 {% endif %}
                 {% if task.unit %}
                 <span class="task-tag">{{ task.unit.name }}</span>
