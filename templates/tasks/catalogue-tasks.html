@@ -280,7 +280,7 @@
             <span class="task-name">{{ task.name }}</span>
             <div class="task-meta">
                 {% if task.type %}
-                                                        {% if task.needs_attention %}
+                    {% if task.needs_attention %}
                 <span class="task-seal">Requires attention</span>
                 {% endif %}
                 <span class="task-tag">{{ task.get_type_display }}</span>
