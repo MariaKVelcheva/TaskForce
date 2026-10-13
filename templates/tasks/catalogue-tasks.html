@@ -264,6 +264,13 @@
         <a href="{% querystring type='none' page=None %}"
            class="filter-chip {% if active_type == 'none' %}active{% endif %}">Standing orders</a>
     </div>
+    <div class="filter-group">
+        <span class="filter-label">Sort</span>
+        {% for value, label in sort_options %}
+        <a href="{% querystring order=value page=None %}"
+           class="filter-chip {% if active_order == value %}active{% endif %}">{{ label }}</a>
+        {% endfor %}
+    </div>
     {% if show_all %}
     <a href="{% querystring show=None page=None %}" class="filter-chip">Hide accomplished</a>
     {% else %}

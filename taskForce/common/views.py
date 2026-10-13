@@ -12,7 +12,7 @@ from django.views.generic import TemplateView
 from taskForce.comms.models import Message, ConversationRead
 from taskForce.tasks.forms import QuickCreateTaskForm
 from taskForce.tasks.items import ITEM_MODELS
-from taskForce.tasks.models import Task
+from taskForce.tasks.models import Task, TaskItem, ChoreItem
 from taskForce.units.models import Unit
 
 TaskUser = get_user_model()
@@ -112,11 +112,15 @@ class DebriefHomeView(LoginRequiredMixin, TemplateView):
         }
 
     def get_overdue_context(self):
+        due_chore_tasks = ChoreItem.objects.due().values_list("task_id", flat=True)
+        query = (Q(is_done=False) & Q(due_date__lt=timezone.now())) | Q(id__in=due_chore_tasks)
+
         return {
             "overdue_tasks": (
                 Task.objects.visible_to(self.request.user)
-                .filter(is_done=False, due_date__lt=timezone.now())
-                .order_by("due_date")[:self.VISIBLE_OVER_DUE]
+                .filter(query)
+                .annotate(has_due_duties=Q(pk__in=due_chore_tasks))
+                .order_by(F("due_date").asc(nulls_last=True))[:self.VISIBLE_OVER_DUE]
             )
         }
 

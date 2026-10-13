@@ -560,7 +560,11 @@
             <div class="over-due-marker"></div>
             <span class="over-due-name">{{ task.name }}</span>
             {% if task.type %}<span class="over-due-type">{{ task.get_type_display }}</span>{% endif %}
-            <span class="over-due-late">{{ task.due_date|timesince }} late</span>
+                        {% if task.due_date %}
+            <span class="overdue-late">{{ task.due_date|timesince }} late</span>
+            {% elif task.has_due_duties %}
+            <span class="overdue-late">duties due</span>
+            {% endif %}
         </a>
         {% endfor %}
     </div>

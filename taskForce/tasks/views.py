@@ -2,9 +2,9 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
-from django.db.models import Count, Q
+from django.db.models import Count, Q, F
 from django.http import Http404
-from django.shortcuts import redirect, get_object_or_404
+from django.shortcuts import redirect, get_object_or_404, render
 from django.urls import reverse_lazy
 from django.views.decorators.http import require_POST
 from django.views.generic import CreateView, DetailView, UpdateView, DeleteView, ListView
@@ -12,6 +12,25 @@ from django.views.generic import CreateView, DetailView, UpdateView, DeleteView,
 from taskForce.tasks.forms import CreateTaskForm, UpdateTaskForm, QuickCreateTaskForm
 from taskForce.tasks.items import ITEM_MODELS, ITEM_FORMS, ITEM_PARTIALS
 from taskForce.tasks.models import Task, ChoreItem
+
+
+def get_item_context(task):
+    item_model = ITEM_MODELS.get(task.type)
+    item_partial = ITEM_PARTIALS.get(task.type)
+
+    if item_model is None:
+        return {"items": None}
+
+    items = list(item_model.objects.with_due_state().filter(task=task))
+
+    return {
+        "items": items,
+        "item_form": ITEM_FORMS[task.type](),
+        "items_done": sum(1 for item in items if item.is_done),
+        "items_total": len(items),
+        "item_partial": item_partial,
+        "task": task,
+    }
 
 
 def get_task_and_item_model(user, task_pk):
@@ -52,25 +71,8 @@ class DetailTaskView(LoginRequiredMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context.update(self.get_item_context())
+        context.update(get_item_context(self.object))
         return context
-
-    def get_item_context(self):
-        item_model = ITEM_MODELS.get(self.object.type)
-        item_partial = ITEM_PARTIALS.get(self.object.type)
-
-        if item_model is None:
-            return {"items": None}
-
-        items = item_model.objects.with_due_state().filter(task=self.object)
-
-        return {
-            "items": items,
-            "item_form": ITEM_FORMS[self.object.type](),
-            "items_done": sum(1 for item in items if item.is_done),
-            "items_total": len(items),
-            "items_partial": item_partial,
-        }
 
 
 class UpdateTaskView(LoginRequiredMixin, UpdateView):
@@ -79,7 +81,7 @@ class UpdateTaskView(LoginRequiredMixin, UpdateView):
     template_name = "tasks/update-task.html"
 
     def get_queryset(self):
-        return Task.objects.filter(user=self.request.user)
+        return Task.objects.filter(user=self.request.user, is_done=False)
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -102,6 +104,13 @@ class DeleteTaskView(LoginRequiredMixin, DeleteView):
 
 
 class CatalogueTaskView(LoginRequiredMixin, ListView):
+    ORDERINGS = {
+        "points": ["-appointed_points", "-created_at"],
+        "due": [F("due_date").asc(nulls_last=True), "-created_at"],
+        "name": ["name"],
+        "newest": ["is_done", "-created_at"],
+    }
+
     model = Task
     template_name = "tasks/catalogue-tasks.html"
     context_object_name = "tasks"
@@ -123,7 +132,10 @@ class CatalogueTaskView(LoginRequiredMixin, ListView):
         if self.request.GET.get("show") != "all":
             queryset = queryset.filter(is_done=False)
 
-        return queryset
+        ordering = self.ORDERINGS.get(
+            self.request.GET.get("order"), self.ORDERINGS["newest"]
+        )
+        return queryset.order_by(*ordering)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -135,6 +147,7 @@ class CatalogueTaskView(LoginRequiredMixin, ListView):
             "type_choices": Task.TYPE_CHOICES,
             "active_type": self.request.GET.get("type", ""),
             "show_all": self.request.GET.get("show") == "all",
+            "active_order": self.request.GET.get("order", "newest"),
         }
 
 
@@ -171,6 +184,10 @@ def toggle_item(request, task_pk, item_pk):
     item = get_object_or_404(item_model.objects.with_due_state(), pk=item_pk, task=task)
     item.toggle()
 
+    if request.headers.get("x-requested-with") == "fetch":
+        context = get_item_context(task)
+        return render(request, context["item_partial"], context)
+
     return redirect("details-task", pk=task.pk)
 
 
@@ -184,6 +201,10 @@ def delete_item(request, task_pk, item_pk):
 
     item = get_object_or_404(item_model, pk=item_pk, task=task)
     item.delete()
+
+    if request.headers.get("x-requested-with") == "fetch":
+        context = get_item_context(task)
+        return render(request, context["item_partial"], context)
 
     return redirect("details-task", pk=task.pk)
 
@@ -203,6 +224,10 @@ def add_item(request, task_pk):
     else:
         for error in form.errors.values():
             messages.error(request, error[0])
+
+    if request.headers.get("x-requested-with") == "fetch":
+        context = get_item_context(task)
+        return render(request, context["item_partial"], context)
 
     return redirect("details-task", pk=task.pk)
 
