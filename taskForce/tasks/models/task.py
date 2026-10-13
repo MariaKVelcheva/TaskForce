@@ -20,9 +20,19 @@ class Task(models.Model):
         ("list", "List"),
     )
 
+    PRIORITY_CHOICES = (
+        (1, "Critical"),
+        (2, "High"),
+        (3, "Routine"),
+    )
+
     name = models.CharField(
         _("name"),
         max_length=100,
+    )
+
+    priority = models.PositiveSmallIntegerField(
+        choices=PRIORITY_CHOICES, default=3,
     )
 
     assigned_to = models.ForeignKey(

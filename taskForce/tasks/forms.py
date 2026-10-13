@@ -32,7 +32,7 @@ class BaseTaskForm(forms.ModelForm):
 
     class Meta:
         model = Task
-        fields = ["name", "type", "unit", "assigned_to", "appointed_points", "due_date", "is_done"]
+        fields = ["name", "type", "priority", "unit", "assigned_to", "appointed_points", "due_date", "is_done"]
 
         labels = {
             "name": "Mission name",
@@ -42,6 +42,7 @@ class BaseTaskForm(forms.ModelForm):
             "unit": "Unit",
             "appointed_points": "Intel points",
             "due_date": "Due date",
+            "priority": "Priority",
         }
 
         widgets = {
@@ -50,6 +51,9 @@ class BaseTaskForm(forms.ModelForm):
                 "autofocus": True,
             }),
             "type": forms.Select(attrs={
+                "class": "select-field",
+            }),
+            "priority": forms.Select(attrs={
                 "class": "select-field",
             }),
             "unit": forms.Select(attrs={
@@ -84,7 +88,7 @@ class CreateTaskForm(BaseTaskForm):
 class QuickCreateTaskForm(forms.ModelForm):
     class Meta:
         model = Task
-        fields = ("name", "type", )
+        fields = ("name", "type", "priority")
 
 
 class UpdateTaskForm(BaseTaskForm):

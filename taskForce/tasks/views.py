@@ -104,7 +104,16 @@ class DeleteTaskView(LoginRequiredMixin, DeleteView):
 
 
 class CatalogueTaskView(LoginRequiredMixin, ListView):
+    SORT_OPTIONS = [
+        ("newest", "Newest"),
+        ("due", "Due date"),
+        ("priority", "Priority"),
+        ("points", "Points"),
+        ("name", "Name"),
+    ]
+
     ORDERINGS = {
+        "priority": ["priority", ],
         "points": ["-appointed_points", "-created_at"],
         "due": [F("due_date").asc(nulls_last=True), "-created_at"],
         "name": ["name"],
@@ -135,6 +144,15 @@ class CatalogueTaskView(LoginRequiredMixin, ListView):
         ordering = self.ORDERINGS.get(
             self.request.GET.get("order"), self.ORDERINGS["newest"]
         )
+
+        search = self.request.GET.get("q", "").strip()
+        if search:
+            queryset = queryset.filter(
+                Q(name__icontains=search)
+                | Q(unit__name__icontains=search)
+                | Q(assigned_to__username__icontains=search)
+            )
+
         return queryset.order_by(*ordering)
 
     def get_context_data(self, **kwargs):

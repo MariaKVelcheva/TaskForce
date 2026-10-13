@@ -74,6 +74,16 @@
         gap: 0.6rem;
     }
 
+        .task-tag.priority-1 {
+        color: var(--rust-light);
+        border-color: var(--rust-light);
+    }
+
+    .task-tag.priority-2 {
+        color: var(--khaki);
+        border-color: var(--khaki);
+    }
+
     .task-row {
         display: flex;
         align-items: center;
@@ -286,6 +296,9 @@
             <div class="task-status {% if task.is_done %}done{% endif %}"></div>
             <span class="task-name">{{ task.name }}</span>
             <div class="task-meta">
+                                {% if task.priority < 3 %}
+                <span class="task-tag priority-{{ task.priority }}">{{ task.get_priority_display }}</span>
+                {% endif %}
                 {% if task.type %}
                     {% if task.needs_attention %}
                 <span class="task-seal">Requires attention</span>

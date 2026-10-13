@@ -41,6 +41,15 @@
         gap: 1rem;
         margin-bottom: 1.5rem;
     }
+        .task-tag.priority-1 {
+        color: var(--rust-light);
+        border-color: var(--rust-light);
+    }
+
+    .task-tag.priority-2 {
+        color: var(--khaki);
+        border-color: var(--khaki);
+    }
 
     .detail-field {
         background: var(--olive-mid);
@@ -439,7 +448,12 @@
 {% endif %}
 
 <div class="detail-grid">
-
+    {% if task.priority < 3 %}
+    <div class="detail-field">
+        <div class="detail-field-label">Priority</div>
+        <div class="detail-field-value">{{ task.get_priority_display }}</div>
+    </div>
+    {% endif %}
     <div class="detail-field">
         <div class="detail-field-label">Status</div>
         <div class="detail-field-value">
