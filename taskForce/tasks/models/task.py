@@ -69,6 +69,11 @@ class Task(models.Model):
         blank=True,
     )
 
+    comment = models.TextField(
+        blank=True,
+        verbose_name=_('comment'),
+    )
+
     unit = models.ForeignKey(
         to='units.Unit',
         on_delete=models.SET_NULL,

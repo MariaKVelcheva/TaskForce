@@ -32,7 +32,7 @@ class BaseTaskForm(forms.ModelForm):
 
     class Meta:
         model = Task
-        fields = ["name", "type", "priority", "unit", "assigned_to", "appointed_points", "due_date", "is_done"]
+        fields = ["name", "type", "comment", "priority", "unit", "assigned_to", "appointed_points", "due_date", "is_done"]
 
         labels = {
             "name": "Mission name",
@@ -43,6 +43,11 @@ class BaseTaskForm(forms.ModelForm):
             "appointed_points": "Intel points",
             "due_date": "Due date",
             "priority": "Priority",
+            "comment": "Comment",
+        }
+
+        help_texts = {
+            "comment": _("Notes about the mission itself. For discussion, use the mission chat."),
         }
 
         widgets = {
@@ -55,6 +60,10 @@ class BaseTaskForm(forms.ModelForm):
             }),
             "priority": forms.Select(attrs={
                 "class": "select-field",
+            }),
+            "comment": forms.Textarea(attrs={
+                "rows": 3,
+                "placeholder": "What is this mission about?",
             }),
             "unit": forms.Select(attrs={
                 "class": "select-field",
@@ -76,24 +85,26 @@ class BaseTaskForm(forms.ModelForm):
         }
 
 
+
+
 class CreateTaskForm(BaseTaskForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["type"].choices = [("", "Standing order (Default type)")] + list(Task.TYPE_CHOICES)
 
     class Meta(BaseTaskForm.Meta):
-        fields = ["name", "type", "unit", "appointed_points", "due_date"]
+        fields = ["name", "priority", "type", "unit", "appointed_points", "due_date", "comment"]
 
 
 class QuickCreateTaskForm(forms.ModelForm):
     class Meta:
         model = Task
-        fields = ("name", "type", "priority")
+        fields = ("name", "type",)
 
 
 class UpdateTaskForm(BaseTaskForm):
     class Meta(BaseTaskForm.Meta):
-        fields = ["name", "type", "appointed_points", "due_date"]
+        fields = ["name", "priority", "type", "appointed_points", "due_date", "comment"]
 
 
 class GroceryItemForm(forms.ModelForm):

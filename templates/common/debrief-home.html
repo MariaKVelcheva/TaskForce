@@ -361,7 +361,7 @@
     }
 
     .due-section {
-        border-color: var(--rust-light);
+        border-color: #d5ca70;
     }
 
     .overdue-section .section-title {
@@ -369,7 +369,7 @@
     }
 
         .due-section .section-title {
-        color: var(--rust-light);
+        color: #d5ca70;
     }
 
     .over-due-item {
@@ -431,7 +431,7 @@
         font-size: 0.65rem;
         letter-spacing: 0.06em;
         text-transform: uppercase;
-        color: var(--rust-light);
+        color: #d5ca70;
         flex-shrink: 0;
     }
 
@@ -533,16 +533,16 @@
     {% if due_tasks %}
     <div class="dashboard-section due-section" style="grid-column: 1 / -1;">
         <div class="section-header">
-            <span class="section-title">// Due soon</span>
-            <a href="{% url 'all-tasks' %}" class="section-link">Mission log →</a>
+            <span class="section-title due-soon">// Due soon</span>
+            <a href="{% url 'all-tasks' %}" class="section-link due-soon">Mission log →</a>
         </div>
 
         {% for task in due_tasks %}
-        <a href="{% url 'details-task' task.pk %}" class="over-due-item">
-            <div class="over-due-marker"></div>
+        <a href="{% url 'details-task' task.pk %}" class="over-due-item due-soon">
+            <div style="color: khaki;">&#10003;</div>
             <span class="over-due-name">{{ task.name }}</span>
             {% if task.type %}<span class="over-due-type">{{ task.get_type_display }}</span>{% endif %}
-            <span class="due-time">in {{ task.due_date|timeuntil }}</span>
+            <span class="due-time due-soon">in {{ task.due_date|timeuntil }}</span>
         </a>
         {% endfor %}
     </div>
@@ -561,9 +561,9 @@
             <span class="over-due-name">{{ task.name }}</span>
             {% if task.type %}<span class="over-due-type">{{ task.get_type_display }}</span>{% endif %}
                         {% if task.due_date %}
-            <span class="overdue-late">{{ task.due_date|timesince }} late</span>
+            <span class="over-due-late">{{ task.due_date|timesince }} late</span>
             {% elif task.has_due_duties %}
-            <span class="overdue-late">duties due</span>
+            <span class="over-due-late">duties due</span>
             {% endif %}
         </a>
         {% endfor %}

@@ -366,8 +366,6 @@
         transition: border-color 0.15s, background 0.15s;
     }
 
-
-
     .item-add-box {
         width: 13px;
         height: 13px;
@@ -423,6 +421,22 @@
     .item-add button:hover { background: var(--khaki-dark); }
 
     .item-add input:focus { border-color: var(--khaki); }
+    
+        .detail-comment {
+        background: var(--olive-mid);
+        border: 1px solid var(--khaki-dark);
+        border-radius: var(--radius-sm);
+        padding: 0.85rem 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .detail-comment-text {
+        font-size: 0.92rem;
+        color: var(--cream-dark);
+        line-height: 1.6;
+        margin-top: 0.4rem;
+        overflow-wrap: anywhere;
+    }
 </style>
 {% endblock %}
 
@@ -444,7 +458,6 @@
     </div>
 </div>
     {% if items is not None %}
-    {% include items_partial %}
 {% endif %}
 
 <div class="detail-grid">
@@ -498,6 +511,13 @@
         <div class="detail-field-value">{{ object.due_date|date:"d M Y, H:i" }}</div>
     </div>
     {% endif %}
+
+{% if task.comment %}
+<div class="detail-comment">
+    <div class="detail-field-label">Briefing notes</div>
+    <p class="detail-comment-text">{{ task.comment|linebreaksbr }}</p>
+</div>
+{% endif %}
 
     {% if object.accomplished_at %}
     <div class="detail-field">

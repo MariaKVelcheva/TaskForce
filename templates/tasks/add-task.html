@@ -150,6 +150,7 @@
       
 
                 <div class="form-row">
+                    {% include 'common/partials/_field.html' with field=form.priority %}
                     {% include 'common/partials/_field.html' with field=form.unit %}
                     {% include 'common/partials/_field.html' with field=form.assigned_to %}
                 </div>
@@ -158,6 +159,17 @@
                     {% include 'common/partials/_field.html' with field=form.due_date %}
                     {% include 'common/partials/_field.html' with field=form.appointed_points %}
                 </div>
+            
+            <div class="form-section">
+                <div class="form-section-label">// Briefing notes</div>
+                <div class="form-group">
+                    <label for="{{ form.comment.id_for_label }}">{{ form.comment.label }}</label>
+                    {{ form.comment }}
+                    {% if form.comment.help_text %}
+                    <p class="form-help">{{ form.comment.help_text }}</p>
+                    {% endif %}
+                </div>
+            </div>
 
             </details>
 
