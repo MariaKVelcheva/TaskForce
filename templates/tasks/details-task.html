@@ -4,6 +4,18 @@
 
 {% block extra_css %}
 <style>
+
+    .status-badge.priority-1 {
+        color: var(--rust-light);
+        border-color: var(--rust-light);
+        background: rgba(180, 90, 60, 0.12);
+    }
+
+    .status-badge.priority-2 {
+        color: var(--khaki);
+        border-color: var(--khaki-dark);
+        background: rgba(200, 185, 122, 0.08);
+    }
     .detail-header {
         display: flex;
         align-items: flex-start;
@@ -457,7 +469,8 @@
         {% endif %}
     </div>
 </div>
-    {% if items is not None %}
+{% if items is not None %}
+    {% include item_partial %}
 {% endif %}
 
 <div class="detail-grid">
@@ -556,7 +569,7 @@
     const block = document.querySelector(".items-block");
     if (!block) return;
 
-    async function send(form) {
+        async function send(form) {
         const response = await fetch(form.action, {
             method: "POST",
             body: new FormData(form),
@@ -565,13 +578,13 @@
         if (!response.ok) { form.submit(); return; }
 
         const html = await response.text();
-        block.outerHTML = html;
+        const current = document.querySelector(".items-block");
+        current.outerHTML = html;
         bind();
 
         const input = document.querySelector(".item-add-name");
         if (input) input.focus();
     }
-
     function bind() {
         const current = document.querySelector(".items-block");
         if (!current) return;
