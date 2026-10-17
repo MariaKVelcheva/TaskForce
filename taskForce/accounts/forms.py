@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth import get_user_model
+import zoneinfo
 from django.utils.translation import gettext_lazy as _
 from taskForce.accounts.models import Avatar
 
@@ -77,3 +78,15 @@ class LoginCustomForm(AuthenticationForm):
         **AuthenticationForm.error_messages,
         "invalid_login": _("Wrong credentials, operative. Try again."),
     }
+
+
+def time_zone_choices():
+    return [(tz, tz.replace("_", " ")) for tz in sorted(zoneinfo.available_timezones())]
+
+class TimeZoneForm(forms.ModelForm):
+    time_zone = forms.ChoiceField(choices=time_zone_choices)
+
+    class Meta:
+        model = Avatar
+        fields = ["time_zone"]
+

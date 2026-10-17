@@ -16,6 +16,12 @@ class Avatar(models.Model):
         verbose_name=_('Points'),
     )
 
+    time_zone = models.CharField(
+        max_length=63,
+        default="Europe/Paris",
+        verbose_name=_("time zone"),
+    )
+
     class Meta:
         verbose_name = _('Avatar')
         verbose_name_plural = _('Avatars')
