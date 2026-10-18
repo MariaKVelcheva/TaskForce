@@ -4,14 +4,16 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth import get_user_model
 from django.db.models import Q, Exists, OuterRef, Count, F, Subquery
+from django.http import Http404
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.utils import timezone
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, ListView
 
 from taskForce.comms.models import Message, ConversationRead
 from taskForce.tasks.forms import QuickCreateTaskForm
 from taskForce.tasks.items import ITEM_MODELS
+from taskForce.tasks.locations import LOCATIONS, missions_at
 from taskForce.tasks.models import Task, TaskItem, ChoreItem
 from taskForce.units.models import Unit
 
@@ -131,3 +133,26 @@ class DebriefHomeView(LoginRequiredMixin, TemplateView):
                      .order_by("due_date")[:self.VISIBLE_OVER_DUE]
                      )
         return {"due_tasks": due_tasks}
+
+
+class DeployLocationView(LoginRequiredMixin, ListView):
+    template_name = "tasks/deploy-location.html"
+    context_object_name = "missions"
+
+    def get_queryset(self):
+        self.location_key = self.kwargs["location"]
+        if self.location_key not in LOCATIONS:
+            raise Http404
+        return missions_at(self.request.user, self.location_key)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(self.get_location_context())
+        return context
+
+    def get_location_context(self):
+        location = LOCATIONS[self.location_key]
+        return {
+            "location_key": self.location_key,
+            "location_label": location["label"],
+        }

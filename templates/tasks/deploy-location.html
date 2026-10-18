@@ -1,0 +1,14 @@
+{% extends "common/base.html" %}
+
+{% block content %}
+  <h1>{{ location_label }}</h1>
+  {% if missions %}
+    <ul>
+      {% for mission in missions %}
+        <li><a href="{% url 'details-task' mission.pk %}">{{ mission.name }}</a></li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>No missions here.</p>
+  {% endif %}
+{% endblock %}
