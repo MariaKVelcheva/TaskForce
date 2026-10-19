@@ -385,9 +385,10 @@
         <a href="{% url 'index' %}" class="nav-brand">Task<span>:</span> Force!</a>
         {% if user.is_authenticated %}
         <div class="mode-switch">
-            <a href="{% url 'home' %}"
-               class="mode-option {% if request.resolver_match.url_name == 'home' %}active{% endif %}">Debrief</a>
-            <span class="mode-option disabled" title="Not yet deployed">Deploy</span>
+            <a href="{% url 'debrief' %}"
+               class="mode-option {% if request.resolver_match.url_name == 'debrief' %}active{% endif %}">Debrief</a>
+                        <a href="{% url 'deploy' %}"
+               class="mode-option {% if request.resolver_match.url_name == 'deploy' %}active{% endif %}">Deploy</a>
         </div>
         {% endif %}
     </div>

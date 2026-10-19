@@ -135,6 +135,23 @@ class DebriefHomeView(LoginRequiredMixin, TemplateView):
         return {"due_tasks": due_tasks}
 
 
+class DeployIndexView(LoginRequiredMixin, TemplateView):
+    template_name = "tasks/deploy-index.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(self.get_locations_context())
+        return context
+
+    def get_locations_context(self):
+        return {
+            "locations": [
+                {"key": key, "label": loc["label"], "x": loc["x"], "y": loc["y"]}
+                for key, loc in LOCATIONS.items()
+            ],
+        }
+
+
 class DeployLocationView(LoginRequiredMixin, ListView):
     template_name = "tasks/deploy-location.html"
     context_object_name = "missions"
