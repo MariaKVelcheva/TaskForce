@@ -11,7 +11,7 @@ PARIS = ZoneInfo("Europe/Paris")
 NOW = datetime(2026, 10, 18, 12, 0, tzinfo=PARIS)
 
 
-class GateLocationTests(TestCase):
+class HqLocationTests(TestCase):
     @classmethod
     def setUpTestData(cls):
         User = get_user_model()
@@ -23,29 +23,29 @@ class GateLocationTests(TestCase):
         kwargs.setdefault("name", "mission")
         return Task.objects.create(**kwargs)
 
-    def gate(self):
+    def hq(self):
         with timezone.override(PARIS):
-            return set(missions_at(self.user, "gate", now=NOW))
+            return set(missions_at(self.user, "hq", now=NOW))
 
     def test_untyped_missions_both_null_and_empty(self):
         a = self.make(type=None)
         b = self.make(type="")
-        self.assertEqual(self.gate(), {a, b})
+        self.assertEqual(self.hq(), {a, b})
 
-    def test_typed_missions_never_at_gate(self):
+    def test_typed_missions_never_at_hq(self):
         self.make(type="workout", due_date=NOW)
         self.make(type="chores", due_date=NOW - timedelta(days=3))
         self.make(type="groceries", due_date=None)
-        self.assertEqual(self.gate(), set())
+        self.assertEqual(self.hq(), set())
 
     def test_just_after_midnight_paris_is_tomorrow(self):
         self.make(type="workout", due_date=datetime(2026, 10, 19, 0, 30, tzinfo=PARIS))
-        self.assertEqual(self.gate(), set())
+        self.assertEqual(self.hq(), set())
 
     def test_done_and_invisible_missions_excluded(self):
         self.make(type=None, is_done=True)
         self.make(type=None, user=self.other)
-        self.assertEqual(self.gate(), set())
+        self.assertEqual(self.hq(), set())
 
 
 class LocationCoverageTests(TestCase):
