@@ -1,10 +1,12 @@
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
+from taskForce.accounts.tests import PARIS, NOW
+from taskForce.tasks.locations import location_summary
 from taskForce.tasks.models import Task, GroceryItem, ChoreItem, ChoreCompletion
 from taskForce.units.models import Unit, Membership
 
@@ -143,3 +145,58 @@ class ChoreRecurrenceTests(TestCase):
         chore.refresh_from_db()
         self.assertEqual(chore.completions.count(), 0)
         self.assertIsNone(chore.last_done_at)
+
+
+class LocationTestCase(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        User = get_user_model()
+        cls.user = User.objects.create_user("operative", password="x")
+        cls.other = User.objects.create_user("stranger", password="x")
+
+    def make(self, **kwargs):
+        kwargs.setdefault("user", self.user)
+        kwargs.setdefault("name", "mission")
+        return Task.objects.create(**kwargs)
+
+
+class LocationSummaryTests(LocationTestCase):
+    def summary(self):
+        with timezone.override(PARIS):
+            return location_summary(self.user, now=NOW)
+
+    def test_counts_open_missions_per_location(self):
+        self.make(type="workout")
+        self.make(type="workout")
+        self.make(type="workout", is_done=True)
+        self.make(type=None)
+        s = self.summary()
+        self.assertEqual(s["training"]["count"], 2)
+        self.assertEqual(s["hq"]["count"], 1)
+        self.assertEqual(s["supply"]["count"], 0)
+
+    def test_overdue_mission_flags_only_its_location(self):
+        self.make(type="groceries", due_date=NOW - timedelta(days=1))
+        self.make(type="workout", due_date=NOW + timedelta(days=2))
+        s = self.summary()
+        self.assertTrue(s["supply"]["attention"])
+        self.assertFalse(s["training"]["attention"])
+
+    def test_due_chore_flags_barracks(self):
+        task = self.make(type="chores")
+        ChoreItem.objects.create(
+            task=task, name="sweep",
+            frequency_days=1, last_done_at=NOW - timedelta(days=30),
+        )
+        self.assertTrue(self.summary()["barracks"]["attention"])
+
+    def test_just_after_midnight_paris_is_not_today(self):
+        self.make(type="workout", due_date=datetime(2026, 10, 19, 0, 30, tzinfo=PARIS))
+        self.assertFalse(self.summary()["training"]["attention"])
+
+    def test_counts_not_inflated_by_unit_membership(self):
+        unit = Unit.objects.create(name="Alpha", created_by=self.user)
+        Membership.objects.create(unit=unit, user=self.user, role="commander")
+        Membership.objects.create(unit=unit, user=self.other, role="member")
+        self.make(type="workout", unit=unit)
+        self.assertEqual(self.summary()["training"]["count"], 1)

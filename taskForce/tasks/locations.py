@@ -1,7 +1,7 @@
-from django.db.models import Q
+from django.db.models import Q, Count, Exists, OuterRef
 from django.utils import timezone
 
-from taskForce.tasks.models import Task
+from taskForce.tasks.models import Task, ChoreItem
 
 
 def _hq(now):
@@ -15,11 +15,11 @@ def _of_type(task_type):
 
 
 LOCATIONS = {
-    "hq":       {"label": "HQ",              "x": 50, "y": 88, "filter": _hq},
-    "training": {"label": "Training Ground", "x": 20, "y": 30, "filter": _of_type("workout")},
-    "supply":   {"label": "Supply",          "x": 80, "y": 30, "filter": _of_type("groceries")},
-    "barracks": {"label": "Barracks",        "x": 25, "y": 62, "filter": _of_type("chores")},
-    "rec_room": {"label": "Rec Room",        "x": 75, "y": 62, "filter": _of_type("list")},
+    "hq":       {"label": "HQ",              "filter": _hq},
+    "training": {"label": "Training Ground", "filter": _of_type("workout")},
+    "supply":   {"label": "Supply",          "filter": _of_type("groceries")},
+    "barracks": {"label": "Barracks",        "filter": _of_type("chores")},
+    "rec_room": {"label": "Rec Room",        "filter": _of_type("list")},
 }
 
 
