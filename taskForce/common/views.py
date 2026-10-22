@@ -3,12 +3,13 @@ from datetime import timedelta
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth import get_user_model
-from django.db.models import Q, Exists, OuterRef, Count, F, Subquery
+from django.db.models import Q, OuterRef, Count, F, Subquery
 from django.http import Http404
-from django.shortcuts import render, redirect
-from django.urls import reverse
+from django.shortcuts import redirect
 from django.utils import timezone
 from django.views.generic import TemplateView, ListView
+from taskForce.common.deploy_map import TILE, building_positions, map_rows, tiles
+from taskForce.tasks.locations import location_summary
 
 from taskForce.comms.models import Message, ConversationRead
 from taskForce.tasks.forms import QuickCreateTaskForm
@@ -144,11 +145,24 @@ class DeployIndexView(LoginRequiredMixin, TemplateView):
         return context
 
     def get_locations_context(self):
+        summary = location_summary(self.request.user)
+        positions = building_positions()
+        buildings = []
+        for key, loc in LOCATIONS.items():
+            col, row = positions[key]
+            buildings.append({
+                "key": key,
+                "label": loc["label"],
+                "x": col * TILE,
+                "y": row * TILE,
+                **summary[key],
+            })
+        rows = map_rows()
         return {
-            "locations": [
-                {"key": key, "label": loc["label"], "x": loc["x"], "y": loc["y"]}
-                for key, loc in LOCATIONS.items()
-            ],
+            "tiles": list(tiles()),
+            "buildings": buildings,
+            "map_width": len(rows[0]) * TILE,
+            "map_height": len(rows) * TILE,
         }
 
 
@@ -164,12 +178,26 @@ class DeployLocationView(LoginRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context.update(self.get_location_context())
+        context.update(self.get_locations_context())
         return context
 
-    def get_location_context(self):
-        location = LOCATIONS[self.location_key]
+    def get_locations_context(self):
+        summary = location_summary(self.request.user)
+        positions = building_positions()
+        buildings = []
+        for key, loc in LOCATIONS.items():
+            col, row = positions[key]
+            buildings.append({
+                "key": key,
+                "label": loc["label"],
+                "x": col * TILE,
+                "y": row * TILE,
+                **summary[key],
+            })
+        rows = map_rows()
         return {
-            "location_key": self.location_key,
-            "location_label": location["label"],
+            "tiles": list(tiles()),
+            "buildings": buildings,
+            "map_width": len(rows[0]) * TILE,
+            "map_height": len(rows) * TILE,
         }

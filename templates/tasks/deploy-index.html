@@ -1,10 +1,53 @@
 {% extends "common/base.html" %}
 
+{% block extra_css %}
+    .deploy-map svg { display: block; width: 100%; height: auto; }
+
+.building-label { font: 600 8px "Barlow Condensed", sans-serif; text-anchor: middle; fill: #f2ead0; }
+.label-halo     { stroke: #2b2d1c; stroke-width: 2.5px; stroke-linejoin: round; }
+
+.badge     { fill: #3f4526; }
+.badge-num { font: 8px "Share Tech Mono", monospace; fill: #fff;
+             text-anchor: middle; dominant-baseline: central; }
+.needs-attention .badge { fill: var(--rust-light); }
+
+.building:hover .building-art,
+.building:focus-visible .building-art { filter: brightness(1.15) drop-shadow(0 0 2px #fff); }
+.building:focus-visible { outline: none; }
+
+.needs-attention .building-art { animation: alert-pulse 1.6s ease-in-out infinite; }
+@keyframes alert-pulse {
+  0%, 100% { filter: drop-shadow(0 0 1px var(--rust-light)); }
+  50%      { filter: drop-shadow(0 0 5px var(--rust-light)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .needs-attention .building-art { animation: none; filter: drop-shadow(0 0 4px var(--rust-light)); }
+}
+{% endblock %}
+
 {% block content %}
   <h1>Deploy</h1>
-  <ul>
-    {% for loc in locations %}
-      <li><a href="{% url 'deploy-location' loc.key %}">{{ loc.label }}</a></li>
+<div class="deploy-map">
+  {% include "tasks/partials/_deploy_sprites.html" %}
+  <svg viewBox="0 0 {{ map_width }} {{ map_height }}" aria-label="Base map">
+    <g aria-hidden="true">
+      {% for t in tiles %}<use href="#tile-{{ t.kind }}" x="{{ t.x }}" y="{{ t.y }}" width="32" height="32"/>{% endfor %}
+    </g>
+
+    {% for b in buildings %}
+      <a href="{% url 'deploy-location' b.key %}"
+         class="building{% if b.attention %} needs-attention{% endif %}"
+         transform="translate({{ b.x }},{{ b.y }})">
+        <title>{{ b.label }}: {{ b.count }} mission{{ b.count|pluralize }}{% if b.attention %}, needs attention{% endif %}</title>
+        <use class="building-art" href="#building-{{ b.key }}" y="-16" width="32" height="48"/>
+        {% if b.count %}
+          <circle class="badge" cx="28" cy="-12" r="7"/>
+          <text class="badge-num" x="28" y="-12">{{ b.count }}</text>
+        {% endif %}
+        <text class="building-label label-halo" x="16" y="42">{{ b.label }}</text>
+        <text class="building-label" x="16" y="42">{{ b.label }}</text>
+      </a>
     {% endfor %}
-  </ul>
+  </svg>
+</div>
 {% endblock %}

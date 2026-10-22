@@ -46,3 +46,9 @@ def building_positions():
             if char in BUILDINGS:
                 positions[BUILDINGS[char]] = (col, row)
     return positions
+
+
+def tiles():
+    for row, line in enumerate(map_rows()):
+        for col, char in enumerate(line):
+            yield {"kind": TERRAIN.get(char, "grass"), "x": col * TILE, "y": row * TILE}
