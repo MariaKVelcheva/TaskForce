@@ -1,30 +1,5 @@
 {% extends "common/base.html" %}
 
-{% block extra_css %}
-    .deploy-map svg { display: block; width: 100%; height: auto; }
-
-.building-label { font: 600 8px "Barlow Condensed", sans-serif; text-anchor: middle; fill: #f2ead0; }
-.label-halo     { stroke: #2b2d1c; stroke-width: 2.5px; stroke-linejoin: round; }
-
-.badge     { fill: #3f4526; }
-.badge-num { font: 8px "Share Tech Mono", monospace; fill: #fff;
-             text-anchor: middle; dominant-baseline: central; }
-.needs-attention .badge { fill: var(--rust-light); }
-
-.building:hover .building-art,
-.building:focus-visible .building-art { filter: brightness(1.15) drop-shadow(0 0 2px #fff); }
-.building:focus-visible { outline: none; }
-
-.needs-attention .building-art { animation: alert-pulse 1.6s ease-in-out infinite; }
-@keyframes alert-pulse {
-  0%, 100% { filter: drop-shadow(0 0 1px var(--rust-light)); }
-  50%      { filter: drop-shadow(0 0 5px var(--rust-light)); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .needs-attention .building-art { animation: none; filter: drop-shadow(0 0 4px var(--rust-light)); }
-}
-{% endblock %}
-
 {% block content %}
   <h1>Deploy</h1>
 <div class="deploy-map">

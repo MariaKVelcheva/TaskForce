@@ -178,26 +178,12 @@ class DeployLocationView(LoginRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context.update(self.get_locations_context())
+        context.update(self.get_location_context())
         return context
 
-    def get_locations_context(self):
-        summary = location_summary(self.request.user)
-        positions = building_positions()
-        buildings = []
-        for key, loc in LOCATIONS.items():
-            col, row = positions[key]
-            buildings.append({
-                "key": key,
-                "label": loc["label"],
-                "x": col * TILE,
-                "y": row * TILE,
-                **summary[key],
-            })
-        rows = map_rows()
+    def get_location_context(self):
+        location = LOCATIONS[self.location_key]
         return {
-            "tiles": list(tiles()),
-            "buildings": buildings,
-            "map_width": len(rows[0]) * TILE,
-            "map_height": len(rows) * TILE,
+            "location_key": self.location_key,
+            "location_label": location["label"],
         }

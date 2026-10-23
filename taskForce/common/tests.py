@@ -12,13 +12,6 @@ from taskForce.tasks.models import Task
 User = get_user_model()
 
 
-def test_query_count(self):
-    with CaptureQueriesContext(connection) as ctx:
-        self.client.get(reverse("deploy"))
-    for q in ctx.captured_queries:
-        print(q["sql"][:120])
-
-
 class DeployMapTests(SimpleTestCase):
     def test_all_rows_same_length(self):
         widths = {len(line) for line in map_rows()}
@@ -47,6 +40,10 @@ class DeployIndexViewTests(TestCase):
 
     def setUp(self):
         self.client.force_login(self.user)
+
+    def test_query_count(self):
+        with self.assertNumQueries(7):
+            self.client.get(reverse("deploy"))
 
     def test_requires_login(self):
         self.client.logout()
