@@ -179,8 +179,8 @@ class LocationSummaryTests(LocationTestCase):
         self.make(type="groceries", due_date=NOW - timedelta(days=1))
         self.make(type="workout", due_date=NOW + timedelta(days=2))
         s = self.summary()
-        self.assertTrue(s["supply"]["attention"])
-        self.assertFalse(s["training"]["attention"])
+        self.assertTrue(s["supply"]["overdue"])
+        self.assertFalse(s["training"]["overdue"])
 
     def test_due_chore_flags_barracks(self):
         task = self.make(type="chores")
@@ -188,11 +188,11 @@ class LocationSummaryTests(LocationTestCase):
             task=task, name="sweep",
             frequency_days=1, last_done_at=NOW - timedelta(days=30),
         )
-        self.assertTrue(self.summary()["barracks"]["attention"])
+        self.assertTrue(self.summary()["barracks"]["overdue"])
 
     def test_just_after_midnight_paris_is_not_today(self):
         self.make(type="workout", due_date=datetime(2026, 10, 19, 0, 30, tzinfo=PARIS))
-        self.assertFalse(self.summary()["training"]["attention"])
+        self.assertFalse(self.summary()["training"]["due_today"])
 
     def test_counts_not_inflated_by_unit_membership(self):
         unit = Unit.objects.create(name="Alpha", created_by=self.user)
@@ -200,3 +200,15 @@ class LocationSummaryTests(LocationTestCase):
         Membership.objects.create(unit=unit, user=self.other, role="member")
         self.make(type="workout", unit=unit)
         self.assertEqual(self.summary()["training"]["count"], 1)
+
+    def test_critical_flags_only_its_location(self):
+        self.make(type="groceries", priority=1)
+        s = self.summary()
+        self.assertTrue(s["supply"]["critical"])
+        self.assertFalse(s["training"]["critical"])
+
+    def test_due_later_today_is_not_overdue(self):
+        self.make(type="workout", due_date=NOW + timedelta(hours=3))
+        s = self.summary()["training"]
+        self.assertTrue(s["due_today"])
+        self.assertFalse(s["overdue"])

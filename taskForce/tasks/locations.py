@@ -40,19 +40,25 @@ def location_summary(user, now=None):
         .annotate(has_due_chores=Exists(due_chores))
         .order_by()
     )
-    attention = Q(due_date__date__lte=today) | Q(has_due_chores=True)
+
+    STATES = {
+        "overdue":   Q(due_date__lt=now) | Q(has_due_chores=True),
+        "critical":  Q(priority=1),
+        "due_today": Q(due_date__gte=now, due_date__date=today),
+    }
 
     aggregates = {}
     for key, loc in LOCATIONS.items():
         q = loc["filter"](now)
-        aggregates[f"{key}_count"] = Count("pk", filter=q, distinct=True)
-        aggregates[f"{key}_attention"] = Count("pk", filter=q & attention, distinct=True)
+        aggregates[f"{key}__count"] = Count("pk", filter=q, distinct=True)
+        for state, state_q in STATES.items():
+            aggregates[f"{key}__{state}"] = Count("pk", filter=q & state_q, distinct=True)
 
     totals = qs.aggregate(**aggregates)
     return {
         key: {
-            "count": totals[f"{key}_count"],
-            "attention": totals[f"{key}_attention"] > 0,
+            "count": totals[f"{key}__count"],
+            **{state: totals[f"{key}__{state}"] > 0 for state in STATES},
         }
         for key in LOCATIONS
     }
