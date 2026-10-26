@@ -100,7 +100,7 @@ class DeleteTaskView(LoginRequiredMixin, DeleteView):
         return Task.objects.filter(user=self.request.user)
 
     def get_success_url(self):
-        return reverse_lazy("home")
+        return reverse_lazy("index")
 
 
 class CatalogueTaskView(LoginRequiredMixin, ListView):

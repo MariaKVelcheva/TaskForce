@@ -56,7 +56,7 @@ class RenameUnitView(LoginRequiredMixin, UpdateView):
 class DeleteUnitView(LoginRequiredMixin, DeleteView):
     model = Unit
     template_name = "units/delete-unit.html"
-    success_url = reverse_lazy("home")
+    success_url = reverse_lazy("index")
 
     def get_queryset(self):
         return Unit.objects.filter(

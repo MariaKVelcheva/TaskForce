@@ -26,10 +26,9 @@ class RegisterUserView(CreateView):
             if parsed_next.netloc == "":
                 return next_url
 
-        return reverse_lazy("home")
+        return reverse_lazy("index")
 
     def form_valid(self, form):
-        """to do: add an email verification later, and a possibility to register through google and others"""
         user = form.save()
         login(self.request, user, backend="django.contrib.auth.backends.ModelBackend")
         return HttpResponseRedirect(self.get_success_url())
@@ -41,13 +40,13 @@ class LoginUserView(LoginView):
 
 
 class LogoutUserView(LoginRequiredMixin, LogoutView):
-    next_page = reverse_lazy("home")
+    next_page = reverse_lazy("index")
 
 
 class DeleteUserView(LoginRequiredMixin, DeleteView):
     model = TaskUser
     template_name = "accounts/delete-user.html"
-    success_url = reverse_lazy("home")
+    success_url = reverse_lazy("index")
 
     def delete(self, request, *args, **kwargs):
         user = request.user

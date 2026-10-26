@@ -1,19 +1,39 @@
 {% extends "common/base.html" %}
-{% block extra_css %}
-.is-empty .building-art    { filter: grayscale(1) brightness(.8); opacity: .55; }
-.is-empty .building-label  { opacity: .6; }
 
-.is-due-today .badge       { fill: #b8933a; }
+{% block extra_css %}
+<style>
+.deploy-map svg { display: block; width: 100%; height: auto; }
+
+.building-label { font: 600 8px "Barlow Condensed", sans-serif; text-anchor: middle; fill: #f2ead0; }
+.label-halo     { stroke: #2b2d1c; stroke-width: 2.5px; stroke-linejoin: round; }
+.badge          { fill: #3f4526; }
+.badge-num      { font: 8px "Share Tech Mono", monospace; fill: #fff;
+                  text-anchor: middle; dominant-baseline: central; }
+.building:hover .building-art,
+.building:focus-visible .building-art { filter: brightness(1.15) drop-shadow(0 0 2px #fff); }
+.building:focus-visible { outline: none; }
+
+.is-empty .building-art   { filter: grayscale(1) brightness(.8); opacity: .55; }
+.is-empty .building-label { opacity: .6; }
+
+.is-due-today .badge        { fill: #b8933a; }
 .is-due-today .building-art { filter: drop-shadow(0 0 2px #e0b85a); }
 
-    .is-overdue .badge         { fill: var(--rust-light); }
-.is-overdue .building-art  { animation: alert-pulse 1.6s ease-in-out infinite; }
+
+    .is-overdue .badge        { fill: var(--rust-light); }
+.is-overdue .building-art { animation: alert-pulse 1.6s ease-in-out infinite; }
+@keyframes alert-pulse {
+  0%, 100% { filter: drop-shadow(0 0 1px var(--rust-light)); }
+  50%      { filter: drop-shadow(0 0 5px var(--rust-light)); }
+}
+
 .pennant rect { fill: #3a3a2c; }
 .pennant path { fill: var(--rust-light); }
 
 @media (prefers-reduced-motion: reduce) {
   .is-overdue .building-art { animation: none; filter: drop-shadow(0 0 4px var(--rust-light)); }
 }
+</style>
 {% endblock %}
 {% block content %}
   <h1>Deploy</h1>
