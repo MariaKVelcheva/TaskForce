@@ -132,6 +132,7 @@
 
     <form method="post" novalidate>
             {% csrf_token %}
+      {% include "tasks/partials/_next_input.html" %}
 
             {% if form.non_field_errors %}
             <ul class="errorlist" style="margin-bottom: 1rem;">

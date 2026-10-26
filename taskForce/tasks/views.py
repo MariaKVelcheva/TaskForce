@@ -5,10 +5,11 @@ from django.core.exceptions import PermissionDenied
 from django.db.models import Count, Q, F
 from django.http import Http404
 from django.shortcuts import redirect, get_object_or_404, render
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 from django.views.decorators.http import require_POST
 from django.views.generic import CreateView, DetailView, UpdateView, DeleteView, ListView
 
+from taskForce.redirects import NextMixin, with_next, get_next
 from taskForce.tasks.forms import CreateTaskForm, UpdateTaskForm, QuickCreateTaskForm
 from taskForce.tasks.items import ITEM_MODELS, ITEM_FORMS, ITEM_PARTIALS
 from taskForce.tasks.models import Task, ChoreItem
@@ -58,10 +59,10 @@ class CreateTaskView(LoginRequiredMixin, CreateView):
         return kwargs
 
     def get_success_url(self):
-        return reverse_lazy("details-task", kwargs={"pk": self.object.pk})
+        return with_next(reverse("details-task", args=[self.object.pk]), get_next(self.request))
 
 
-class DetailTaskView(LoginRequiredMixin, DetailView):
+class DetailTaskView(NextMixin, LoginRequiredMixin, DetailView):
     model = Task
     template_name = "tasks/details-task.html"
     context_object_name = "task"
@@ -72,6 +73,7 @@ class DetailTaskView(LoginRequiredMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update(get_item_context(self.object))
+        context.update(self.get_next_context())
         return context
 
 
@@ -89,7 +91,7 @@ class UpdateTaskView(LoginRequiredMixin, UpdateView):
         return kwargs
 
     def get_success_url(self):
-        return reverse_lazy("details-task", kwargs={"pk": self.object.pk})
+        return with_next(reverse("details-task", args=[self.object.pk]), get_next(self.request))
 
 
 class DeleteTaskView(LoginRequiredMixin, DeleteView):
@@ -100,7 +102,7 @@ class DeleteTaskView(LoginRequiredMixin, DeleteView):
         return Task.objects.filter(user=self.request.user)
 
     def get_success_url(self):
-        return reverse_lazy("index")
+        return get_next(self.request) or reverse("all-tasks")
 
 
 class CatalogueTaskView(LoginRequiredMixin, ListView):
@@ -204,9 +206,10 @@ def toggle_item(request, task_pk, item_pk):
 
     if request.headers.get("x-requested-with") == "fetch":
         context = get_item_context(task)
+        context["next_url"] = get_next(request)
         return render(request, context["item_partial"], context)
 
-    return redirect("details-task", pk=task.pk)
+    return with_next(reverse("details-task", args=[task.pk]), get_next(request))
 
 
 @login_required
@@ -222,9 +225,10 @@ def delete_item(request, task_pk, item_pk):
 
     if request.headers.get("x-requested-with") == "fetch":
         context = get_item_context(task)
+        context["next_url"] = get_next(request)
         return render(request, context["item_partial"], context)
 
-    return redirect("details-task", pk=task.pk)
+    return with_next(reverse("details-task", args=[task.pk]), get_next(request))
 
 
 @login_required
@@ -245,6 +249,7 @@ def add_item(request, task_pk):
 
     if request.headers.get("x-requested-with") == "fetch":
         context = get_item_context(task)
+        context["next_url"] = get_next(request)
         return render(request, context["item_partial"], context)
 
     return redirect("details-task", pk=task.pk)

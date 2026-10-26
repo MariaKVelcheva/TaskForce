@@ -558,7 +558,7 @@
 
 <div class="danger-zone">
     <a href="{% url 'delete-task' task.pk %}" class="btn btn-danger" style="font-size: 0.82rem;">Delete mission</a>
-    <a href="{% url 'all-tasks' %}" class="btn btn-ghost" style="font-size: 0.82rem;">Back to log</a>
+    <a href="{{ back_url }}" class="btn btn-ghost" style="font-size: 0.82rem;">← Back</a>
 </div>
 
 {% endblock %}

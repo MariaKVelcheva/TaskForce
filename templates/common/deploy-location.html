@@ -5,7 +5,7 @@
   {% if missions %}
     <ul>
       {% for mission in missions %}
-        <li><a href="{% url 'details-task' mission.pk %}">{{ mission.name }}</a></li>
+        <li><a href="{% url 'details-task' mission.pk %}?next={{ request.get_full_path|urlencode }}">{{ mission.name }}</a></li>
       {% endfor %}
     </ul>
   {% else %}

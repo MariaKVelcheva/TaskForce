@@ -137,7 +137,7 @@ class DebriefHomeView(LoginRequiredMixin, TemplateView):
 
 
 class DeployIndexView(LoginRequiredMixin, TemplateView):
-    template_name = "tasks/deploy-index.html"
+    template_name = "tasks/../../templates/common/deploy-index.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -167,7 +167,7 @@ class DeployIndexView(LoginRequiredMixin, TemplateView):
 
 
 class DeployLocationView(LoginRequiredMixin, ListView):
-    template_name = "tasks/deploy-location.html"
+    template_name = "tasks/../../templates/common/deploy-location.html"
     context_object_name = "missions"
 
     def get_queryset(self):

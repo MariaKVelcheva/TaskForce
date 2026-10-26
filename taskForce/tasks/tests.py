@@ -212,3 +212,28 @@ class LocationSummaryTests(LocationTestCase):
         s = self.summary()["training"]
         self.assertTrue(s["due_today"])
         self.assertFalse(s["overdue"])
+
+
+class TaskNextTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = get_user_model().objects.create_user("operative", password="x")
+        cls.task = Task.objects.create(user=cls.user, name="mission")
+
+    def setUp(self):
+        self.client.force_login(self.user)
+
+    def test_back_link_follows_next(self):
+        url = reverse("details-task", args=[self.task.pk])
+        response = self.client.get(url, {"next": "/deploy/barracks/"})
+        self.assertEqual(response.context["back_url"], "/deploy/barracks/")
+
+    def test_unsafe_next_is_ignored(self):
+        url = reverse("details-task", args=[self.task.pk])
+        response = self.client.get(url, {"next": "https://evil.example/"})
+        self.assertEqual(response.context["back_url"], reverse("all-tasks"))
+
+    def test_delete_returns_to_next(self):
+        url = reverse("delete-task", args=[self.task.pk])  # your actual name
+        response = self.client.post(url, {"next": "/deploy/barracks/"})
+        self.assertRedirects(response, "/deploy/barracks/", fetch_redirect_response=False)
