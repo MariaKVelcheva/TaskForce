@@ -13,10 +13,10 @@ from taskForce.tasks.locations import location_summary
 
 from taskForce.comms.models import Message, ConversationRead
 from taskForce.tasks.forms import QuickCreateTaskForm
-from taskForce.tasks.items import ITEM_MODELS
+from taskForce.tasks.items import ITEM_MODELS, item_progress
 from taskForce.tasks.locations import LOCATIONS, missions_at
 from taskForce.tasks.models import Task, TaskItem, ChoreItem
-from taskForce.tasks.urgency import group_by_urgency
+from taskForce.tasks.urgency import group_by_urgency, has_due_chores
 from taskForce.units.models import Unit
 
 TaskUser = get_user_model()
@@ -177,7 +177,7 @@ class DeployLocationView(LoginRequiredMixin, ListView):
             raise Http404
         return (
             missions_at(self.request.user, self.location_key)
-            .annotate(has_due_chores=has_due_chores())
+            .annotate(has_due_chores=has_due_chores(), **item_progress())
             .order_by(F("due_date").asc(nulls_last=True), "-created_at")
         )
 

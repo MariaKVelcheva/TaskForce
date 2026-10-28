@@ -6,8 +6,9 @@ from django.urls import reverse
 from django.utils import timezone
 
 from taskForce.accounts.tests import PARIS, NOW
+from taskForce.tasks.items import item_progress
 from taskForce.tasks.locations import location_summary
-from taskForce.tasks.models import Task, GroceryItem, ChoreItem, ChoreCompletion
+from taskForce.tasks.models import Task, GroceryItem, ChoreItem, ChoreCompletion, WorkoutItem
 from taskForce.tasks.urgency import group_by_urgency, bucket_for
 from taskForce.units.models import Unit, Membership
 
@@ -247,6 +248,19 @@ class TaskNextTests(TestCase):
         texts = [str(m) for m in response.context["messages"]]
         self.assertFalse(any("pts" in t for t in texts))
         self.assertTrue(any("already accomplished" in t for t in texts))
+
+    def test_item_progress_counts(self):
+        task = Task.objects.create(user=self.user, name="run", type="workout")
+        WorkoutItem.objects.create(task=task, name="a", is_done=True)
+        WorkoutItem.objects.create(task=task, name="b")
+        WorkoutItem.objects.create(task=task, name="c")
+        annotated = Task.objects.annotate(**item_progress()).get(pk=task.pk)
+        self.assertEqual((annotated.items_done, annotated.items_total), (1, 3))
+
+    def test_mission_without_items_counts_zero(self):
+        task = Task.objects.create(user=self.user, name="empty", type="workout")
+        annotated = Task.objects.annotate(**item_progress()).get(pk=task.pk)
+        self.assertEqual((annotated.items_done, annotated.items_total), (0, 0))
 
 
 class UrgencyTests(SimpleTestCase):

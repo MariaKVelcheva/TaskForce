@@ -35,6 +35,11 @@
 
 .board-empty { text-align: center; padding: 3rem 1rem; border: 1px dashed var(--olive); border-radius: var(--radius); }
 .board-empty-title { font-family: 'Barlow Condensed', sans-serif; font-size: 1.5rem; color: var(--khaki); margin-bottom: .4rem; }
+  .card-progress { display: flex; align-items: center; gap: .5rem; }
+.card-progress-bar { flex: 1; height: 4px; background: var(--olive-dark); border-radius: 2px; overflow: hidden; }
+.card-progress-bar span { display: block; height: 100%; background: var(--khaki); }
+.card-progress-text, .card-duties { font-family: 'Share Tech Mono', monospace; font-size: .72rem; color: var(--khaki-muted); }
+.card-duties { color: var(--rust-light); }
     </style>
 {% endblock %}
 {% block content %}
@@ -64,7 +69,14 @@
             {% elif key == "later" %}{{ m.due_date|date:"D j M" }}
             {% endif %}
           </p>
-          <form method="post" action="{% url 'complete-task' m.pk %}" class="card-action">
+{% if m.type == "chores" %}
+  {% if m.duties_due %}<p class="card-duties">{{ m.duties_due }} dut{{ m.duties_due|pluralize:"y,ies" }} due</p>{% endif %}
+{% elif m.items_total %}
+  <div class="card-progress" aria-label="{{ m.items_done }} of {{ m.items_total }} done">
+    <div class="card-progress-bar"><span style="width: {% widthratio m.items_done m.items_total 100 %}%"></span></div>
+    <span class="card-progress-text">{{ m.items_done }}/{{ m.items_total }}</span>
+  </div>
+{% endif %}          <form method="post" action="{% url 'complete-task' m.pk %}" class="card-action">
             {% csrf_token %}
             <input type="hidden" name="next" value="{{ request.get_full_path }}">
             <button type="submit" class="btn btn-primary">Accomplish · +{{ m.appointed_points }}</button>
