@@ -16,6 +16,7 @@ from taskForce.tasks.forms import QuickCreateTaskForm
 from taskForce.tasks.items import ITEM_MODELS
 from taskForce.tasks.locations import LOCATIONS, missions_at
 from taskForce.tasks.models import Task, TaskItem, ChoreItem
+from taskForce.tasks.urgency import group_by_urgency
 from taskForce.units.models import Unit
 
 TaskUser = get_user_model()
@@ -174,7 +175,11 @@ class DeployLocationView(LoginRequiredMixin, ListView):
         self.location_key = self.kwargs["location"]
         if self.location_key not in LOCATIONS:
             raise Http404
-        return missions_at(self.request.user, self.location_key)
+        return (
+            missions_at(self.request.user, self.location_key)
+            .annotate(has_due_chores=has_due_chores())
+            .order_by(F("due_date").asc(nulls_last=True), "-created_at")
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -186,4 +191,5 @@ class DeployLocationView(LoginRequiredMixin, ListView):
         return {
             "location_key": self.location_key,
             "location_label": location["label"],
+            "groups": group_by_urgency(self.object_list),
         }

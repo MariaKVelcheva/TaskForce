@@ -2,6 +2,7 @@ from django.db.models import Q, Count, Exists, OuterRef
 from django.utils import timezone
 
 from taskForce.tasks.models import Task, ChoreItem
+from taskForce.tasks.urgency import has_due_chores
 
 
 def _hq(now):
@@ -37,7 +38,7 @@ def location_summary(user, now=None):
     qs = (
         Task.objects.visible_to(user)
         .filter(is_done=False)
-        .annotate(has_due_chores=Exists(due_chores))
+        .annotate(has_due_chores)
         .order_by()
     )
 

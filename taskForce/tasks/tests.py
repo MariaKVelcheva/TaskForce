@@ -1,13 +1,14 @@
 from datetime import timedelta, datetime
 
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.test import TestCase, SimpleTestCase
 from django.urls import reverse
 from django.utils import timezone
 
 from taskForce.accounts.tests import PARIS, NOW
 from taskForce.tasks.locations import location_summary
 from taskForce.tasks.models import Task, GroceryItem, ChoreItem, ChoreCompletion
+from taskForce.tasks.urgency import group_by_urgency, bucket_for
 from taskForce.units.models import Unit, Membership
 
 User = get_user_model()
@@ -237,3 +238,42 @@ class TaskNextTests(TestCase):
         url = reverse("delete-task", args=[self.task.pk])  # your actual name
         response = self.client.post(url, {"next": "/deploy/barracks/"})
         self.assertRedirects(response, "/deploy/barracks/", fetch_redirect_response=False)
+
+    def test_second_completion_shows_no_success_message(self):
+        task = Task.objects.create(user=self.user, name="mission")
+        url = reverse("complete-task", args=[task.pk])
+        self.client.post(url, follow=True)
+        response = self.client.post(url, follow=True)
+        texts = [str(m) for m in response.context["messages"]]
+        self.assertFalse(any("pts" in t for t in texts))
+        self.assertTrue(any("already accomplished" in t for t in texts))
+
+
+class UrgencyTests(SimpleTestCase):
+    def bucket(self, **kwargs):
+        with timezone.override(PARIS):
+            return bucket_for(Task(name="m", **kwargs), NOW)
+
+    def test_buckets(self):
+        cases = [
+            (None, "unscheduled"),
+            (NOW - timedelta(minutes=1), "overdue"),
+            (NOW + timedelta(hours=3), "today"),
+            (NOW + timedelta(days=1), "soon"),
+            (NOW + timedelta(days=5), "later"),
+            (datetime(2026, 10, 19, 0, 30, tzinfo=PARIS), "soon"),  # just after midnight: tomorrow
+        ]
+        for due, expected in cases:
+            with self.subTest(due=due):
+                self.assertEqual(self.bucket(due_date=due), expected)
+
+    def test_due_chores_count_as_overdue_even_without_date(self):
+        task = Task(name="m", type="chores")
+        task.has_due_chores = True
+        self.assertEqual(bucket_for(task, NOW), "overdue")
+
+    def test_empty_groups_are_dropped_and_order_is_kept(self):
+        tasks = [Task(name="later", due_date=NOW + timedelta(days=5)),
+                 Task(name="late", due_date=NOW - timedelta(days=1))]
+        keys = [key for key, _, _ in group_by_urgency(tasks, NOW)]
+        self.assertEqual(keys, ["overdue", "later"])

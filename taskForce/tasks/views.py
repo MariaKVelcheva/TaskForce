@@ -176,10 +176,12 @@ class CatalogueTaskView(LoginRequiredMixin, ListView):
 def complete_task(request, pk):
     task = get_object_or_404(Task.objects.visible_to(request.user), pk=pk)
 
-    if not task.complete(request.user):
+    if task.complete(request.user):
+        messages.success(request, f"Mission accomplished. +{task.appointed_points} pts")
+    else:
         messages.info(request, "Mission already accomplished by another operative.")
 
-    return redirect("details-task", pk=task.pk)
+    return redirect(get_next(request) or reverse("details-task", args=[task.pk]))
 
 
 @login_required

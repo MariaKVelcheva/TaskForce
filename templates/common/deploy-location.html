@@ -1,13 +1,84 @@
 {% extends "common/base.html" %}
+{% block extra_css %}
+    <style>
+    .board-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; }
+.board-header h1 { font-family: 'Barlow Condensed', sans-serif; text-transform: uppercase;
+                   letter-spacing: .08em; color: var(--khaki); }
 
+.board-group { margin-bottom: 2rem; }
+.board-group-title { font-family: 'Share Tech Mono', monospace; font-size: .75rem; font-weight: normal;
+                     letter-spacing: .14em; text-transform: uppercase; color: var(--khaki-muted);
+                     border-bottom: 1px solid var(--olive); padding-bottom: .5rem; margin-bottom: 1rem; }
+.board-group-title span { color: var(--muted); margin-left: .4rem; }
+.board-overdue .board-group-title { color: var(--rust-light); border-color: var(--rust); }
+
+.board-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; }
+
+.card { position: relative; background: var(--olive-mid); border: 1px solid var(--olive);
+        border-left: 4px solid var(--khaki-muted); border-radius: var(--radius);
+        padding: 1rem 1rem .85rem; display: flex; flex-direction: column; gap: .4rem; }
+.card.priority-2 { border-left-color: var(--khaki); }
+.card.priority-1 { border-left-color: var(--rust-light); }
+.board-overdue .card { border-color: var(--rust); border-left-width: 4px; }
+
+.card-name { font-family: 'Barlow Condensed', sans-serif; font-size: 1.35rem; line-height: 1.15;
+             color: var(--cream); text-decoration: none; }
+.card-name:hover { color: var(--khaki); }
+.card-due { font-family: 'Share Tech Mono', monospace; font-size: .8rem; color: var(--khaki-muted); min-height: 1em; }
+.board-overdue .card-due { color: var(--rust-light); }
+
+.card-action { margin-top: auto; padding-top: .5rem; }
+.card-action .btn { font-size: .8rem; padding: .35rem .9rem; }
+
+.card-pennant { position: absolute; top: -1px; right: 1rem; width: 12px; height: 18px;
+                background: var(--rust-light); clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 75%, 0 100%); }
+
+.board-empty { text-align: center; padding: 3rem 1rem; border: 1px dashed var(--olive); border-radius: var(--radius); }
+.board-empty-title { font-family: 'Barlow Condensed', sans-serif; font-size: 1.5rem; color: var(--khaki); margin-bottom: .4rem; }
+    </style>
+{% endblock %}
 {% block content %}
   <h1>{{ location_label }}</h1>
   {% if missions %}
-    <ul>
-      {% for mission in missions %}
-        <li><a href="{% url 'details-task' mission.pk %}?next={{ request.get_full_path|urlencode }}">{{ mission.name }}</a></li>
+{% load urgency_tags %}
+
+<div class="board-header">
+  <a href="{% url 'deploy' %}" class="btn btn-ghost" style="font-size: 0.82rem;">← Map</a>
+  <h1>{{ location_label }}</h1>
+</div>
+
+{% for key, label, missions in groups %}
+  <section class="board-group board-{{ key }}">
+    <h2 class="board-group-title">{{ label }} <span>{{ missions|length }}</span></h2>
+    <div class="board-cards">
+      {% for m in missions %}
+        <article class="card priority-{{ m.priority }}">
+          {% if m.priority == 1 %}<span class="card-pennant" aria-label="Critical"></span>{% endif %}
+          <a class="card-name" href="{% url 'details-task' m.pk %}?next={{ request.get_full_path|urlencode }}">{{ m.name }}</a>
+          <p class="card-due">
+            {% if key == "overdue" %}
+              {% if m.due_date %}{{ m.due_date|late_by }} late{% endif %}
+              {% if m.has_due_chores %}Duties waiting{% endif %}
+            {% elif key == "today" %}{{ m.due_date|date:"H:i" }}
+            {% elif key == "soon" %}{{ m.due_date|date:"D H:i" }}
+            {% elif key == "later" %}{{ m.due_date|date:"D j M" }}
+            {% endif %}
+          </p>
+          <form method="post" action="{% url 'complete-task' m.pk %}" class="card-action">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <button type="submit" class="btn btn-primary">Accomplish · +{{ m.appointed_points }}</button>
+          </form>
+        </article>
       {% endfor %}
-    </ul>
+    </div>
+  </section>
+{% empty %}
+  <div class="board-empty">
+    <p class="board-empty-title">All clear at {{ location_label }}.</p>
+    <p class="text-muted text-mono">No open missions here.</p>
+  </div>
+{% endfor %}
   {% else %}
     <p>No missions here.</p>
   {% endif %}
