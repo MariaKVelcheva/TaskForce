@@ -40,6 +40,30 @@
 .card-progress-bar span { display: block; height: 100%; background: var(--khaki); }
 .card-progress-text, .card-duties { font-family: 'Share Tech Mono', monospace; font-size: .72rem; color: var(--khaki-muted); }
 .card-duties { color: var(--rust-light); }
+.quick-add { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem;
+             background: var(--olive-mid); border: 1px solid var(--khaki-dark);
+             border-radius: var(--radius); padding: .85rem; margin-bottom: 2rem; }
+.quick-add input[type="text"] { flex: 1 1 220px; width: auto; }
+
+.chips { display: flex; gap: .3rem; border: none; }
+.chip input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.chip span { display: inline-block; font-family: 'Share Tech Mono', monospace; font-size: .72rem;
+             letter-spacing: .06em; text-transform: uppercase; padding: .35rem .6rem;
+             border: 1px solid var(--khaki-dark); border-radius: var(--radius-sm);
+             color: var(--khaki-muted); cursor: pointer; }
+.chip input:checked + span { background: var(--khaki-dark); color: var(--cream); }
+.chip input:focus-visible + span { outline: 2px solid var(--khaki); outline-offset: 2px; }
+.chip-p1 input:checked + span { background: var(--rust-light); border-color: var(--rust-light); }
+
+.quick-add input[type="datetime-local"] { background: var(--olive-dark); color: var(--cream);
+             border: 1px solid var(--khaki-dark); border-radius: var(--radius-sm); padding: .35rem .5rem; }
+
+@supports selector(:has(*)) {
+  .pick-date { display: none; }
+  .quick-add:has(input[value="pick"]:checked) .pick-date { display: block; }
+}
+
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
     </style>
 {% endblock %}
 {% block content %}
@@ -51,6 +75,30 @@
   <a href="{% url 'deploy' %}" class="btn btn-ghost" style="font-size: 0.82rem;">← Map</a>
   <h1>{{ location_label }}</h1>
 </div>
+      
+    <form method="post" class="quick-add">
+  {% csrf_token %}
+  {{ form.name }}
+
+  <fieldset class="chips">
+    <legend class="visually-hidden">Due</legend>
+    {% for radio in form.when %}
+      <label class="chip">{{ radio.tag }}<span>{{ radio.choice_label }}</span></label>
+    {% endfor %}
+  </fieldset>
+
+  <div class="pick-date">{{ form.due_date }}{{ form.due_date.errors }}</div>
+
+  <fieldset class="chips">
+    <legend class="visually-hidden">Priority</legend>
+    {% for radio in form.priority %}
+      <label class="chip chip-p{{ radio.data.value }}">{{ radio.tag }}<span>{{ radio.choice_label }}</span></label>
+    {% endfor %}
+  </fieldset>
+
+  <button type="submit" class="btn btn-primary">Deploy</button>
+  {{ form.name.errors }}
+</form>
 
 {% for key, label, missions in groups %}
   <section class="board-group board-{{ key }}">

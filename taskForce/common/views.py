@@ -6,13 +6,15 @@ from django.contrib.auth import get_user_model
 from django.db.models import Q, OuterRef, Count, F, Subquery
 from django.http import Http404
 from django.shortcuts import redirect
+from django.urls import reverse
 from django.utils import timezone
 from django.views.generic import TemplateView, ListView
 from taskForce.common.deploy_map import TILE, building_positions, map_rows, tiles
+from taskForce.redirects import with_next
 from taskForce.tasks.locations import location_summary
 
 from taskForce.comms.models import Message, ConversationRead
-from taskForce.tasks.forms import QuickCreateTaskForm
+from taskForce.tasks.forms import QuickCreateTaskForm, LocationQuickAddForm
 from taskForce.tasks.items import ITEM_MODELS, item_progress
 from taskForce.tasks.locations import LOCATIONS, missions_at
 from taskForce.tasks.models import Task, TaskItem, ChoreItem
@@ -181,9 +183,29 @@ class DeployLocationView(LoginRequiredMixin, ListView):
             .order_by(F("due_date").asc(nulls_last=True), "-created_at")
         )
 
+    def get_form(self, data=None):
+        return LocationQuickAddForm(data)
+
+    def post(self, request, *args, **kwargs):
+        self.object_list = self.get_queryset()
+        form = self.get_form(request.POST)
+        if form.is_valid():
+            task = form.save(commit=False)
+            task.user = request.user
+            task.type = LOCATIONS[self.location_key]["type"]
+            task.save()
+            messages.success(request, "Mission deployed.")
+            if task.type:
+                return redirect(with_next(reverse("details-task", args=[task.pk]),
+                                          request.get_full_path()))
+            return redirect(request.get_full_path())
+        return self.render_to_response(self.get_context_data(form=form))
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context.update(self.get_location_context())
+        location_context = self.get_location_context()
+        location_context.update({k: v for k, v in kwargs.items() if k == "form"})
+        context.update(location_context)
         return context
 
     def get_location_context(self):
@@ -193,3 +215,4 @@ class DeployLocationView(LoginRequiredMixin, ListView):
             "location_label": location["label"],
             "groups": group_by_urgency(self.object_list),
         }
+

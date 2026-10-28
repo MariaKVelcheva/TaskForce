@@ -1,11 +1,15 @@
 from django import forms
 from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
+from django.utils import timezone
+from datetime import datetime, time, timedelta
+
 from taskForce.tasks.models import Task, TaskItem, GroceryItem, WorkoutItem, ChoreItem, ListItem
 from taskForce.units.models import Unit
 
 
 User = get_user_model()
+DEADLINE = time(23, 59)
 
 
 class BaseTaskForm(forms.ModelForm):
@@ -83,8 +87,6 @@ class BaseTaskForm(forms.ModelForm):
                 "class": "checkbox-field",
             }),
         }
-
-
 
 
 class CreateTaskForm(BaseTaskForm):
@@ -165,3 +167,48 @@ class ListItemForm(forms.ModelForm):
             "name": forms.TextInput(attrs={"placeholder": "Add entry..."}),
         }
 
+
+class LocationQuickAddForm(forms.ModelForm):
+    WHEN_CHOICES = (
+        ("", "No date"),
+        ("today", "Today"),
+        ("tomorrow", "Tomorrow"),
+        ("pick", "Pick date"),
+    )
+    when = forms.ChoiceField(choices=WHEN_CHOICES, required=False,
+                             widget=forms.RadioSelect, initial="")
+
+    class Meta:
+        model = Task
+        fields = ["name", "priority", "due_date"]
+        widgets = {
+            "name": forms.TextInput(attrs={"placeholder": "New mission…", "autocomplete": "off"}),
+            "priority": forms.RadioSelect,
+            "due_date": forms.DateTimeInput(attrs={"type": "datetime-local"},
+                                            format="%Y-%m-%dT%H:%M"),
+        }
+
+    def __init__(self, *args, now=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.now = now
+        self.fields["due_date"].required = False
+
+    def clean(self):
+        cleaned = super().clean()
+        when = cleaned.get("when")
+        today = timezone.localdate(self.now or timezone.now())
+
+        if when == "today":
+            cleaned["due_date"] = self._deadline(today)
+        elif when == "tomorrow":
+            cleaned["due_date"] = self._deadline(today + timedelta(days=1))
+        elif when == "pick":
+            if not cleaned.get("due_date"):
+                self.add_error("due_date", "Pick a date and time.")
+        else:
+            cleaned["due_date"] = None
+        return cleaned
+
+    @staticmethod
+    def _deadline(day):
+        return timezone.make_aware(datetime.combine(day, DEADLINE))

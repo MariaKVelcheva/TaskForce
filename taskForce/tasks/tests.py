@@ -6,8 +6,9 @@ from django.urls import reverse
 from django.utils import timezone
 
 from taskForce.accounts.tests import PARIS, NOW
+from taskForce.tasks.forms import LocationQuickAddForm
 from taskForce.tasks.items import item_progress
-from taskForce.tasks.locations import location_summary
+from taskForce.tasks.locations import location_summary, LOCATIONS, missions_at
 from taskForce.tasks.models import Task, GroceryItem, ChoreItem, ChoreCompletion, WorkoutItem
 from taskForce.tasks.urgency import group_by_urgency, bucket_for
 from taskForce.units.models import Unit, Membership
@@ -261,6 +262,32 @@ class TaskNextTests(TestCase):
         task = Task.objects.create(user=self.user, name="empty", type="workout")
         annotated = Task.objects.annotate(**item_progress()).get(pk=task.pk)
         self.assertEqual((annotated.items_done, annotated.items_total), (0, 0))
+
+    def test_today_chip_sets_end_of_day(self):
+        with timezone.override(PARIS):
+            form = LocationQuickAddForm({"name": "m", "priority": 3, "when": "today"}, now=NOW)
+            self.assertTrue(form.is_valid(), form.errors)
+            due = timezone.localtime(form.cleaned_data["due_date"])
+        self.assertEqual((due.date(), due.hour, due.minute), (NOW.date(), 23, 59))
+
+    def test_pick_without_date_is_an_error(self):
+        form = LocationQuickAddForm({"name": "m", "priority": 3, "when": "pick"})
+        self.assertFalse(form.is_valid())
+        self.assertIn("due_date", form.errors)
+
+    def test_no_date_ignores_a_submitted_date(self):
+        form = LocationQuickAddForm({"name": "m", "priority": 3, "when": "",
+                                     "due_date": "2026-11-01T10:00"})
+        self.assertTrue(form.is_valid())
+        self.assertIsNone(form.cleaned_data["due_date"])
+
+    def test_mission_created_at_a_location_appears_there(self):
+        for key in LOCATIONS:
+            with self.subTest(location=key):
+                url = reverse("deploy-location", args=[key])
+                self.client.post(url, {"name": f"m-{key}", "priority": 3, "when": ""})
+                task = Task.objects.get(name=f"m-{key}")
+                self.assertIn(task, missions_at(self.user, key))
 
 
 class UrgencyTests(SimpleTestCase):

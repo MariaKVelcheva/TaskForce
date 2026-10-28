@@ -16,11 +16,11 @@ def _of_type(task_type):
 
 
 LOCATIONS = {
-    "hq":       {"label": "HQ",              "filter": _hq},
-    "training": {"label": "Training Ground", "filter": _of_type("workout")},
-    "supply":   {"label": "Supply",          "filter": _of_type("groceries")},
-    "barracks": {"label": "Barracks",        "filter": _of_type("chores")},
-    "rec_room": {"label": "Rec Room",        "filter": _of_type("list")},
+    "hq": {"label": "HQ", "type": None, "filter": _hq},
+    "training": {"label": "Training Ground", "type": "workout", "filter": _of_type("workout")},
+    "supply": {"label": "Supply", "type": "groceries", "filter": _of_type("groceries")},
+    "barracks": {"label": "Barracks", "type": "chores", "filter": _of_type("chores")},
+    "rec_room": {"label": "Rec Room", "type": "list", "filter": _of_type("list")},
 }
 
 
