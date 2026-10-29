@@ -15,6 +15,14 @@ BUCKETS = (
     ("unscheduled", "No due date"),
 )
 
+BUCKET_ORDER = {key: i for i, (key, _) in enumerate(BUCKETS)}
+
+ACTIONABLE = {"overdue", "today", "soon"}
+
+
+def urgency_key(task, now):
+    return BUCKET_ORDER[task.bucket], task.due_date or now
+
 
 def has_due_chores():
     return Exists(ChoreItem.objects.due().filter(task=OuterRef("pk")))

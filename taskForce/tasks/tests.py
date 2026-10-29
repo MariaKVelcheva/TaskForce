@@ -8,7 +8,7 @@ from django.utils import timezone
 from taskForce.accounts.tests import PARIS, NOW
 from taskForce.tasks.forms import LocationQuickAddForm
 from taskForce.tasks.items import item_progress
-from taskForce.tasks.locations import location_summary, LOCATIONS, missions_at, location_previews
+from taskForce.tasks.locations import location_summary, LOCATIONS, missions_at, location_previews, next_objective
 from taskForce.tasks.models import Task, GroceryItem, ChoreItem, ChoreCompletion, WorkoutItem
 from taskForce.tasks.urgency import group_by_urgency, bucket_for
 from taskForce.units.models import Unit, Membership
@@ -161,6 +161,21 @@ class LocationTestCase(TestCase):
         kwargs.setdefault("user", self.user)
         kwargs.setdefault("name", "mission")
         return Task.objects.create(**kwargs)
+
+    def test_objective_prefers_overdue_over_today(self):
+        self.make(type="workout", due_date=NOW + timedelta(hours=2))
+        self.make(type="chores", due_date=NOW - timedelta(days=1))
+        with timezone.override(PARIS):
+            previews = location_previews(self.user, now=NOW)
+        self.assertEqual(next_objective(previews, NOW), "barracks")
+
+    def test_no_objective_without_actionable_missions(self):
+        self.make(type="workout")  # no date
+        self.make(type="groceries", due_date=NOW + timedelta(days=9))
+        with timezone.override(PARIS):
+            previews = location_previews(self.user, now=NOW)
+        self.assertIsNone(next_objective(previews, NOW))
+
 
 
 class LocationSummaryTests(LocationTestCase):

@@ -9,9 +9,9 @@ from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils import timezone
 from django.views.generic import TemplateView, ListView
-from taskForce.common.deploy_map import TILE, building_positions, map_rows, tiles
+from taskForce.common.deploy_map import TILE, building_positions, map_rows, tiles, find_path
 from taskForce.redirects import with_next
-from taskForce.tasks.locations import location_summary, location_previews
+from taskForce.tasks.locations import location_summary, location_previews, next_objective
 
 from taskForce.comms.models import Message, ConversationRead
 from taskForce.tasks.forms import QuickCreateTaskForm, LocationQuickAddForm
@@ -148,11 +148,13 @@ class DeployIndexView(LoginRequiredMixin, TemplateView):
         return context
 
     def get_locations_context(self):
-        summary = location_summary(self.request.user)
+        now = timezone.now()
+        summary = location_summary(self.request.user, now=now)
         positions = building_positions()
         rows = map_rows()
         buildings = []
-        previews = location_previews(self.request.user)
+        previews = location_previews(self.request.user, now=now)
+        objective = next_objective(previews, now)
         width, height = len(rows[0]) * TILE, len(rows) * TILE
 
         for key, loc in LOCATIONS.items():
@@ -171,11 +173,27 @@ class DeployIndexView(LoginRequiredMixin, TemplateView):
 
             })
 
+        hq_col, hq_row = positions["hq"]
+        avatar_tile = (hq_col + 1, hq_row)  # at ease, beside HQ
+        route = ""
+        if objective and objective != "hq":
+            path = find_path(positions["hq"], positions[objective])
+            if len(path) > 2:
+                walk = path[1:-1]
+                route = " ".join(f"{c * TILE + TILE // 2},{r * TILE + TILE // 2}" for c, r in walk)
+                avatar_tile = walk[-1]
+
         return {
             "tiles": list(tiles()),
             "buildings": buildings,
             "map_width": len(rows[0]) * TILE,
             "map_height": len(rows) * TILE,
+            "route": route,
+            "avatar_x": avatar_tile[0] * TILE,
+            "avatar_y": avatar_tile[1] * TILE - 16,
+            "objective": objective and {
+                "label": LOCATIONS[objective]["label"],
+                "mission": previews[objective][0],}
         }
 
 

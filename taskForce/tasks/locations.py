@@ -2,10 +2,7 @@ from django.db.models import Q, Count, Exists, OuterRef, When, Value, Case, Char
 from django.utils import timezone
 
 from taskForce.tasks.models import Task, ChoreItem
-from taskForce.tasks.urgency import has_due_chores, bucket_for, BUCKETS
-
-
-BUCKET_ORDER = {key: i for i, (key, _) in enumerate(BUCKETS)}
+from taskForce.tasks.urgency import has_due_chores, bucket_for, BUCKETS, BUCKET_ORDER, urgency_key, ACTIONABLE
 
 
 def _hq(now):
@@ -83,10 +80,18 @@ def location_previews(user, limit=3, now=None):
     for m in missions:
         m.bucket = bucket_for(m, now)
 
-    ranked = sorted(missions, key=lambda m: (BUCKET_ORDER[m.bucket], m.due_date or now))
+    ranked = sorted(missions, key=lambda m: urgency_key(m, now))
     previews = {key: [] for key in LOCATIONS}
     for m in ranked:
         if m.location and len(previews[m.location]) < limit:
             previews[m.location].append(m)
     return previews
 
+
+def next_objective(previews, now):
+    candidates = [
+        (urgency_key(missions[0], now), key)
+        for key, missions in previews.items()
+        if missions and missions[0].bucket in ACTIONABLE
+    ]
+    return min(candidates)[1] if candidates else None

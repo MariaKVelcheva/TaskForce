@@ -1,11 +1,15 @@
+from datetime import timedelta
+
 from django.contrib.auth import get_user_model
 from django.db import connection
 from django.test import TestCase, SimpleTestCase
 from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
+from django.utils import timezone
 
-from taskForce.common.deploy_map import map_rows, TERRAIN, BUILDINGS, building_positions
-from taskForce.tasks.locations import LOCATIONS
+from taskForce.accounts.tests import NOW, PARIS
+from taskForce.common.deploy_map import map_rows, TERRAIN, BUILDINGS, building_positions, find_path
+from taskForce.tasks.locations import LOCATIONS, location_previews, next_objective
 from taskForce.tasks.models import Task
 
 
@@ -30,6 +34,21 @@ class DeployMapTests(SimpleTestCase):
 
     def test_every_location_has_a_building(self):
         self.assertEqual(set(building_positions()), set(LOCATIONS))
+
+    def test_every_building_reachable_from_hq(self):
+        positions = building_positions()
+        for key, pos in positions.items():
+            with self.subTest(building=key):
+                self.assertTrue(find_path(positions["hq"], pos))
+
+    def test_paths_only_cross_roads(self):
+        rows = map_rows()
+        positions = building_positions()
+        for key, pos in positions.items():
+            path = find_path(positions["hq"], pos)
+            for col, row in path[1:-1]:
+                with self.subTest(building=key, tile=(col, row)):
+                    self.assertEqual(rows[row][col], "=")
 
 
 class DeployIndexViewTests(TestCase):

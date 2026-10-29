@@ -48,7 +48,15 @@
 .map-preview li.is-overdue { color: var(--rust-light); }
 .map-preview li.is-overdue::before { content: "● "; font-size: .6rem; vertical-align: middle; }
 .map-preview-more { font-family: 'Share Tech Mono', monospace; font-size: .65rem; color: var(--muted); margin-top: .25rem; }
+.route { fill: none; stroke: #f2ead0; stroke-width: 2.5; stroke-dasharray: 2 6;
+         stroke-linecap: round; opacity: .85; animation: march 1s linear infinite; }
+@keyframes march { to { stroke-dashoffset: -8; } }
 
+.objective { margin-top: 1rem; display: flex; flex-wrap: wrap; align-items: baseline; gap: .5rem; }
+.objective-tag { font-family: 'Share Tech Mono', monospace; font-size: .7rem; letter-spacing: .12em;
+                 text-transform: uppercase; color: var(--rust-light); }
+.objective a { font-family: 'Barlow Condensed', sans-serif; font-size: 1.25rem; color: var(--cream); text-decoration: none; }
+.objective a:hover { color: var(--khaki); }
 @media (prefers-reduced-motion: reduce) {
   .is-overdue .building-art { animation: none; filter: drop-shadow(0 0 4px var(--rust-light)); }
 }
@@ -61,7 +69,10 @@
     <g aria-hidden="true">
       {% for t in tiles %}<use href="#tile-{{ t.kind }}" x="{{ t.x }}" y="{{ t.y }}" width="32" height="32"/>{% endfor %}
     </g>
-
+{% if route %}
+  <polyline class="route" points="{{ route }}" aria-hidden="true"/>
+{% endif %}
+  <use class="avatar" href="#avatar" x="{{ avatar_x }}" y="{{ avatar_y }}" width="32" height="48" aria-hidden="true"/>
     {% for b in buildings %}
 <a id="bld-{{ b.key }}" aria-describedby="preview-{{ b.key }}" href="{% url 'deploy-location' b.key %}"
    class="building{% if not b.count %} is-empty{% endif %}{% if b.overdue %} is-overdue{% endif %}{% if b.critical %} is-critical{% endif %}{% if b.due_today %} is-due-today{% endif %}"
@@ -103,4 +114,13 @@
   {% endfor %}
 </style>
 </div>
+    {% if objective %}
+  <p class="objective">
+    <span class="objective-tag">Next objective</span>
+    <a href="{% url 'details-task' objective.mission.pk %}?next={{ request.get_full_path|urlencode }}">{{ objective.mission.name }}</a>
+    <span class="text-muted">at {{ objective.label }}</span>
+  </p>
+{% else %}
+  <p class="objective text-muted">No urgent orders. At ease, operative.</p>
+{% endif %}
 {% endblock %}
