@@ -30,6 +30,25 @@
 .pennant rect { fill: #3a3a2c; }
 .pennant path { fill: var(--rust-light); }
 
+.deploy-map { position: relative; }
+
+.map-preview { display: none; position: absolute; z-index: 10; pointer-events: none;
+               transform: translate(-50%, calc(-100% - 6px));
+               min-width: 170px; max-width: 240px;
+               background: var(--olive-dark); border: 1px solid var(--khaki-dark);
+               border-radius: var(--radius-sm); padding: .6rem .75rem;
+               box-shadow: 0 6px 18px rgba(0,0,0,.4); }
+.map-preview.is-below { transform: translate(-50%, 54px); }
+
+.map-preview-title { font-family: 'Share Tech Mono', monospace; font-size: .65rem; letter-spacing: .12em;
+                     text-transform: uppercase; color: var(--khaki-muted); margin-bottom: .35rem; }
+.map-preview ul { list-style: none; }
+.map-preview li { font-family: 'Barlow Condensed', sans-serif; font-size: 1rem; color: var(--cream);
+                  padding: .15rem 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.map-preview li.is-overdue { color: var(--rust-light); }
+.map-preview li.is-overdue::before { content: "● "; font-size: .6rem; vertical-align: middle; }
+.map-preview-more { font-family: 'Share Tech Mono', monospace; font-size: .65rem; color: var(--muted); margin-top: .25rem; }
+
 @media (prefers-reduced-motion: reduce) {
   .is-overdue .building-art { animation: none; filter: drop-shadow(0 0 4px var(--rust-light)); }
 }
@@ -44,7 +63,7 @@
     </g>
 
     {% for b in buildings %}
-<a href="{% url 'deploy-location' b.key %}"
+<a id="bld-{{ b.key }}" aria-describedby="preview-{{ b.key }}" href="{% url 'deploy-location' b.key %}"
    class="building{% if not b.count %} is-empty{% endif %}{% if b.overdue %} is-overdue{% endif %}{% if b.critical %} is-critical{% endif %}{% if b.due_today %} is-due-today{% endif %}"
    transform="translate({{ b.x }},{{ b.y }})">
   <title>{{ b.label }}: {{ b.count }} mission{{ b.count|pluralize }}{% if b.overdue %}, overdue{% endif %}{% if b.critical %}, critical{% endif %}{% if b.due_today %}, due today{% endif %}</title>
@@ -64,5 +83,24 @@
       </a>
     {% endfor %}
   </svg>
+{% for b in buildings %}
+  {% if b.preview %}
+    <div class="map-preview{% if b.below %} is-below{% endif %}" id="preview-{{ b.key }}" role="tooltip"
+         style="left: {{ b.px|floatformat:2 }}%; top: {{ b.py|floatformat:2 }}%;">
+      <p class="map-preview-title">{{ b.label }}</p>
+      <ul>
+        {% for m in b.preview %}
+          <li class="{% if m.bucket == 'overdue' %}is-overdue{% endif %}">{{ m.name }}</li>
+        {% endfor %}
+      </ul>
+      {% if b.more > 0 %}<p class="map-preview-more">+{{ b.more }} more</p>{% endif %}
+    </div>
+  {% endif %}
+{% endfor %}
+<style>
+  {% for b in buildings %}
+  .deploy-map:has(#bld-{{ b.key }}:is(:hover, :focus-visible)) #preview-{{ b.key }} { display: block; }
+  {% endfor %}
+</style>
 </div>
 {% endblock %}

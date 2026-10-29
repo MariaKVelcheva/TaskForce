@@ -11,7 +11,7 @@ from django.utils import timezone
 from django.views.generic import TemplateView, ListView
 from taskForce.common.deploy_map import TILE, building_positions, map_rows, tiles
 from taskForce.redirects import with_next
-from taskForce.tasks.locations import location_summary
+from taskForce.tasks.locations import location_summary, location_previews
 
 from taskForce.comms.models import Message, ConversationRead
 from taskForce.tasks.forms import QuickCreateTaskForm, LocationQuickAddForm
@@ -150,7 +150,11 @@ class DeployIndexView(LoginRequiredMixin, TemplateView):
     def get_locations_context(self):
         summary = location_summary(self.request.user)
         positions = building_positions()
+        rows = map_rows()
         buildings = []
+        previews = location_previews(self.request.user)
+        width, height = len(rows[0]) * TILE, len(rows) * TILE
+
         for key, loc in LOCATIONS.items():
             col, row = positions[key]
             buildings.append({
@@ -158,9 +162,15 @@ class DeployIndexView(LoginRequiredMixin, TemplateView):
                 "label": loc["label"],
                 "x": col * TILE,
                 "y": row * TILE,
+                "preview": previews[key],
+                "more": summary[key]["count"] - len(previews[key]),
+                "px": (col * TILE + TILE / 2) / width * 100,
+                "py": (row * TILE - 16) / height * 100,
+                "below": row < 5,
                 **summary[key],
+
             })
-        rows = map_rows()
+
         return {
             "tiles": list(tiles()),
             "buildings": buildings,

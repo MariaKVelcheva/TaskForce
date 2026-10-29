@@ -8,7 +8,7 @@ from django.utils import timezone
 from taskForce.accounts.tests import PARIS, NOW
 from taskForce.tasks.forms import LocationQuickAddForm
 from taskForce.tasks.items import item_progress
-from taskForce.tasks.locations import location_summary, LOCATIONS, missions_at
+from taskForce.tasks.locations import location_summary, LOCATIONS, missions_at, location_previews
 from taskForce.tasks.models import Task, GroceryItem, ChoreItem, ChoreCompletion, WorkoutItem
 from taskForce.tasks.urgency import group_by_urgency, bucket_for
 from taskForce.units.models import Unit, Membership
@@ -215,6 +215,20 @@ class LocationSummaryTests(LocationTestCase):
         s = self.summary()["training"]
         self.assertTrue(s["due_today"])
         self.assertFalse(s["overdue"])
+
+    def test_previews_keep_three_most_urgent(self):
+        late = self.make(type="chores", due_date=NOW - timedelta(days=1))
+        for i in range(4):
+            self.make(type="chores", name=f"later-{i}", due_date=NOW + timedelta(days=5 + i))
+        with timezone.override(PARIS):
+            preview = location_previews(self.user, now=NOW)["barracks"]
+        self.assertEqual(len(preview), 3)
+        self.assertEqual(preview[0], late)
+
+    def test_previews_exclude_other_users(self):
+        self.make(type="workout", user=self.other)
+        with timezone.override(PARIS):
+            self.assertEqual(location_previews(self.user, now=NOW)["training"], [])
 
 
 class TaskNextTests(TestCase):

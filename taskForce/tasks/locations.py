@@ -1,8 +1,11 @@
-from django.db.models import Q, Count, Exists, OuterRef
+from django.db.models import Q, Count, Exists, OuterRef, When, Value, Case, CharField
 from django.utils import timezone
 
 from taskForce.tasks.models import Task, ChoreItem
-from taskForce.tasks.urgency import has_due_chores
+from taskForce.tasks.urgency import has_due_chores, bucket_for, BUCKETS
+
+
+BUCKET_ORDER = {key: i for i, (key, _) in enumerate(BUCKETS)}
 
 
 def _hq(now):
@@ -63,3 +66,27 @@ def location_summary(user, now=None):
         }
         for key in LOCATIONS
     }
+
+
+def location_previews(user, limit=3, now=None):
+    now = now or timezone.now()
+    whens = [When(loc["filter"](now), then=Value(key)) for key, loc in LOCATIONS.items()]
+    missions = (
+        Task.objects.visible_to(user)
+        .filter(is_done=False)
+        .annotate(
+            location=Case(*whens, default=Value(None), output_field=CharField()),
+            has_due_chores=has_due_chores(),
+        )
+    )
+
+    for m in missions:
+        m.bucket = bucket_for(m, now)
+
+    ranked = sorted(missions, key=lambda m: (BUCKET_ORDER[m.bucket], m.due_date or now))
+    previews = {key: [] for key in LOCATIONS}
+    for m in ranked:
+        if m.location and len(previews[m.location]) < limit:
+            previews[m.location].append(m)
+    return previews
+
