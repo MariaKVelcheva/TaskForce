@@ -57,12 +57,15 @@
                  text-transform: uppercase; color: var(--rust-light); }
 .objective a { font-family: 'Barlow Condensed', sans-serif; font-size: 1.25rem; color: var(--cream); text-decoration: none; }
 .objective a:hover { color: var(--khaki); }
+.deploy-map-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.deploy-map        { min-width: 640px; }
 @media (prefers-reduced-motion: reduce) {
   .is-overdue .building-art { animation: none; filter: drop-shadow(0 0 4px var(--rust-light)); }
 }
 </style>
 {% endblock %}
 {% block content %}
+    <div class="deploy-map-scroll">
 <div class="deploy-map">
   {% include "tasks/partials/_deploy_sprites.html" %}
   <svg viewBox="0 0 {{ map_width }} {{ map_height }}" aria-label="Base map">
@@ -114,6 +117,7 @@
   {% endfor %}
 </style>
 </div>
+    </div>
     {% if objective %}
   <p class="objective">
     <span class="objective-tag">Next objective</span>
@@ -123,4 +127,10 @@
 {% else %}
   <p class="objective text-muted">No urgent orders. At ease, operative.</p>
 {% endif %}
+{% endblock %}
+{% block extra_js %}
+<script>
+  const avatar = document.querySelector(".deploy-map .avatar");
+  if (avatar) avatar.scrollIntoView({ inline: "center", block: "nearest" });
+</script>
 {% endblock %}
