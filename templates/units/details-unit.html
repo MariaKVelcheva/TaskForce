@@ -355,7 +355,6 @@
         <a href="{% url 'details-task' task.pk %}" class="task-preview-link">
             <div class="task-dot"></div>
             <span class="task-preview-name">{{ task.name }}</span>
-            <span style="font-family: 'Share Tech Mono', monospace; font-size: 0.7rem; color: var(--muted);">{{ task.appointed_points }} pts</span>
         </a>
         <a href="{% url 'task-chat' task.pk %}" class="chat-icon" title="Discussion">&#128172;</a>
     </div>

@@ -110,13 +110,11 @@ class CatalogueTaskView(LoginRequiredMixin, ListView):
         ("newest", "Newest"),
         ("due", "Due date"),
         ("priority", "Priority"),
-        ("points", "Points"),
         ("name", "Name"),
     ]
 
     ORDERINGS = {
         "priority": ["priority", ],
-        "points": ["-appointed_points", "-created_at"],
         "due": [F("due_date").asc(nulls_last=True), "-created_at"],
         "name": ["name"],
         "newest": ["is_done", "-created_at"],
@@ -177,7 +175,7 @@ def complete_task(request, pk):
     task = get_object_or_404(Task.objects.visible_to(request.user), pk=pk)
 
     if task.complete(request.user):
-        messages.success(request, f"Mission accomplished. +{task.appointed_points} pts")
+        messages.success(request, f"Mission accomplished.")
     else:
         messages.info(request, "Mission already accomplished by another operative.")
 

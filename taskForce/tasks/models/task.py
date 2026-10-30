@@ -83,12 +83,6 @@ class Task(models.Model):
         verbose_name=_('unit'),
     )
 
-    appointed_points = models.PositiveSmallIntegerField(
-        default=1,
-        verbose_name=_('appointed points'),
-        blank=True,
-    )
-
     accomplished_at = models.DateTimeField(
         null=True,
         blank=True,
@@ -118,7 +112,7 @@ class Task(models.Model):
                 return False
 
             Avatar.objects.filter(user=user).update(
-                points=models.F("points") + self.appointed_points
+                points=models.F("points") + 1
             )
         return True
 
@@ -138,7 +132,7 @@ class Task(models.Model):
 
             if self.assigned_to_id:
                 Avatar.objects.filter(user_id=self.assigned_to_id).update(
-                    points=Greatest(models.F("points") - self.appointed_points, Value(0))
+                    points=Greatest(models.F("points") - 1, Value(0))
                 )
         return True
 

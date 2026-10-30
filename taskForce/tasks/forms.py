@@ -36,7 +36,7 @@ class BaseTaskForm(forms.ModelForm):
 
     class Meta:
         model = Task
-        fields = ["name", "type", "comment", "priority", "unit", "assigned_to", "appointed_points", "due_date", "is_done"]
+        fields = ["name", "type", "comment", "priority", "unit", "assigned_to", "due_date", "is_done"]
 
         labels = {
             "name": "Mission name",
@@ -44,7 +44,6 @@ class BaseTaskForm(forms.ModelForm):
             "is_done": "Already complete",
             "type": "Type",
             "unit": "Unit",
-            "appointed_points": "Intel points",
             "due_date": "Due date",
             "priority": "Priority",
             "comment": "Comment",
@@ -75,11 +74,6 @@ class BaseTaskForm(forms.ModelForm):
             "assigned_to": forms.Select(attrs={
                 "class": "select-field",
             }),
-            "appointed_points": forms.NumberInput(attrs={
-                "min": 0,
-                "max": 100,
-                "step": 1,
-            }),
             "due_date": forms.DateTimeInput(attrs={
                 "type": "datetime-local",
             }, format="%Y-%m-%dT%H:%M"),
@@ -95,7 +89,7 @@ class CreateTaskForm(BaseTaskForm):
         self.fields["type"].choices = [("", "Standing order (Default type)")] + list(Task.TYPE_CHOICES)
 
     class Meta(BaseTaskForm.Meta):
-        fields = ["name", "priority", "type", "unit", "appointed_points", "due_date", "comment"]
+        fields = ["name", "priority", "type", "unit", "due_date", "comment"]
 
 
 class QuickCreateTaskForm(forms.ModelForm):
@@ -106,7 +100,7 @@ class QuickCreateTaskForm(forms.ModelForm):
 
 class UpdateTaskForm(BaseTaskForm):
     class Meta(BaseTaskForm.Meta):
-        fields = ["name", "priority", "type", "appointed_points", "due_date", "comment"]
+        fields = ["name", "priority", "type", "due_date", "comment"]
 
 
 class GroceryItemForm(forms.ModelForm):

@@ -310,8 +310,7 @@
                 <span class="task-tag">{{ task.unit.name }}</span>
                 {% endif %}
             </div>
-            <span class="task-points">{{ task.appointed_points }} pt{{ task.appointed_points|pluralize }}</span>
-        </a>
+                   </a>
         {% if task.unit %}
         <a href="{% url 'task-chat' task.pk %}" class="task-chat-link" title="Unit discussion">&#128172;</a>
         {% endif %}

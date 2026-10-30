@@ -486,7 +486,6 @@
             <a href="{% url 'details-task' task.pk %}" class="task-item">
                 <div class="task-dot"></div>
                 <span class="task-item-name">{{ task.name }}</span>
-                <span class="task-item-pts">{{ task.appointed_points }}pts</span>
             </a>
             {% endfor %}
         {% else %}

@@ -29,7 +29,6 @@ class TaskCompletionTests(TestCase):
             name="Secure the perimeter",
             user=self.owner,
             unit=self.unit,
-            appointed_points=5,
         )
 
     def test_unit_member_can_complete_another_members_task(self):
