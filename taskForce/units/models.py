@@ -36,6 +36,15 @@ class Unit(models.Model):
         editable=False,
     )
 
+    personal_for = models.OneToOneField(
+        to=User,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="personal_unit",
+        verbose_name=_("personal unit of"),
+    )
+
     def get_absolute_url(self):
         return reverse("details-unit", kwargs={"pk": self.pk})
 

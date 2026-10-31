@@ -39,7 +39,7 @@ def task_type_counts(request):
 
     counts: dict[str | None, int] = dict(
         visible_tasks
-        .filter(is_done=False)
+        .filter(is_active=True)
         .order_by()
         .values_list("type")
         .annotate(total=Count("pk", distinct=True))
@@ -47,11 +47,11 @@ def task_type_counts(request):
 
     due_types = set(
         ChoreItem.objects.due()
-        .filter(task__in=visible_tasks, task__is_done=False)
+        .filter(task__in=visible_tasks, task__is_active=True)
         .values_list("task__type", flat=True)
     )
 
-    labels = dict(Task.TYPE_CHOICES)
+    labels = dict(Task.PRIORITY_CHOICES)
 
     type_nav = [
         {

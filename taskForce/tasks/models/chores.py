@@ -2,7 +2,7 @@ from django.db import models, transaction
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-from taskForce.tasks.manager import ChoreItemManager
+from taskForce.tasks.manager import RecurringItemManager
 from taskForce.tasks.models import TaskItem
 
 
@@ -41,7 +41,7 @@ class ChoreItem(TaskItem):
         verbose_name=_("Last done at"),
     )
 
-    objects = ChoreItemManager()
+    objects = RecurringItemManager()
 
     def toggle(self):
         if not self.is_recurring:
@@ -50,7 +50,7 @@ class ChoreItem(TaskItem):
         with transaction.atomic():
             latest = self.completions.first()
 
-            if latest and not self.is_due:
+            if latest and self.is_active:
                 latest.delete()
                 remaining = self.completions.first()
                 self.last_done_at = remaining.done_at if remaining else None
@@ -67,7 +67,7 @@ class ChoreItem(TaskItem):
     @property
     def is_satisfied(self):
         if not self.is_recurring:
-            return self.is_done
+            return not self.is_active
         return not getattr(self, "is_due", True)
 
 

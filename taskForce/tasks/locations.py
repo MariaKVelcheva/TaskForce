@@ -27,7 +27,7 @@ LOCATIONS = {
 def missions_at(user, key, now=None):
     now = now or timezone.now()
     q = LOCATIONS[key]["filter"](now)
-    return Task.objects.visible_to(user).filter(q, is_done=False)
+    return Task.objects.visible_to(user).filter(q, is_active=True)
 
 
 def location_summary(user, now=None):
@@ -37,7 +37,7 @@ def location_summary(user, now=None):
     due_chores = ChoreItem.objects.due().filter(task=OuterRef("pk"))
     qs = (
         Task.objects.visible_to(user)
-        .filter(is_done=False)
+        .filter(is_active=True)
         .annotate(has_due_chores)
         .order_by()
     )
@@ -70,7 +70,7 @@ def location_previews(user, limit=3, now=None):
     whens = [When(loc["filter"](now), then=Value(key)) for key, loc in LOCATIONS.items()]
     missions = (
         Task.objects.visible_to(user)
-        .filter(is_done=False)
+        .filter(is_active=True)
         .annotate(
             location=Case(*whens, default=Value(None), output_field=CharField()),
             has_due_chores=has_due_chores(),

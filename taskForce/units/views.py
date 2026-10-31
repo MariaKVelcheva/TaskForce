@@ -83,8 +83,8 @@ class DetailUnitView(LoginRequiredMixin, DetailView):
         context["is_commander"] = is_commander
         context["can_leave"] = not is_commander
         context["memberships"] = memberships
-        context["active_tasks"] = tasks.filter(is_done=False)
-        context["finished_tasks"] = tasks.filter(is_done=True)
+        context["active_tasks"] = tasks.filter(is_active=True)
+        context["finished_tasks"] = tasks.filter(is_active=False)
 
         return context
 
@@ -193,7 +193,7 @@ def leave_unit(request, pk):
         Task.objects.filter(
             unit=unit,
             assigned_to=request.user,
-            is_done=False,
+            is_active=True,
         ).update(assigned_to=None)
         unit.memberships.filter(user=request.user).delete()
 

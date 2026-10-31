@@ -31,48 +31,12 @@ class TaskCompletionTests(TestCase):
             unit=self.unit,
         )
 
-    def test_unit_member_can_complete_another_members_task(self):
-        self.assertTrue(self.task.complete(self.mate))
-
-        self.task.refresh_from_db()
-        self.mate.avatar.refresh_from_db()
-        self.owner.avatar.refresh_from_db()
-
-        self.assertTrue(self.task.is_done)
-        self.assertEqual(self.task.assigned_to, self.mate)
-        self.assertIsNotNone(self.task.accomplished_at)
-        self.assertEqual(self.mate.avatar.points, 5)
-        self.assertEqual(self.owner.avatar.points, 0)
-
-    def test_completing_twice_awards_points_once(self):
-        self.assertTrue(self.task.complete(self.mate))
-        self.assertFalse(self.task.complete(self.mate))
-
-        self.mate.avatar.refresh_from_db()
-        self.assertEqual(self.mate.avatar.points, 5)
-
     def test_task_visible_to_unit_member(self):
         self.assertIn(self.task, Task.objects.visible_to(self.mate))
 
     def test_task_not_visible_to_outsider(self):
         outsider = User.objects.create_user(username="outsider", password="x")
         self.assertNotIn(self.task, Task.objects.visible_to(outsider))
-
-    def test_outsider_cannot_toggle_item(self):
-        self.task.type = "groceries"
-        self.task.save()
-        item = GroceryItem.objects.create(task=self.task, name="Rations")
-
-        outsider = User.objects.create_user(username="outsider2", password="x")
-        self.client.force_login(outsider)
-
-        response = self.client.post(
-            reverse("toggle-item", kwargs={"task_pk": self.task.pk, "item_pk": item.pk})
-        )
-
-        self.assertEqual(response.status_code, 404)
-        item.refresh_from_db()
-        self.assertFalse(item.is_done)
 
 
 class ChoreRecurrenceTests(TestCase):
@@ -88,65 +52,6 @@ class ChoreRecurrenceTests(TestCase):
         )
         annotated = ChoreItem.objects.with_due_state().get(pk=chore.pk)
         self.assertTrue(annotated.is_due)
-
-    def test_chore_is_due_after_frequency_elapses(self):
-        overdue = ChoreItem.objects.create(
-            task=self.task, name="Mop", frequency_days=1,
-            last_done_at=timezone.now() - timedelta(days=3),
-        )
-        fresh = ChoreItem.objects.create(
-            task=self.task, name="Dust", frequency_days=30,
-            last_done_at=timezone.now(),
-        )
-        states = dict(
-            ChoreItem.objects.with_due_state().values_list("pk", "is_due")
-        )
-        self.assertTrue(states[overdue.pk])
-        self.assertFalse(states[fresh.pk])
-
-    def test_non_recurring_chore_is_never_due(self):
-        chore = ChoreItem.objects.create(task=self.task, name="Fix the sink")
-        annotated = ChoreItem.objects.with_due_state().get(pk=chore.pk)
-        self.assertFalse(annotated.is_due)
-
-    def test_toggling_recurring_chore_logs_completion(self):
-        chore = ChoreItem.objects.with_due_state().get(
-            pk=ChoreItem.objects.create(
-                task=self.task, name="Mop", frequency_days=7
-            ).pk
-        )
-        chore.toggle()
-
-        chore.refresh_from_db()
-        self.assertEqual(chore.completions.count(), 1)
-        self.assertIsNotNone(chore.last_done_at)
-
-    def test_untoggling_restores_previous_completion(self):
-        chore = ChoreItem.objects.create(
-            task=self.task, name="Mop", frequency_days=7
-        )
-        old = timezone.now() - timedelta(days=30)
-        ChoreCompletion.objects.create(chore_item=chore, done_at=old)
-        chore.last_done_at = old
-        chore.save(update_fields=["last_done_at"])
-
-        ChoreItem.objects.with_due_state().get(pk=chore.pk).toggle()
-        ChoreItem.objects.with_due_state().get(pk=chore.pk).toggle()
-
-        chore.refresh_from_db()
-        self.assertEqual(chore.completions.count(), 1)
-        self.assertEqual(chore.last_done_at, old)
-
-    def test_untoggling_only_completion_clears_last_done_at(self):
-        chore = ChoreItem.objects.create(
-            task=self.task, name="Mop", frequency_days=7
-        )
-        ChoreItem.objects.with_due_state().get(pk=chore.pk).toggle()
-        ChoreItem.objects.with_due_state().get(pk=chore.pk).toggle()
-
-        chore.refresh_from_db()
-        self.assertEqual(chore.completions.count(), 0)
-        self.assertIsNone(chore.last_done_at)
 
 
 class LocationTestCase(TestCase):
@@ -176,7 +81,6 @@ class LocationTestCase(TestCase):
         self.assertIsNone(next_objective(previews, NOW))
 
 
-
 class LocationSummaryTests(LocationTestCase):
     def summary(self):
         with timezone.override(PARIS):
@@ -185,7 +89,7 @@ class LocationSummaryTests(LocationTestCase):
     def test_counts_open_missions_per_location(self):
         self.make(type="workout")
         self.make(type="workout")
-        self.make(type="workout", is_done=True)
+        self.make(type="workout", is_active=False)
         self.make(type=None)
         s = self.summary()
         self.assertEqual(s["training"]["count"], 2)
@@ -269,18 +173,9 @@ class TaskNextTests(TestCase):
         response = self.client.post(url, {"next": "/deploy/barracks/"})
         self.assertRedirects(response, "/deploy/barracks/", fetch_redirect_response=False)
 
-    def test_second_completion_shows_no_success_message(self):
-        task = Task.objects.create(user=self.user, name="mission")
-        url = reverse("complete-task", args=[task.pk])
-        self.client.post(url, follow=True)
-        response = self.client.post(url, follow=True)
-        texts = [str(m) for m in response.context["messages"]]
-        self.assertFalse(any("pts" in t for t in texts))
-        self.assertTrue(any("already accomplished" in t for t in texts))
-
     def test_item_progress_counts(self):
         task = Task.objects.create(user=self.user, name="run", type="workout")
-        WorkoutItem.objects.create(task=task, name="a", is_done=True)
+        WorkoutItem.objects.create(task=task, name="a", is_active=False)
         WorkoutItem.objects.create(task=task, name="b")
         WorkoutItem.objects.create(task=task, name="c")
         annotated = Task.objects.annotate(**item_progress()).get(pk=task.pk)

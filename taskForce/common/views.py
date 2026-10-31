@@ -68,12 +68,12 @@ class DebriefHomeView(LoginRequiredMixin, TemplateView):
     def get_task_context(self):
         tasks = Task.objects.visible_to(self.request.user)
         counts = tasks.aggregate(
-            open=Count("pk", filter=Q(is_done=False), distinct=True),
-            done=Count("pk", filter=Q(is_done=True), distinct=True),
+            open=Count("pk", filter=Q(is_active=True), distinct=True),
+            done=Count("pk", filter=Q(is_active=True), distinct=True),
         )
         return {
             "open_tasks": (
-                tasks.filter(is_done=False)
+                tasks.filter(is_active=True)
                 .order_by(F("due_date").asc(nulls_last=True), "-created_at")
                 [:self.VISIBLE_TASKS]
             ),
@@ -119,7 +119,7 @@ class DebriefHomeView(LoginRequiredMixin, TemplateView):
 
     def get_overdue_context(self):
         due_chore_tasks = ChoreItem.objects.due().values_list("task_id", flat=True)
-        query = (Q(is_done=False) & Q(due_date__lt=timezone.now())) | Q(id__in=due_chore_tasks)
+        query = (Q(is_active=True) & Q(due_date__lt=timezone.now())) | Q(id__in=due_chore_tasks)
 
         return {
             "overdue_tasks": (
@@ -133,7 +133,7 @@ class DebriefHomeView(LoginRequiredMixin, TemplateView):
     def get_soon_due_context(self):
         horizon = timezone.now() + timedelta(days=2)
         due_tasks = (Task.objects.visible_to(self.request.user)
-                     .filter(is_done=False, due_date__gte=timezone.now(), due_date__lte=horizon)
+                     .filter(is_active=True, due_date__gte=timezone.now(), due_date__lte=horizon)
                      .order_by("due_date")[:self.VISIBLE_OVER_DUE]
                      )
         return {"due_tasks": due_tasks}

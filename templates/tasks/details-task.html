@@ -458,13 +458,13 @@
 {% endif %}
 <div class="detail-header">
     <div>
-        <h1 class="detail-title {% if object.is_done %}done{% endif %}">{{ object.name }}</h1>
+        <h1 class="detail-title {% if not object.is_active %}done{% endif %}">{{ object.name }}</h1>
         <p style="font-family: 'Share Tech Mono', monospace; font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-top: 0.4rem;">
             Added {{ object.created_at|date:"d M Y" }}
         </p>
     </div>
     <div class="detail-actions">
-        {% if not object.is_done %}
+        {% if object.is_active %}
         <a href="{% url 'update-task' object.pk %}" class="btn btn-ghost" style="font-size: 0.8rem; padding: 0.45rem 1rem;">Edit</a>
         {% endif %}
     </div>
@@ -483,7 +483,7 @@
     <div class="detail-field">
         <div class="detail-field-label">Status</div>
         <div class="detail-field-value">
-            {% if object.is_done %}
+            {% if not object.is_active %}
             <span class="status-badge done">Complete</span>
             {% else %}
             <span class="status-badge pending">Pending</span>
@@ -527,29 +527,7 @@
 </div>
 {% endif %}
 
-    {% if object.accomplished_at %}
-    <div class="detail-field">
-        <div class="detail-field-label">Completed</div>
-        <div class="detail-field-value">{{ object.accomplished_at|date:"d M Y, H:i" }}</div>
-    </div>
-    {% endif %}
-
 </div>
-
-    
-    {% if task.is_done %}
-    {% if request.user == task.assigned_to or request.user == task.user %}
-    <form method="post" action="{% url 'uncomplete-task' task.pk %}">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-ghost">Revoke completion</button>
-    </form>
-    {% endif %}
-{% else %}
-<form method="post" action="{% url 'complete-task' task.pk %}">
-    {% csrf_token %}
-    <button type="submit" class="btn btn-primary">Mark accomplished</button>
-</form>
-{% endif %}
 
 <div class="danger-zone">
     <a href="{% url 'delete-task' task.pk %}" class="btn btn-danger" style="font-size: 0.82rem;">Delete mission</a>

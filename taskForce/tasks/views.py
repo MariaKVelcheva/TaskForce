@@ -27,7 +27,7 @@ def get_item_context(task):
     return {
         "items": items,
         "item_form": ITEM_FORMS[task.type](),
-        "items_done": sum(1 for item in items if item.is_done),
+        "items_done": sum(1 for item in items if item.is_active), #fix
         "items_total": len(items),
         "item_partial": item_partial,
         "task": task,
@@ -83,7 +83,7 @@ class UpdateTaskView(LoginRequiredMixin, UpdateView):
     template_name = "tasks/update-task.html"
 
     def get_queryset(self):
-        return Task.objects.filter(user=self.request.user, is_done=False)
+        return Task.objects.filter(user=self.request.user, is_active=True)
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -117,7 +117,7 @@ class CatalogueTaskView(LoginRequiredMixin, ListView):
         "priority": ["priority", ],
         "due": [F("due_date").asc(nulls_last=True), "-created_at"],
         "name": ["name"],
-        "newest": ["is_done", "-created_at"],
+        "newest": ["-created_at"],
     }
 
     model = Task
@@ -167,34 +167,6 @@ class CatalogueTaskView(LoginRequiredMixin, ListView):
             "show_all": self.request.GET.get("show") == "all",
             "active_order": self.request.GET.get("order", "newest"),
         }
-
-
-@login_required
-@require_POST
-def complete_task(request, pk):
-    task = get_object_or_404(Task.objects.visible_to(request.user), pk=pk)
-
-    if task.complete(request.user):
-        messages.success(request, f"Mission accomplished.")
-    else:
-        messages.info(request, "Mission already accomplished by another operative.")
-
-    return redirect(get_next(request) or reverse("details-task", args=[task.pk]))
-
-
-@login_required
-@require_POST
-def uncomplete_task(request, pk):
-    task = get_object_or_404(Task.objects.visible_to(request.user), pk=pk)
-
-    if request.user not in (task.assigned_to, task.user):
-        raise PermissionDenied
-
-    if not task.uncomplete():
-        messages.info(request, "That mission is not marked as accomplished.")
-
-    return redirect("details-task", pk=task.pk)
-
 
 @login_required
 @require_POST

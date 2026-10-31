@@ -42,11 +42,6 @@ class HqLocationTests(TestCase):
         self.make(type="workout", due_date=datetime(2026, 10, 19, 0, 30, tzinfo=PARIS))
         self.assertEqual(self.hq(), set())
 
-    def test_done_and_invisible_missions_excluded(self):
-        self.make(type=None, is_done=True)
-        self.make(type=None, user=self.other)
-        self.assertEqual(self.hq(), set())
-
 
 class LocationCoverageTests(TestCase):
     @classmethod

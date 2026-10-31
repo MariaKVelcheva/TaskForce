@@ -18,7 +18,7 @@ class TaskItem(models.Model):
         verbose_name=_('name'),
     )
 
-    is_done = models.BooleanField(
+    is_active = models.BooleanField(
         default=False,
     )
 
@@ -33,8 +33,8 @@ class TaskItem(models.Model):
         ordering = ["position", "pk"]
 
     def toggle(self):
-        self.is_done = not self.is_done
-        self.save(update_fields=['is_done'])
+        self.is_active = not self.is_active
+        self.save(update_fields=['is_active'])
 
     def save(self, *args, **kwargs):
         if not self.pk:

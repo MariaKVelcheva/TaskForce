@@ -2,6 +2,8 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils.translation import gettext_lazy as _
 
+from taskForce.units.models import Unit
+
 
 class Avatar(models.Model):
     user = models.OneToOneField(
@@ -14,6 +16,15 @@ class Avatar(models.Model):
     points = models.PositiveSmallIntegerField(
         default=0,
         verbose_name=_('Points'),
+    )
+
+    active_unit = models.ForeignKey(
+        to="tasks.Unit",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+        verbose_name=_("active unit"),
     )
 
     time_zone = models.CharField(

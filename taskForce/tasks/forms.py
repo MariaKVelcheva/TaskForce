@@ -36,12 +36,12 @@ class BaseTaskForm(forms.ModelForm):
 
     class Meta:
         model = Task
-        fields = ["name", "type", "comment", "priority", "unit", "assigned_to", "due_date", "is_done"]
+        fields = ["name", "type", "comment", "priority", "unit", "assigned_to", ]
 
         labels = {
             "name": "Mission name",
             "assigned_to": "Assign to operative",
-            "is_done": "Already complete",
+            "is_active": "Active mission",
             "type": "Type",
             "unit": "Unit",
             "due_date": "Due date",
@@ -77,7 +77,7 @@ class BaseTaskForm(forms.ModelForm):
             "due_date": forms.DateTimeInput(attrs={
                 "type": "datetime-local",
             }, format="%Y-%m-%dT%H:%M"),
-            "is_done": forms.CheckboxInput(attrs={
+            "is_active": forms.CheckboxInput(attrs={
                 "class": "checkbox-field",
             }),
         }
