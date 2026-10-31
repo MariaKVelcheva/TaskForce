@@ -1,87 +1,37 @@
-from django.db import models, transaction
-from django.utils import timezone
+from django.db import models
 from django.utils.translation import gettext_lazy as _
+from django.utils import timezone
 
-from taskForce.tasks.manager import RecurringItemManager
 from taskForce.tasks.models import TaskItem
+from taskForce.tasks.mixins import (
+    CheckableItem,
+    RecurringItem,
+    recurring_checkable_constraints,
+)
 
 
-class ChoreItem(TaskItem):
-    ROOM_CHOICES = (
-        ("", "Section"),
-        ("kitchen", _("Kitchen")),
-        ("bathroom", _("Bathroom")),
-        ("bedroom", _("Bedroom")),
-        ("living", _("Living room")),
-        ("outdoor", _("Outdoor")),
-    )
+class ChoreItem(RecurringItem, CheckableItem, TaskItem):
+    class Room(models.TextChoices):
+        GENERAL = "", _("General")
+        KITCHEN = "kitchen", _("Kitchen")
+        BATHROOM = "bathroom", _("Bathroom")
+        BEDROOM = "bedroom", _("Bedroom")
+        LIVING = "living", _("Living room")
+        OUTDOOR = "outdoor", _("Outdoor")
 
     minutes = models.PositiveSmallIntegerField(
         null=True,
         blank=True,
-        verbose_name=_("Minutes"),
+        verbose_name=_("minutes"),
     )
 
     room = models.CharField(
-        max_length=100,
+        max_length=20,
         blank=True,
-        choices=ROOM_CHOICES,
-        verbose_name=_("Room"),
+        choices=Room.choices,
+        default=Room.GENERAL,
+        verbose_name=_("room"),
     )
 
-    frequency_days = models.PositiveSmallIntegerField(
-        null=True,
-        blank=True,
-        verbose_name=_("Frequency days"),
-    )
-
-    last_done_at = models.DateTimeField(
-        null=True,
-        blank=True,
-        verbose_name=_("Last done at"),
-    )
-
-    objects = RecurringItemManager()
-
-    def toggle(self):
-        if not self.is_recurring:
-            return super().toggle()
-
-        with transaction.atomic():
-            latest = self.completions.first()
-
-            if latest and self.is_active:
-                latest.delete()
-                remaining = self.completions.first()
-                self.last_done_at = remaining.done_at if remaining else None
-            else:
-                completion = self.completions.create()
-                self.last_done_at = completion.done_at
-
-            self.save(update_fields=["last_done_at"])
-
-    @property
-    def is_recurring(self):
-        return self.frequency_days is not None
-
-    @property
-    def is_satisfied(self):
-        if not self.is_recurring:
-            return not self.is_active
-        return not getattr(self, "is_due", True)
-
-
-class ChoreCompletion(models.Model):
-    chore_item = models.ForeignKey(
-        to=ChoreItem,
-        on_delete=models.CASCADE,
-        verbose_name=_("Duty"),
-        related_name="completions",
-    )
-
-    done_at = models.DateTimeField(
-        default=timezone.now,
-    )
-
-    class Meta:
-        ordering = ("-done_at", )
+    class Meta(TaskItem.Meta):
+        constraints = recurring_checkable_constraints("choreitem")

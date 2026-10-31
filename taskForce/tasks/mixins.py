@@ -88,6 +88,10 @@ class RecurringItem(models.Model):
     objects = RecurringItemManager()
 
     @property
+    def is_recurring(self):
+        return self.frequency_days is not None
+
+    @property
     def is_due_now(self):
         if self.frequency_days is None:
             return False

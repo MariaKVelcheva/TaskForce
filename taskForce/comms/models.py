@@ -69,7 +69,7 @@ class Message(models.Model):
 
     text = models.TextField(verbose_name=_("Text"))
 
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("created at"))
 
     class Meta:
         ordering = ("created_at",)
@@ -88,7 +88,7 @@ class ConversationRead(models.Model):
         related_name="conversation_reads",
     )
 
-    last_read_at = models.DateTimeField(default=    timezone.now)
+    last_read_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
         constraints = [
@@ -97,3 +97,4 @@ class ConversationRead(models.Model):
                 name="unique_conversation_read",
             )
         ]
+

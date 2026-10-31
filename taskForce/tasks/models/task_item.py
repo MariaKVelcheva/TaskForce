@@ -9,21 +9,18 @@ class TaskItem(models.Model):
     task = models.ForeignKey(
         to=Task,
         on_delete=models.CASCADE,
-        verbose_name=_('task'),
-        related_name='%(class)s',
+        verbose_name=_("task"),
+        related_name="%(class)s",
     )
 
     name = models.CharField(
         max_length=50,
-        verbose_name=_('name'),
-    )
-
-    is_active = models.BooleanField(
-        default=False,
+        verbose_name=_("name"),
     )
 
     position = models.PositiveSmallIntegerField(
         default=0,
+        verbose_name=_("position"),
     )
 
     objects = TaskItemManager()
@@ -31,10 +28,6 @@ class TaskItem(models.Model):
     class Meta:
         abstract = True
         ordering = ["position", "pk"]
-
-    def toggle(self):
-        self.is_active = not self.is_active
-        self.save(update_fields=['is_active'])
 
     def save(self, *args, **kwargs):
         if not self.pk:
