@@ -10,7 +10,7 @@ class UsernameOrEmailBackend(ModelBackend):
         if username is None:
             username = kwargs.get(User.USERNAME_FIELD)
 
-        if username is None or password is None:
+        if not username or password is None:
             return None
 
         try:

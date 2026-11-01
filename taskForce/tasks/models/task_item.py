@@ -1,7 +1,7 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-from taskForce.tasks.manager import TaskItemManager
+from taskForce.tasks.managers import TaskItemManager
 from taskForce.tasks.models import Task
 
 

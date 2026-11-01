@@ -6,7 +6,7 @@ from django.db.models import CheckConstraint, F, Q
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-from taskForce.tasks.manager import RecurringItemManager
+from taskForce.tasks.managers import RecurringItemManager, CheckableItemManager
 
 
 def _add_points(user_id, delta):
@@ -28,6 +28,8 @@ class CheckableItem(models.Model):
         related_name="+",
         verbose_name=_("checked by"),
     )
+
+    object = CheckableItemManager()
 
     @property
     def is_done(self):

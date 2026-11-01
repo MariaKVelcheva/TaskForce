@@ -40,10 +40,7 @@ class JoinUnitForm(forms.Form):
         except Unit.DoesNotExist:
             raise forms.ValidationError(_("No unit matches this clearance code."))
 
+        if self.unit.personal_for_id is not None:
+            raise forms.ValidationError(_("This unit doesn't take new members."))
+
         return code
-
-
-class ChangeCommanderForm(forms.ModelForm):
-    class Meta:
-        model = Membership
-        fields = ("role",)

@@ -1,4 +1,5 @@
 from django.db import transaction
+from django.db.models import OuterRef, Exists
 from django.utils.translation import gettext_lazy as _
 
 from taskForce.tasks.models import Task, TaskType
@@ -48,3 +49,14 @@ def active_unit_for(user):
     if unit and Membership.objects.filter(unit=unit, user=user).exists():
         return unit
     return user.personal_unit
+
+
+def blocking_commands(user):
+    others = Membership.objects.filter(unit=OuterRef("pk")).exclude(user=user)
+    return Unit.objects.filter(
+        personal_for__isnull=True,
+        memberships__user=user,
+        memberships__role="commander",
+    ).filter(Exists(others))
+
+

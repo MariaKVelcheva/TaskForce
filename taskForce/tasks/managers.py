@@ -24,6 +24,16 @@ class TaskItemManager(models.Manager):
         return self.get_queryset()
 
 
+class CheckableItemManager(TaskItemManager):
+    def done(self, now=None):
+        return self.filter(is_checked=True)
+
+
+class PantryItemManager(TaskItemManager):
+    def low(self):
+        return self.filter(threshold__isnull=False, quantity__lte=F("threshold"))
+
+
 class RecurringItemManager(TaskItemManager):
     DUE_AT = ExpressionWrapper(
         F("last_done_at") + timedelta(days=1) * F("frequency_days"),
@@ -43,3 +53,10 @@ class RecurringItemManager(TaskItemManager):
     def due(self, now=None):
         now = Now() if now is None else now
         return self.annotate(due_at=self.DUE_AT).filter(self.is_due_q(now))
+
+    def done(self, now=None):
+        now = Now() if now is None else now
+        return self.annotate(due_at=self.DUE_AT).filter(
+            Q(frequency_days__isnull=True, is_checked=True)
+            | Q(frequency_days__isnull=False, last_done_at__isnull=False, due_at__gt=now)
+        )

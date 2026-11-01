@@ -7,7 +7,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from taskForce.accounts.models import Avatar
-from taskForce.tasks.manager import TaskManager
+from taskForce.tasks.managers import TaskManager
 
 
 TaskUser = get_user_model()
@@ -124,7 +124,7 @@ class Task(models.Model):
                     is_active=True,
                     is_accomplished=False,
                 )
-                .update(is_accomplished=True, accomplished_by=user)
+                .update(is_accomplished=True, is_active=False, accomplished_by=user)
             )
             if not claimed:
                 return False
@@ -146,6 +146,7 @@ class Task(models.Model):
             earner_id = task.accomplished_by_id
             Task.objects.filter(pk=self.pk).update(
                 is_accomplished=False,
+                is_active=True,
                 accomplished_by=None,
             )
             if earner_id:

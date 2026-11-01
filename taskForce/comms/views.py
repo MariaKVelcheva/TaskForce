@@ -17,9 +17,15 @@ from taskForce.units.models import Unit
 
 class OpenUnitChatView(LoginRequiredMixin, View):
     def get(self, request, pk):
-        unit = get_object_or_404(Unit, pk=pk, memberships__user=request.user)
+        unit = get_object_or_404(
+            Unit, pk=pk,
+            memberships__user=request.user,
+            personal_for__isnull=True,)
+
         conversation = Conversation.objects.for_unit(unit)
-        return redirect("conversation", pk=conversation.pk)
+
+        return redirect("conversation",
+                        pk=conversation.pk)
 
 
 class OpenTaskChatView(LoginRequiredMixin, View):
@@ -27,9 +33,8 @@ class OpenTaskChatView(LoginRequiredMixin, View):
         task = get_object_or_404(
             Task,
             pk=pk,
-            unit__isnull=False,
             unit__memberships__user=request.user,
-        )
+            unit__personal_for__isnull=True,)
 
         conversation = Conversation.objects.for_task(task)
 
@@ -41,9 +46,12 @@ class ConversationView(LoginRequiredMixin, ListView):
     context_object_name = "messages_list"
 
     def get_conversation(self):
-        return get_object_or_404(
-            Conversation.objects.visible_to(self.request.user).select_related("unit", "task"),
-            pk=self.kwargs["pk"])
+        if not hasattr(self, "_conversation"):
+            self._conversation = get_object_or_404(
+                Conversation.objects.visible_to(self.request.user).select_related("unit", "task"),
+                pk=self.kwargs["pk"],
+            )
+        return self._conversation
 
     def get_queryset(self):
         return self.get_conversation().messages.select_related("sender")
@@ -94,14 +102,19 @@ class InboxView(LoginRequiredMixin, ListView):
             created_at__gt=OuterRef("last_read_at"),
         ).exclude(sender=user)
 
+        last_message = Message.objects.filter(
+            conversation=OuterRef("pk"),
+        ).order_by("-created_at").values("created_at")[:1]
+
         conversations = (
-            Conversation.objects.filter(unit__memberships__user=user)
+            Conversation.objects.visible_to(user)
             .select_related("unit", "task")
             .annotate(
-                last_read_at=Coalesce(Subquery(my_read), Value(datetime.datetime(1970,
-                                                                                 1, 1,
-                                                                                 tzinfo=datetime.timezone.utc))),
-                last_message_at=Max("messages__created_at"),
+                last_read_at=Coalesce(
+                    Subquery(my_read),
+                    Value(datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)),
+                ),
+                last_message_at=Subquery(last_message),
                 has_unread=Exists(unread),
             )
             .order_by(F("last_message_at").desc(nulls_last=True))
@@ -113,13 +126,16 @@ class InboxView(LoginRequiredMixin, ListView):
             matching = Message.objects.filter(
                 conversation=OuterRef("pk"),
                 text__icontains=query,
-            ).order_by("-created_at").values("text")[:1]
-
+            )
             conversations = conversations.filter(
-                Q(messages__text__icontains=query)
+                Exists(matching)
                 | Q(unit__name__icontains=query)
                 | Q(task__name__icontains=query)
-            ).annotate(match_preview=Subquery(matching)).distinct()
+            ).annotate(
+                match_preview=Subquery(
+                    matching.order_by("-created_at").values("text")[:1]
+                )
+            )
 
         return conversations
 

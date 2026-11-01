@@ -3,7 +3,10 @@ from django.db import models
 
 class ConversationManager(models.Manager):
     def visible_to(self, user):
-        return self.filter(unit__memberships__user=user)
+        return self.filter(
+            unit__memberships__user=user,
+            unit__personal_for__isnull=True,
+        )
 
     def for_unit(self, unit):
         conversation, _ = self.get_or_create(unit=unit, task=None)
@@ -12,3 +15,4 @@ class ConversationManager(models.Manager):
     def for_task(self, task):
         conversation, _ = self.get_or_create(unit=task.unit, task=task)
         return conversation
+

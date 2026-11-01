@@ -1,15 +1,18 @@
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import LoginView, LogoutView
 from django.db import transaction
 from django.http import HttpResponseRedirect
 from django.contrib.auth import get_user_model, login, logout
+from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, UpdateView, DeleteView, DetailView
+from django.utils.translation import gettext_lazy as _
 
-from taskForce.accounts.forms import RegisterForm, LoginCustomForm, AvatarUpdateForm
+from taskForce.accounts.forms import RegisterForm, LoginCustomForm, TimeZoneForm
 from taskForce.accounts.models import Avatar
 from taskForce.redirects import get_next
-from taskForce.units.services import create_personal_unit
+from taskForce.units.services import create_personal_unit, blocking_commands
 
 TaskUser = get_user_model()
 
@@ -47,6 +50,11 @@ class DeleteUserView(LoginRequiredMixin, DeleteView):
     def form_valid(self, form):
         user = self.request.user
         logout(self.request)
+
+        if blocking_commands(user).exists():
+            messages.error(self.request, _("Transfer command of your units before deleting your account."))
+            return redirect("all-units")
+
         user.delete()
         return HttpResponseRedirect(self.get_success_url())
 
@@ -56,7 +64,7 @@ class DeleteUserView(LoginRequiredMixin, DeleteView):
 
 class UpdateAvatarView(LoginRequiredMixin, UpdateView):
     model = Avatar
-    form_class = AvatarUpdateForm
+    form_class = TimeZoneForm
     template_name = "accounts/update-profile.html"
     success_url = reverse_lazy("profile-details")
 

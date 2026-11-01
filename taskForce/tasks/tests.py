@@ -4,8 +4,6 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase, SimpleTestCase
 from django.urls import reverse
 from django.utils import timezone
-
-from taskForce.accounts.tests import PARIS, NOW
 from taskForce.tasks.forms import LocationQuickAddForm
 from taskForce.tasks.items import item_progress
 from taskForce.tasks.locations import location_summary, LOCATIONS, missions_at, location_previews, next_objective
@@ -14,6 +12,79 @@ from taskForce.tasks.urgency import group_by_urgency, bucket_for
 from taskForce.units.models import Unit, Membership
 
 User = get_user_model()
+
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
+from django.contrib.auth import get_user_model
+from django.test import TestCase
+from django.utils import timezone
+
+from taskForce.tasks.locations import LOCATIONS, missions_at
+from taskForce.tasks.models import Task, TaskType
+from taskForce.units.services import create_personal_unit
+
+PARIS = ZoneInfo("Europe/Paris")
+NOW = datetime(2026, 10, 18, 12, 0, tzinfo=PARIS)
+
+
+class LocationTestCase(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create_user("operative", password="x")
+        cls.unit = create_personal_unit(cls.user)
+
+    def make(self, **kwargs):
+        kwargs.setdefault("user", self.user)
+        kwargs.setdefault("unit", self.unit)
+        kwargs.setdefault("name", "mission")
+        return Task.objects.create(**kwargs)
+
+    def at(self, key):
+        with timezone.override(PARIS):
+            return set(missions_at(self.user, key, now=NOW))
+
+
+class HqLocationTests(LocationTestCase):
+    def test_standing_orders_are_at_hq(self):
+        a = self.make(type=TaskType.ONEOFF)
+        b = self.make(type=TaskType.ONEOFF, due_date=NOW)
+        self.assertEqual(self.at("hq"), {a, b})
+
+    def test_lists_and_singletons_never_at_hq(self):
+        self.make(type=TaskType.LIST, due_date=NOW)
+        self.assertEqual(self.at("hq"), set())
+
+    def test_inactive_missions_not_at_hq(self):
+        self.make(type=TaskType.ONEOFF, is_active=False)
+        self.assertEqual(self.at("hq"), set())
+
+    def test_other_units_missions_not_at_hq(self):
+        stranger = User.objects.create_user("stranger", password="x")
+        self.make(user=stranger, unit=create_personal_unit(stranger))
+        self.assertEqual(self.at("hq"), set())
+
+
+class LocationCoverageTests(LocationTestCase):
+    def test_every_active_mission_is_in_exactly_one_location(self):
+        for mission_type in (TaskType.ONEOFF, TaskType.LIST):
+            for due in (None, NOW):
+                self.make(type=mission_type, due_date=due)
+
+        missions = list(Task.objects.filter(unit=self.unit, is_active=True))
+        self.assertEqual({m.type for m in missions}, set(TaskType.values))
+
+        placements = {key: self.at(key) for key in LOCATIONS}
+        for mission in missions:
+            found = [key for key, placed in placements.items() if mission in placed]
+            with self.subTest(type=mission.type, due=mission.due_date):
+                self.assertEqual(len(found), 1, f"found in {found}")
+
+    def test_inactive_missions_are_in_no_location(self):
+        mission = self.make(type=TaskType.ONEOFF, is_active=False)
+        for key in LOCATIONS:
+            with self.subTest(location=key):
+                self.assertNotIn(mission, self.at(key))
 
 
 class TaskCompletionTests(TestCase):

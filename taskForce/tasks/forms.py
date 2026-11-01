@@ -5,12 +5,20 @@ from django.utils import timezone
 from datetime import datetime, time, timedelta
 
 from taskForce.tasks.models import Task, TaskItem, GroceryItem, WorkoutItem, ChoreItem, ListItem, TaskType, \
-    SINGLETON_TYPES
+    SINGLETON_TYPES, PantryItem
 from taskForce.units.models import Unit
 
 
 User = get_user_model()
 DEADLINE = time(23, 59)
+
+
+def creatable_type_choices():
+    return [
+        (value, label)
+        for value, label in TaskType.choices
+        if value not in SINGLETON_TYPES
+    ]
 
 
 class BaseTaskForm(forms.ModelForm):
@@ -29,8 +37,7 @@ class BaseTaskForm(forms.ModelForm):
         cleaned = super().clean()
         unit = cleaned.get("unit")
         assigned_to = cleaned.get("assigned_to")
-        if assigned_to and not unit:
-            raise forms.ValidationError("Assign a unit before assigning an operative.")
+
         if assigned_to and unit and not unit.users.filter(pk=assigned_to.pk).exists():
             raise forms.ValidationError("That operative is not in the selected unit.")
         return cleaned
@@ -87,11 +94,7 @@ class BaseTaskForm(forms.ModelForm):
 class CreateTaskForm(BaseTaskForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["type"].choices = [
-            (value, label)
-            for value, label in TaskType.choices
-            if value not in SINGLETON_TYPES
-        ]
+        self.fields["type"].choices = creatable_type_choices()
 
     class Meta(BaseTaskForm.Meta):
         fields = ["name", "priority", "type", "unit", "due_date", "comment"]
@@ -100,25 +103,36 @@ class CreateTaskForm(BaseTaskForm):
 class QuickCreateTaskForm(forms.ModelForm):
     class Meta:
         model = Task
-        fields = ("name", "type",)
+        fields = ("name", "type")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["type"].choices = creatable_type_choices()
 
 
 class UpdateTaskForm(BaseTaskForm):
     class Meta(BaseTaskForm.Meta):
-        fields = ["name", "priority", "type", "due_date", "comment"]
+        fields = ["name", "priority", "due_date", "comment"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance.type not in (TaskType.ONEOFF, TaskType.LIST):
+            del self.fields["due_date"]
 
 
 class GroceryItemForm(forms.ModelForm):
     class Meta:
         model = GroceryItem
-        fields = ("quantity", "name")
+        fields = ("name", "quantity", "frequency_days")
         labels = {
             "name": _("Grocery item"),
             "quantity": _("Quantity"),
+            "frequency_days": _("Restock every (days)"),
         }
         widgets = {
-            "name": forms.TextInput(attrs={"placeholder": "Add supply..."}),
-            "quantity": forms.TextInput(attrs={"placeholder": "500g"}),
+            "name": forms.TextInput(attrs={"placeholder": _("Add supply...")}),
+            "quantity": forms.TextInput(attrs={"placeholder": _("500g")}),
+            "frequency_days": forms.NumberInput(attrs={"min": 1, "max": 365}),
         }
 
 
@@ -211,3 +225,19 @@ class LocationQuickAddForm(forms.ModelForm):
     @staticmethod
     def _deadline(day):
         return timezone.make_aware(datetime.combine(day, DEADLINE))
+
+
+class PantryItemForm(forms.ModelForm):
+    class Meta:
+        model = PantryItem
+        fields = ("name", "quantity", "threshold")
+        labels = {
+            "name": _("Product"),
+            "quantity": _("In stock"),
+            "threshold": _("Restock at"),
+        }
+        widgets = {
+            "name": forms.TextInput(attrs={"placeholder": _("Add product...")}),
+            "quantity": forms.NumberInput(attrs={"min": 0}),
+            "threshold": forms.NumberInput(attrs={"min": 0}),
+        }

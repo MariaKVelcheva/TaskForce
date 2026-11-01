@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
+from taskForce.tasks.managers import PantryItemManager
 from taskForce.tasks.models import TaskItem
 
 
@@ -14,6 +15,8 @@ class PantryItem(TaskItem):
         blank=True,
         verbose_name=_("restock at"),
     )
+
+    object = PantryItemManager()
 
     class Meta(TaskItem.Meta):
         pass

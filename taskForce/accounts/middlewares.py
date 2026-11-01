@@ -12,7 +12,10 @@ class UserTimeZoneMiddleware:
             avatar = getattr(request.user, "avatar", None)
             tzname = getattr(avatar, "time_zone", None)
         if tzname:
-            timezone.activate(zoneinfo.ZoneInfo(tzname))
+            try:
+                timezone.activate(zoneinfo.ZoneInfo(tzname))
+            except zoneinfo.ZoneInfoNotFoundError:
+                timezone.deactivate()
         else:
             timezone.deactivate()
         return self.get_response(request)

@@ -1,68 +1,87 @@
-from datetime import datetime, timedelta
-from zoneinfo import ZoneInfo
+from urllib.parse import urlencode
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase
-from django.utils import timezone
+from django.urls import reverse
 
-from taskForce.tasks.locations import missions_at, LOCATIONS
-from taskForce.tasks.models import Task, TaskType
+from taskForce.tasks.models import TaskType
+from taskForce.units.models import Membership, Unit
+from taskForce.units.services import create_personal_unit, create_unit
 
-PARIS = ZoneInfo("Europe/Paris")
-NOW = datetime(2026, 10, 18, 12, 0, tzinfo=PARIS)
-
-
-class HqLocationTests(TestCase):
-    @classmethod
-    def setUpTestData(cls):
-        User = get_user_model()
-        cls.user = User.objects.create_user("operative", password="x")
-        cls.other = User.objects.create_user("stranger", password="x")
-
-    def make(self, **kwargs):
-        kwargs.setdefault("user", self.user)
-        kwargs.setdefault("name", "mission")
-        return Task.objects.create(**kwargs)
-
-    def hq(self):
-        with timezone.override(PARIS):
-            return set(missions_at(self.user, "hq", now=NOW))
-
-    def test_untyped_missions_both_null_and_empty(self):
-        a = self.make(type=None)
-        b = self.make(type="")
-        self.assertEqual(self.hq(), {a, b})
-
-    def test_typed_missions_never_at_hq(self):
-        self.make(type="workout", due_date=NOW)
-        self.make(type="chores", due_date=NOW - timedelta(days=3))
-        self.make(type="groceries", due_date=None)
-        self.assertEqual(self.hq(), set())
-
-    def test_just_after_midnight_paris_is_tomorrow(self):
-        self.make(type="workout", due_date=datetime(2026, 10, 19, 0, 30, tzinfo=PARIS))
-        self.assertEqual(self.hq(), set())
+User = get_user_model()
+PASSWORD = "Str0ng-pass!"
 
 
-class LocationCoverageTests(TestCase):
-    @classmethod
-    def setUpTestData(cls):
-        cls.user = get_user_model().objects.create_user("operative", password="x")
+class RegisterTests(TestCase):
+    def register(self, username="newbie", next_url=None):
+        url = reverse("register")
+        if next_url:
+            url += "?" + urlencode({"next": next_url})
+        return self.client.post(url, {
+            "username": username,
+            "email": f"{username}@example.com",
+            "password1": PASSWORD,
+            "password2": PASSWORD,
+        })
 
-    def test_every_open_mission_is_in_exactly_one_location(self):
-        types = [None, ""] + [value for value, _ in TaskType.choices]
-        missions = [
-            Task.objects.create(user=self.user, name=f"m-{t}-{due}", type=t, due_date=due)
-            for t in types
-            for due in (None, NOW)
-        ]
+    def test_register_creates_personal_unit_with_four_singletons(self):
+        self.register()
+        user = User.objects.get(username="newbie")
 
-        with timezone.override(PARIS):
-            placements = {
-                key: set(missions_at(self.user, key, now=NOW))
-                for key in LOCATIONS
-            }
+        self.assertEqual(
+            set(user.personal_unit.tasks.values_list("type", flat=True)),
+            {TaskType.GROCERIES, TaskType.PANTRY, TaskType.CHORES, TaskType.WORKOUT},
+        )
 
-        for mission in missions:
-            found = [key for key, placed in placements.items() if mission in placed]
-            with self.subTest(type=mission.type, due=mission.due_date):
-                self.assertEqual(len(found), 1, f"found in {found}")
+    def test_register_logs_user_in(self):
+        self.register()
+        user = User.objects.get(username="newbie")
+
+        self.assertEqual(int(self.client.session["_auth_user_id"]), user.pk)
+
+    def test_safe_next_is_followed(self):
+        response = self.register(next_url="/units/")
+        self.assertRedirects(response, "/units/", fetch_redirect_response=False)
+
+    def test_unsafe_next_is_ignored(self):
+        attacks = ["//evil.com", "/\\evil.com", "https://evil.com", "javascript:alert(1)"]
+        for i, bad in enumerate(attacks):
+            with self.subTest(next=bad):
+                self.client.logout()
+                response = self.register(username=f"user{i}", next_url=bad)
+                self.assertRedirects(response, reverse("index"), fetch_redirect_response=False)
+
+
+class DeleteAccountTests(TestCase):
+    def setUp(self):
+        self.cmd = User.objects.create_user(username="cmd", password=PASSWORD)
+        self.op = User.objects.create_user(username="op", password=PASSWORD)
+        create_personal_unit(self.cmd)
+        create_personal_unit(self.op)
+        self.family = create_unit(name="Family", commander=self.cmd)
+        Membership.objects.create(user=self.op, unit=self.family, role="operative")
+
+    def delete_account(self, user):
+        self.client.force_login(user)
+        return self.client.post(reverse("delete-user"))
+
+    def test_commander_of_populated_unit_cannot_delete_account(self):
+        self.delete_account(self.cmd)
+
+        self.assertTrue(User.objects.filter(pk=self.cmd.pk).exists())
+
+    def test_deleting_account_removes_personal_unit(self):
+        unit_pk = self.op.personal_unit.pk
+        self.delete_account(self.op)
+
+        self.assertFalse(User.objects.filter(pk=self.op.pk).exists())
+        self.assertFalse(Unit.objects.filter(pk=unit_pk).exists())
+
+    def test_family_unit_survives_its_creators_deletion(self):
+        Membership.objects.filter(unit=self.family).update(role="operative")
+        Membership.objects.filter(unit=self.family, user=self.op).update(role="commander")
+
+        self.delete_account(self.cmd)
+
+        self.assertFalse(User.objects.filter(pk=self.cmd.pk).exists())
+        self.assertTrue(Unit.objects.filter(pk=self.family.pk).exists())

@@ -1,76 +1,52 @@
-from django import forms
-from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
-from django.contrib.auth import get_user_model
 import zoneinfo
-from django.utils.translation import gettext_lazy as _
-from taskForce.accounts.models import Avatar
 
+from django import forms
+from django.contrib.auth import get_user_model
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+from django.utils.translation import gettext_lazy as _
+
+from taskForce.accounts.models import Avatar
 
 User = get_user_model()
 
 
 class RegisterForm(UserCreationForm):
-    password1 = forms.CharField(
-        label=_('Password'),
-        widget=forms.PasswordInput(),
-    )
-
-    password2 = forms.CharField(
-        label=_('Confirm password'),
-        widget=forms.PasswordInput(),
-    )
-
     class Meta:
         model = User
-        fields = ("username", "email", "password1", "password2")
-
+        fields = ("username", "email")
         labels = {
-            'username': _('Username'),
-            'email': _('Email'),
-            'password1': _('Password'),
-            'password2': _('Confirm password'),
+            "username": _("Username"),
+            "email": _("Email"),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["password1"].label = _("Password")
+        self.fields["password2"].label = _("Confirm password")
+
+    def clean_username(self):
+        username = super().clean_username()
+        if "@" in username:
+            raise forms.ValidationError(_("Usernames can't contain @."))
+        return username
 
     def clean_email(self):
-        email = self.cleaned_data.get('email')
-
-        if User.objects.filter(email=email).exists():
+        email = (self.cleaned_data.get("email") or "").strip()
+        if not email:
+            return email
+        if User.objects.filter(email__iexact=email).exists():
             raise forms.ValidationError(_("This email already exists."))
-
         return email
-
-
-class AvatarBaseForm(forms.ModelForm):
-    class Meta:
-        model = Avatar
-        exclude = ('user', 'points',)
-
-        labels = {
-            'species': _('Species'),
-            'hair_color': _('Hair color'),
-            'glasses': _('Glasses'),
-        }
-
-        widgets = {
-            'glasses': forms.CheckboxInput(),
-            'species': forms.RadioSelect(),
-            'hair_color': forms.RadioSelect(),
-
-        }
-
-
-class AvatarUpdateForm(AvatarBaseForm):
-    pass
 
 
 class LoginCustomForm(AuthenticationForm):
     username = forms.CharField(
-        label=_('Username or email'),
+        label=_("Username or email"),
         widget=forms.TextInput(attrs={"autofocus": True, "autocomplete": "username"}),
     )
 
     password = forms.CharField(
-        label=_('Password'),
+        label=_("Password"),
         widget=forms.PasswordInput(attrs={"autocomplete": "current-password"}),
     )
 
@@ -83,10 +59,15 @@ class LoginCustomForm(AuthenticationForm):
 def time_zone_choices():
     return [(tz, tz.replace("_", " ")) for tz in sorted(zoneinfo.available_timezones())]
 
+
 class TimeZoneForm(forms.ModelForm):
-    time_zone = forms.ChoiceField(choices=time_zone_choices)
+    time_zone = forms.ChoiceField(
+        choices=time_zone_choices,
+        label=_("Time zone"),
+    )
 
     class Meta:
         model = Avatar
         fields = ["time_zone"]
+
 

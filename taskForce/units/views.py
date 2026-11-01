@@ -11,8 +11,9 @@ from django.views.generic import CreateView, UpdateView, DeleteView, DetailView,
 from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
 
+from taskForce.accounts.models import Avatar
 from taskForce.tasks.models import Task
-from taskForce.units.forms import CreateUnitForm, JoinUnitForm, RenameUnitForm, ChangeCommanderForm
+from taskForce.units.forms import CreateUnitForm, JoinUnitForm, RenameUnitForm
 from taskForce.units.models import Unit, Membership
 from taskForce.units.services import create_unit
 
@@ -32,6 +33,7 @@ class CreateUnitView(LoginRequiredMixin, CreateView):
             name=form.cleaned_data["name"],
             commander=self.request.user,
         )
+        Avatar.objects.filter(user=self.request.user).update(active_unit=self.object)
         return HttpResponseRedirect(self.get_success_url())
 
 
@@ -59,6 +61,7 @@ class DeleteUnitView(LoginRequiredMixin, DeleteView):
         return Unit.objects.filter(
             memberships__user=self.request.user,
             memberships__role="commander",
+            personal_for__isnull=True,
         )
 
 
@@ -80,8 +83,9 @@ class DetailUnitView(LoginRequiredMixin, DetailView):
         context["is_commander"] = is_commander
         context["can_leave"] = not is_commander
         context["memberships"] = memberships
+        context["is_personal"] = unit.personal_for_id is not None
         context["active_tasks"] = tasks.filter(is_active=True)
-        context["finished_tasks"] = tasks.filter(is_active=False)
+        context["inactive_tasks"] = tasks.filter(is_active=False)
 
         return context
 
@@ -113,6 +117,10 @@ class JoinUnitView(LoginRequiredMixin, FormView):
 
     def form_valid(self, form):
         unit = form.unit
+
+        if unit.personal_for_id is not None:
+            form.add_error("invite_code", _("This unit doesn't take new members."))
+            return self.form_invalid(form)
 
         membership, created = Membership.objects.get_or_create(
             user=self.request.user,
@@ -190,7 +198,6 @@ def leave_unit(request, pk):
         Task.objects.filter(
             unit=unit,
             assigned_to=request.user,
-            is_active=True,
         ).update(assigned_to=None)
         unit.memberships.filter(user=request.user).delete()
 
