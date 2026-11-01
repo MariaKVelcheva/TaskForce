@@ -9,7 +9,7 @@ from taskForce.accounts.tests import PARIS, NOW
 from taskForce.tasks.forms import LocationQuickAddForm
 from taskForce.tasks.items import item_progress
 from taskForce.tasks.locations import location_summary, LOCATIONS, missions_at, location_previews, next_objective
-from taskForce.tasks.models import Task, GroceryItem, ChoreItem, ChoreCompletion, WorkoutItem
+from taskForce.tasks.models import Task, GroceryItem, ChoreItem, WorkoutItem
 from taskForce.tasks.urgency import group_by_urgency, bucket_for
 from taskForce.units.models import Unit, Membership
 

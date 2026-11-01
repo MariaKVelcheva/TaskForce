@@ -75,13 +75,6 @@ class Membership(models.Model):
         related_name='memberships',
     )
 
-    role = models.CharField(
-        verbose_name=_('role'),
-        choices=ROLES,
-        max_length=55,
-        default='operative',
-    )
-
     unit = models.ForeignKey(
         to=Unit,
         on_delete=models.CASCADE,

@@ -4,7 +4,8 @@ from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 from datetime import datetime, time, timedelta
 
-from taskForce.tasks.models import Task, TaskItem, GroceryItem, WorkoutItem, ChoreItem, ListItem
+from taskForce.tasks.models import Task, TaskItem, GroceryItem, WorkoutItem, ChoreItem, ListItem, TaskType, \
+    SINGLETON_TYPES
 from taskForce.units.models import Unit
 
 
@@ -86,7 +87,11 @@ class BaseTaskForm(forms.ModelForm):
 class CreateTaskForm(BaseTaskForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["type"].choices = [("", "Standing order (Default type)")] + list(Task.TYPE_CHOICES)
+        self.fields["type"].choices = [
+            (value, label)
+            for value, label in TaskType.choices
+            if value not in SINGLETON_TYPES
+        ]
 
     class Meta(BaseTaskForm.Meta):
         fields = ["name", "priority", "type", "unit", "due_date", "comment"]

@@ -12,7 +12,7 @@ from django.views.generic import CreateView, DetailView, UpdateView, DeleteView,
 from taskForce.redirects import NextMixin, with_next, get_next
 from taskForce.tasks.forms import CreateTaskForm, UpdateTaskForm, QuickCreateTaskForm
 from taskForce.tasks.items import ITEM_MODELS, ITEM_FORMS, ITEM_PARTIALS
-from taskForce.tasks.models import Task, ChoreItem
+from taskForce.tasks.models import Task, ChoreItem, TaskType
 
 
 def get_item_context(task):
@@ -162,7 +162,7 @@ class CatalogueTaskView(LoginRequiredMixin, ListView):
 
     def get_filter_context(self):
         return {
-            "type_choices": Task.TYPE_CHOICES,
+            "type_choices": TaskType.choices,
             "active_type": self.request.GET.get("type", ""),
             "show_all": self.request.GET.get("show") == "all",
             "active_order": self.request.GET.get("order", "newest"),

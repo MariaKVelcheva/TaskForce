@@ -1,7 +1,6 @@
-from urllib.parse import urlparse
-
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import LoginView, LogoutView
+from django.db import transaction
 from django.http import HttpResponseRedirect
 from django.contrib.auth import get_user_model, login, logout
 from django.urls import reverse_lazy
@@ -9,6 +8,8 @@ from django.views.generic import CreateView, UpdateView, DeleteView, DetailView
 
 from taskForce.accounts.forms import RegisterForm, LoginCustomForm, AvatarUpdateForm
 from taskForce.accounts.models import Avatar
+from taskForce.redirects import get_next
+from taskForce.units.services import create_personal_unit
 
 TaskUser = get_user_model()
 
@@ -19,17 +20,12 @@ class RegisterUserView(CreateView):
     template_name = "accounts/register.html"
 
     def get_success_url(self):
-        next_url = self.request.GET.get("next")
-
-        if next_url:
-            parsed_next = urlparse(next_url)
-            if parsed_next.netloc == "":
-                return next_url
-
-        return reverse_lazy("index")
+        return get_next(self.request) or reverse_lazy("index")
 
     def form_valid(self, form):
-        user = form.save()
+        with transaction.atomic():
+            user = form.save()
+            create_personal_unit(user)
         login(self.request, user, backend="django.contrib.auth.backends.ModelBackend")
         return HttpResponseRedirect(self.get_success_url())
 
@@ -48,9 +44,9 @@ class DeleteUserView(LoginRequiredMixin, DeleteView):
     template_name = "accounts/delete-user.html"
     success_url = reverse_lazy("index")
 
-    def delete(self, request, *args, **kwargs):
-        user = request.user
-        logout(request)
+    def form_valid(self, form):
+        user = self.request.user
+        logout(self.request)
         user.delete()
         return HttpResponseRedirect(self.get_success_url())
 
@@ -65,7 +61,7 @@ class UpdateAvatarView(LoginRequiredMixin, UpdateView):
     success_url = reverse_lazy("profile-details")
 
     def get_object(self, queryset=None):
-        return self.request.user
+        return self.request.user.avatar
 
 
 class ProfileDetailsView(LoginRequiredMixin, DetailView):
@@ -78,7 +74,6 @@ class ProfileDetailsView(LoginRequiredMixin, DetailView):
         avatar = getattr(self.request.user, "avatar", None)
         context["points"] = avatar.points if avatar else 0
         return context
-
 
     def get_object(self, queryset=None):
         return self.request.user

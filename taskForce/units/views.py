@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
+from django.http import HttpResponseRedirect
 from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse_lazy
 from django.views.decorators.http import require_POST
@@ -13,6 +14,7 @@ from django.utils.translation import gettext_lazy as _
 from taskForce.tasks.models import Task
 from taskForce.units.forms import CreateUnitForm, JoinUnitForm, RenameUnitForm, ChangeCommanderForm
 from taskForce.units.models import Unit, Membership
+from taskForce.units.services import create_unit
 
 TaskUser = get_user_model()
 
@@ -26,16 +28,11 @@ class CreateUnitView(LoginRequiredMixin, CreateView):
         return reverse_lazy("details-unit", kwargs={"pk": self.object.pk})
 
     def form_valid(self, form):
-        form.instance.created_by = self.request.user
-        response = super().form_valid(form)
-
-        Membership.objects.create(
-            user=self.request.user,
-            role="commander",
-            unit=self.object,
+        self.object = create_unit(
+            name=form.cleaned_data["name"],
+            commander=self.request.user,
         )
-
-        return response
+        return HttpResponseRedirect(self.get_success_url())
 
 
 class RenameUnitView(LoginRequiredMixin, UpdateView):

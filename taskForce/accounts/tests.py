@@ -5,7 +5,7 @@ from django.test import TestCase
 from django.utils import timezone
 
 from taskForce.tasks.locations import missions_at, LOCATIONS
-from taskForce.tasks.models import Task
+from taskForce.tasks.models import Task, TaskType
 
 PARIS = ZoneInfo("Europe/Paris")
 NOW = datetime(2026, 10, 18, 12, 0, tzinfo=PARIS)
@@ -49,7 +49,7 @@ class LocationCoverageTests(TestCase):
         cls.user = get_user_model().objects.create_user("operative", password="x")
 
     def test_every_open_mission_is_in_exactly_one_location(self):
-        types = [None, ""] + [value for value, _ in Task.TYPE_CHOICES]
+        types = [None, ""] + [value for value, _ in TaskType.choices]
         missions = [
             Task.objects.create(user=self.user, name=f"m-{t}-{due}", type=t, due_date=due)
             for t in types

@@ -17,7 +17,7 @@ from taskForce.comms.models import Message, ConversationRead
 from taskForce.tasks.forms import QuickCreateTaskForm, LocationQuickAddForm
 from taskForce.tasks.items import ITEM_MODELS, item_progress
 from taskForce.tasks.locations import LOCATIONS, missions_at
-from taskForce.tasks.models import Task, TaskItem, ChoreItem
+from taskForce.tasks.models import Task, TaskItem, ChoreItem, TaskType
 from taskForce.tasks.urgency import group_by_urgency, has_due_chores
 from taskForce.units.models import Unit
 
@@ -78,7 +78,7 @@ class DebriefHomeView(LoginRequiredMixin, TemplateView):
                 [:self.VISIBLE_TASKS]
             ),
             "quick_types": [
-                (value, label) for value, label in Task.TYPE_CHOICES
+                (value, label) for value, label in TaskType.choices
                 if value in ITEM_MODELS
             ],
             "open_tasks_count": counts["open"],
