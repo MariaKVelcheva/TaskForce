@@ -29,7 +29,7 @@ class CheckableItem(models.Model):
         verbose_name=_("checked by"),
     )
 
-    object = CheckableItemManager()
+    objects = CheckableItemManager()
 
     @property
     def is_done(self):

@@ -16,7 +16,7 @@ class PantryItem(TaskItem):
         verbose_name=_("restock at"),
     )
 
-    object = PantryItemManager()
+    objects = PantryItemManager()
 
     class Meta(TaskItem.Meta):
         pass
