@@ -6,43 +6,49 @@ Most to-do apps assume you already know how to organise. Task: Force! is built f
 
 Everything is framed as a military operation. Tasks are **missions**, groups are **units**, messages are **comms**, and your work earns your avatar **intel points**.
 
-> **Status: v1 complete — v2 in progress.** Both modes are built and tested. v2 reshapes the app around shared household lists; see [What's next: v2](#whats-next-v2). The v1 code is preserved under the `v1.0` tag.
+> **Status: v2 core complete.** The app now runs on shared household lists: a personal base for every user, one grocery list, pantry and chore rota per unit, and points earned per checked item. Location interiors (a barracks floor plan, a pantry you can restock from) and a unit budget are next — see [What's next](#whats-next). The v1 code is preserved under the `v1.0` tag.
 
 ![Deploy mode: the base map, with the operative standing at the most urgent location](docs/deploy-map.png)
 
 ## Two modes
 
-**Debrief** — the classic view. A dashboard with your open missions, overdue and due-soon panels, your units and your recent comms; a filterable, paginated mission log; quick-add from the home page.
+**Debrief** — the overview. A dashboard across every unit you belong to: what needs action now, what is due soon, your active missions, your units and your recent comms; a filterable, paginated mission log; quick-add from the home page.
 
-**Deploy** — the visual view. Your missions are laid out on a tile map of a military base, in the style of classic strategy-game adventure maps. Each building is a place where a kind of work happens: the supply depot for groceries, the training ground for workouts, the barracks for chores, the rec room for lists, and HQ for everything unsorted. Deploy is a second rendering of the same data, not a separate app — the same missions appear in both modes, and you choose the mode when you enter.
+**Deploy** — the visual view. One base at a time: your personal base, or the base of a unit you belong to, switched from the nav. Its missions are laid out on a tile map of a military base, in the style of classic strategy-game adventure maps. Each building is a place where a kind of work happens: the supply depot for groceries and the pantry, the training ground for workouts, the barracks for chores, the rec room for lists, and HQ for standing orders. Deploy is a second rendering of the same data, not a separate app — the same missions appear in both modes.
 
 The map is designed to answer one question without reading anything: **where should I go, and how urgently?**
 
 - Buildings with nothing to do fade into fog.
-- A building with something due later today glows amber; one with something overdue pulses rust; a critical mission raises a pennant. Counts sit on each building as badges.
+- A building with something due later today glows amber; one that needs action pulses rust — an overdue standing order, a chore that is due again, a pantry product below its restock level. A critical mission raises a pennant. Counts sit on each building as badges.
 - Hovering or focusing a building previews its three most urgent missions.
 - Your operative stands at the location with the most urgent mission, with a marching route from HQ, and the same objective is written out in text under the map.
+- Training is personal: on a unit's base it is off limits, and says so.
 
-Inside a building, missions are pinned to a noticeboard grouped by urgency — overdue, today, next 48 hours, later, no date — with item progress, a one-click accomplish button, and a quick-add form that already knows the mission type from the place you are standing in.
+Inside a building, missions are pinned to a noticeboard grouped by urgency — action required, today, next 48 hours, later, no deadline — with item progress, duties due or products running low, and a quick-add form wherever new missions can be created.
 
 ## Domain vocabulary
 
 | Term | Meaning |
 | --- | --- |
-| **Mission** | A single task. Has a name, an owner, points, a priority, and optionally a type, a unit, a due date and an assignee. |
-| **Unit** | A group of users. Membership is via a UUID invite code or link, with roles of commander or operative. Each unit has exactly one commander. |
-| **Comms** | Messaging. Visibility comes entirely from unit membership — there are no direct messages. |
-| **Avatar** | A user's game profile, holding their intel points and time zone. Linked one-to-one to the Django user. |
-| **Intel points** | In v1, awarded to whoever completes a mission. |
+| **Mission** | A single task, belonging to one unit. Has a name, a type, a priority, and optionally a due date and an assignee. Missions are active or inactive. |
+| **Standing order** | A one-off mission with no items ("buy Mom a present"). The only kind of mission that is *accomplished*: doing so earns one point and retires it from the board. |
+| **Unit** | A group of users, joined by a UUID invite code or link, with exactly one commander. Every user also has a **personal unit** — their lone-wolf base — which no one else can join. |
+| **Comms** | Messaging inside group units. Visibility comes entirely from unit membership — there are no direct messages, and personal bases have no comms. |
+| **Avatar** | A user's game profile: intel points, time zone, and the unit whose base Deploy is showing. |
+| **Intel points** | One point per checked item or accomplished standing order, earned by whoever did it. Unchecking returns the point from the person who earned it, not from whoever unchecks. |
 | **Location** | A place on the Deploy map. Defined in code, not in the database. |
 
-In v1, mission completion is **global, not per-user**: when anyone in a unit completes a shared mission, it is complete for everyone, and the points go to the person who did it.
+## Missions and items
 
-## Mission types
+Every unit is created with its shared lists already in place: **one grocery list, one pantry and one chore rota**, plus a **workout** on personal bases. Nobody has to create them, and they cannot be deleted or deactivated — if a household doesn't use the pantry, it simply stays empty.
 
-A mission can have a type, or none at all. Untyped missions ("buy tomatoes on the way home") are first-class — quick-add creates them, and the fastest path from opening the page to recording a task stays one field and one button.
+On top of those, anyone can create **standing orders** and **lists** (a watchlist, a packing list) as often as they like.
 
-Typed missions — groceries, workout, chores, list — contain items: a shopping list, a workout with exercises, a set of chores, a checklist. The type decides what a mission's contents look like and where it appears in Deploy. Chores recur: each chore has a frequency, a completion log, and becomes due again on its own.
+Items are where the work happens:
+
+- **Checkable items** — groceries, chores, exercises, list entries — are ticked off by whoever does them, and each tick is one point.
+- **Recurring items** — groceries and chores can repeat every N days. A recurring item disappears when it is done and comes back on its own when it is due again; "Need it now" brings it back early (more milk because guests are coming).
+- **Pantry items** are counted, not checked: a quantity and a restock level. A product at or below its level is what makes the supply depot ask for action.
 
 ## Stack
 
@@ -59,7 +65,7 @@ Typed missions — groceries, workout, chores, list — contain items: a shoppin
 | `accounts` | Users, avatars, profiles, per-user time zone middleware |
 | `common` | Mode chooser, Debrief dashboard, Deploy map and location pages, shared templates, context processors |
 | `tasks` | Missions and their items: models, views, forms, filtering, locations, urgency rules |
-| `units` | Units, memberships, command transfer |
+| `units` | Units, memberships, command transfer, the active-unit switcher, unit creation |
 | `comms` | Conversations, messages, read state |
 
 ## Design notes
@@ -68,23 +74,27 @@ A few decisions that are easy to miss from the code alone.
 
 ### Data and permissions
 
-**Permission lives in the queryset.** Every view resolves its objects through `Task.objects.visible_to(user)` or an equivalent filter, rather than trusting the page that linked there. A mission is visible if you own it or belong to its unit.
+**Permission lives in the queryset.** Every view resolves its objects through `Task.objects.visible_to(user)` or an equivalent filter, rather than trusting the page that linked there. Since every mission now belongs to a unit, visibility is a single rule — "missions of units I am a member of" — written as an `Exists` subquery rather than a join, so missions are never duplicated and no query needs `DISTINCT`.
 
-**Completion is a database operation, not a Python one.** `Task.complete()` claims the mission with a conditional `UPDATE ... WHERE is_done = false` and awards points with an `F()` expression inside a transaction. Two people clicking at the same moment cannot both be awarded, and concurrent point awards cannot clobber each other.
+**The database enforces the rules that matter.** One grocery list, pantry, chore rota and workout per unit is a conditional unique constraint. Shared lists can never be deactivated, due dates only exist on standing orders and lists, and only standing orders can be accomplished — all check constraints. The views hide the buttons; the database is the guarantee.
+
+**Points are claimed, not computed.** Checking an item is a conditional `UPDATE ... WHERE is_checked = false` plus an `F()` increment on the checker's points, inside one transaction. Unchecking locks the row with `select_for_update()` to read who earned the point before taking it back. Two people tapping the same item at once cannot both be paid, and a mis-tap can be undone without punishing the wrong person.
+
+**Item behaviour is composed, not repeated.** Abstract `CheckableItem` and `RecurringItem` models carry the checking and recurrence logic; each item type is just the combination it needs (a grocery item is both, a list entry is only checkable, a pantry product is neither). A shopping list is still a mission with items attached, not a different kind of mission, so one `Task` table keeps cross-type queries, pagination and per-mission comms working.
+
+**Creating a unit is one function.** `create_unit()` makes the unit, its commander and its shared lists in a single transaction, and every entry point — sign-up, the unit form, tests — goes through it. A unit can never exist without its grocery list.
 
 **Read state is a pointer, not a row per message.** `ConversationRead` stores one `last_read_at` per user per conversation; unread status is computed by comparing message timestamps against that pointer.
 
-**Contents are related models, not subclasses.** A shopping list is a mission with grocery items attached, not a different kind of mission. This keeps one `Task` table, so cross-type queries, pagination and per-mission comms all keep working as new types are added.
-
-**"Today" belongs to the user.** Each avatar stores a time zone, activated per request by middleware. Due dates, "due today" and overdue checks are all computed in the user's own zone, with tests pinned to the awkward hour just after midnight.
+**"Today" belongs to the user.** Each avatar stores a time zone, activated per request by middleware. "Due today" and overdue checks are computed in the user's own zone, with tests pinned to the awkward hour just after midnight.
 
 ### Deploy
 
-**Locations are code, not data.** Each location is a label, the mission type created there, and a filter function that returns a `Q` object. No migrations are needed to add or rename one, and a coverage test guarantees that every open mission appears in exactly one location — it reads the model's type choices, so adding a new mission type without a location fails the test.
+**Urgency comes from items.** A chore rota is urgent because a chore is due, a pantry because a product is low; a standing order because of its due date. Priority sorts within each level, and a critical mission is actionable even without a deadline. All of it is defined once and shared by the map, the noticeboard, the operative's objective and the Debrief dashboard, so the modes cannot disagree.
 
-**One query for the whole map.** Counts and urgency states for all five locations come from a single query using conditional aggregation (`Count(..., filter=...)`). Hover previews are a second query that labels each mission with its location using `CASE WHEN`. The page's query count is pinned by a test.
+**Locations are code, not data.** Each location is a label, the mission types it holds, and the type it creates (if any). No migrations are needed to add or rename one, and a coverage test guarantees that every active mission appears in exactly one location — it reads the model's type choices, so adding a new mission type without a location fails the test.
 
-**One definition of urgent.** Overdue, due today, due soon and "duties waiting" are defined once and shared by the map, the noticeboard, the operative's objective and the Debrief dashboard, so the modes cannot disagree.
+**Two queries for the whole map.** Counts and urgency states for every location come from a single query using conditional aggregation (`Count(..., filter=...)`). Hover previews are a second query that labels each mission with its location using `CASE WHEN`. The page's total query count is pinned by a test.
 
 **SVG, not canvas.** Every building is a real link: the map works without JavaScript, is keyboard-navigable, and is readable by screen readers. Hover previews use CSS `:has()` rather than JavaScript, and animations respect `prefers-reduced-motion`.
 
@@ -112,26 +122,23 @@ python manage.py createsuperuser
 python manage.py runserver
 ```
 
+Users created with `createsuperuser` skip sign-up, so they don't get a personal base automatically. Create one from the shell:
+
+```powershell
+python manage.py shell -c "from django.contrib.auth import get_user_model; from taskForce.units.services import create_personal_unit; create_personal_unit(get_user_model().objects.get(username='admin'))"
+```
+
 Tests:
 
 ```powershell
 python manage.py test
 ```
 
-## What's next: v2
+## What's next
 
-Using v1 made one thing clear: households don't keep five grocery lists. They keep **one** — the list on the fridge — and one chore rota. v2 reshapes the app around how shared homes, offices and groups actually work.
+The v2 foundations are in place. Still to come:
 
-**Planned changes:**
-
-- **Lone wolf by default.** Every user gets a personal unit for their own missions, and can join as many shared units as they like — one profile, many groups. Deploy shows one unit's base at a time; Debrief stays the overview across all of them.
-- **One shared grocery list per unit**, refilled automatically in two ways: items that recur every few days, and a pantry that adds an item to the list when its stock runs low.
-- **One shared chore rota per unit**, with chores placed by room — shown in Deploy as a floor plan inside the barracks.
-- **Points per item, not per mission.** Shared lists never finish, so missions stop being "accomplished". Instead, whoever checks an item earns its points, and unchecking returns them from the person who earned them.
-- **A budget per unit**, with prices on grocery items and spending recorded as a ledger.
-
-Simple missions, lists and workouts keep working as they do now. A workout calendar is on the longer-term list.
-
----
-
-Built by Kiara as a portfolio project.
+- **Location interiors.** The supply depot and the barracks each hold a single shared list, so they become rooms rather than noticeboards: a **barracks floor plan** with chores placed by room (reusing the map engine), and a **pantry** you restock from, where a product falling below its level adds itself to the grocery list.
+- **A budget per unit**, with estimated and actual prices on grocery items and spending recorded as a ledger.
+- **Original artwork** for the map, replacing the placeholder sprites.
+- **A workout calendar**, attaching training sessions to days of the week.
