@@ -466,6 +466,11 @@ class TaskViewTests(TaskTestCase):
         response = self.client.get(url, {"next": "https://evil.example/"})
         self.assertEqual(response.context["back_url"], reverse("all-tasks"))
 
+    def test_standing_order_shows_accomplish_button(self):
+        task = self.make()
+        response = self.client.get(reverse("details-task", args=[task.pk]))
+        self.assertContains(response, reverse("accomplish-task", args=[task.pk]))
+
     def test_delete_returns_to_next(self):
         url = reverse("delete-task", args=[self.make().pk])
         response = self.client.post(url, {"next": "/deploy/barracks/"})

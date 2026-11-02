@@ -12,18 +12,18 @@
         :root {
             --khaki: #888264;
             --khaki-dark: #a39165;
-            --khaki-muted:  #7a6f4a;
-            --olive:        #4a5240;
-            --olive-dark:   #2e3228;
-            --olive-mid:    #3a4030;
-            --rust:         #b85c38;
+            --khaki-muted: #7a6f4a;
+            --olive: #4a5240;
+            --olive-dark: #2e3228;
+            --olive-mid: #3a4030;
+            --rust: #b85c38;
             --rust-light: #ae3e3e;
-            --cream:        #f0e8d0;
-            --cream-dark:   #d8ceb0;
-            --ink:          #1a1c18;
+            --cream: #f0e8d0;
+            --cream-dark: #d8ceb0;
+            --ink: #1a1c18;
             --muted: #63675e;
-            --radius-sm:    3px;
-            --radius:       5px;
+            --radius-sm: 3px;
+            --radius: 5px;
         }
 
         body {
@@ -56,55 +56,49 @@
             z-index: 100;
         }
 
-            .nav-left {
-        display: flex;
-        align-items: center;
-        gap: 1.25rem;
-    }
+        .nav-left {
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+        }
 
-    .mode-switch {
-        display: flex;
-        border: 1.5px solid var(--khaki-dark);
-        margin-top: 0.3rem;
-        border-radius: var(--radius-sm);
-        overflow: hidden;
-    }
+        .mode-switch {
+            display: flex;
+            border: 1.5px solid var(--khaki-dark);
+            margin-top: 0.3rem;
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+        }
 
-    .mode-option {
-        font-family: 'Share Tech Mono', monospace;
-        font-size: 0.8rem;
-        font-weight: bold;
-        letter-spacing: 0.12em;
-        text-transform: uppercase;
-        padding: 0.28rem 0.7rem;
-        color: var(--khaki-muted);
-        text-decoration: none;
-        transition: background 0.15s, color 0.15s;
-    }
+        .mode-option {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+            font-weight: bold;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            padding: 0.28rem 0.7rem;
+            color: var(--khaki-muted);
+            text-decoration: none;
+            transition: background 0.15s, color 0.15s;
+        }
 
-    .mode-option + .mode-option {
-        border-left: 1.5px solid var(--khaki-dark);
-    }
+        .mode-option + .mode-option {
+            border-left: 1.5px solid var(--khaki-dark);
+        }
 
-    a.mode-option:hover {
-        background: var(--olive);
-        color: var(--khaki);
-    }
+        a.mode-option:hover {
+            background: var(--olive);
+            color: var(--khaki);
+        }
 
-    .mode-option.active {
-        background: var(--khaki-dark);
-        color: var(--cream);
-    }
+        .mode-option.active {
+            background: var(--khaki-dark);
+            color: var(--cream);
+        }
 
-    .mode-option.disabled {
-        color: var(--muted);
-        opacity: 0.45;
-        cursor: default;
-    }
-
-    @media (max-width: 620px) {
-        .mode-switch { display: none; }
-    }
+        @media (max-width: 620px) {
+            .mode-switch { display: none; }
+        }
 
         .nav-brand {
             font-family: 'Barlow Condensed', sans-serif;
@@ -158,60 +152,91 @@
             border-radius: var(--radius-sm);
             letter-spacing: 0.04em;
         }
-            .nav-accordion {
-        position: relative;
-    }
 
-    .nav-dropdown {
-        position: absolute;
-        top: 100%;
-        left: 0;
-        min-width: 190px;
-        background: var(--olive-mid);
-        border: 1px solid var(--khaki-dark);
-        border-radius: var(--radius-sm);
-        padding: 0.35rem;
-        margin-top: 0.4rem;
-        display: none;
-        z-index: 50;
-    }
+        .nav-accordion {
+            position: relative;
+        }
 
-    .nav-accordion:hover .nav-dropdown,
-    .nav-accordion:focus-within .nav-dropdown {
-        display: block;
-    }
+        .nav-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            min-width: 190px;
+            background: var(--olive-mid);
+            border: 1px solid var(--khaki-dark);
+            border-radius: var(--radius-sm);
+            padding: 0.35rem;
+            margin-top: 0.4rem;
+            display: none;
+            z-index: 50;
+        }
 
-    .nav-dropdown-link {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 1rem;
-        padding: 0.4rem 0.6rem;
-        border-radius: var(--radius-sm);
-        font-family: 'Share Tech Mono', monospace;
-        font-size: 0.68rem;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        color: var(--khaki-muted);
-        text-decoration: none;
-        transition: background 0.15s, color 0.15s;
-    }
+        .nav-accordion:hover .nav-dropdown,
+        .nav-accordion:focus-within .nav-dropdown {
+            display: block;
+        }
 
-    .nav-dropdown-link:hover {
-        background: var(--olive);
-        color: var(--cream);
-    }
+        .nav-dropdown-link,
+        .nav-dropdown-button {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            width: 100%;
+            padding: 0.4rem 0.6rem;
+            border: none;
+            border-radius: var(--radius-sm);
+            background: none;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.68rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--khaki-muted);
+            text-decoration: none;
+            text-align: left;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+        }
 
-    .nav-dropdown-count {
-        font-size: 0.62rem;
-        color: var(--muted);
-    }
+        .nav-links .nav-dropdown-link {
+            border-bottom: none;
+        }
+
+        .nav-dropdown-link:hover,
+        .nav-dropdown-button:hover {
+            background: var(--olive);
+            color: var(--cream);
+        }
+
+        .nav-dropdown-current {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 0.4rem 0.6rem;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.68rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--cream);
+        }
+
+        .nav-dropdown-divider {
+            border: none;
+            border-top: 1px solid var(--olive);
+            margin: 0.3rem 0;
+        }
+
+        .nav-dropdown-count {
+            font-size: 0.62rem;
+            color: var(--muted);
+        }
 
         .nav-attention {
-        color: var(--rust-light);
-        font-weight: bold;
+            color: var(--rust-light);
+            font-weight: bold;
             font-size: 1rem;
-    }
+        }
 
         .nav-unread {
             display: inline-flex;
@@ -312,15 +337,16 @@
             color: var(--rust-light);
             font-family: 'Share Tech Mono', monospace;
         }
-        
-            .form-help {
-        font-family: 'Share Tech Mono', monospace;
-        font-size: 0.62rem;
-        letter-spacing: 0.06em;
-        color: var(--muted);
-        margin-top: 0.4rem;
-        line-height: 1.5;
-    }
+
+        .form-help,
+        .field-help {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.62rem;
+            letter-spacing: 0.06em;
+            color: var(--muted);
+            margin-top: 0.4rem;
+            line-height: 1.5;
+        }
 
         .btn {
             display: inline-block;
@@ -380,26 +406,28 @@
 </head>
 <body>
 
+{% with url_name=request.resolver_match.url_name %}
 <nav>
-        <div class="nav-left">
+    <div class="nav-left">
         <a href="{% url 'index' %}" class="nav-brand">Task<span>:</span> Force!</a>
         {% if user.is_authenticated %}
         <div class="mode-switch">
             <a href="{% url 'debrief' %}"
-               class="mode-option {% if request.resolver_match.url_name == 'debrief' %}active{% endif %}">Debrief</a>
-                        <a href="{% url 'deploy' %}"
-               class="mode-option {% if request.resolver_match.url_name == 'deploy' %}active{% endif %}">Deploy</a>
+               class="mode-option{% if url_name == 'debrief' %} active{% endif %}">Debrief</a>
+            <a href="{% url 'deploy' %}"
+               class="mode-option{% if url_name == 'deploy' or url_name == 'deploy-location' %} active{% endif %}">Deploy</a>
         </div>
         {% endif %}
     </div>
+
     <ul class="nav-links">
         {% if user.is_authenticated %}
             <li class="nav-accordion">
                 <a href="{% url 'all-tasks' %}"
-                   class="{% if request.resolver_match.url_name == 'all-tasks' %}active{% endif %}" style="margin-right: 0">
+                   class="{% if url_name == 'all-tasks' %}active{% endif %}">
                    Missions{% if any_attention %} <span class="nav-attention">●</span>{% endif %}
                 </a>
-                {% if type_nav or unsorted_count %}
+                {% if type_nav %}
                 <div class="nav-dropdown">
                     {% for entry in type_nav %}
                     <a href="{% url 'all-tasks' %}?type={{ entry.value }}" class="nav-dropdown-link">
@@ -407,24 +435,46 @@
                         <span class="nav-dropdown-count">{{ entry.count }}</span>
                     </a>
                     {% endfor %}
-                    {% if unsorted_count %}
-                    <a href="{% url 'all-tasks' %}?type=none" class="nav-dropdown-link">
-                        <span>Standing orders</span>
-                        <span class="nav-dropdown-count">{{ unsorted_count }}</span>
+                </div>
+                {% endif %}
+            </li>
+
+            <li class="nav-accordion">
+                <a href="{% url 'all-units' %}"
+                   class="{% if url_name == 'all-units' %}active{% endif %}">
+                   Units
+                </a>
+                {% if active_unit %}
+                <div class="nav-dropdown">
+                    <div class="nav-dropdown-current">
+                        <span>{% if active_unit.personal_for_id %}Personal base{% else %}{{ active_unit.name }}{% endif %}</span>
+                        <span class="nav-dropdown-count">active</span>
+                    </div>
+                    {% if switch_units %}
+                    <hr class="nav-dropdown-divider">
+                    {% for unit in switch_units %}
+                    <form method="post" action="{% url 'switch-unit' unit.pk %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                        <button type="submit" class="nav-dropdown-button">
+                            <span>{% if unit.personal_for_id %}Personal base{% else %}{{ unit.name }}{% endif %}</span>
+                            <span class="nav-dropdown-count">switch</span>
+                        </button>
+                    </form>
+                    {% endfor %}
+                    {% endif %}
+                    {% if more_units %}
+                    <a href="{% url 'all-units' %}" class="nav-dropdown-link">
+                        <span>More…</span>
                     </a>
                     {% endif %}
                 </div>
                 {% endif %}
             </li>
-            <li>
-                <a href="{% url 'all-units' %}"
-                   class="{% if request.resolver_match.url_name == 'all-units' %}active{% endif %}">
-                   Units
-                </a>
-            </li>
+
             <li style="position: relative;">
                 <a href="{% url 'inbox' %}"
-                   class="{% if request.resolver_match.url_name == 'inbox' %}active{% endif %}">
+                   class="{% if url_name == 'inbox' %}active{% endif %}">
                    Comms
                    {% if unread_count %}
                    <span class="nav-unread">{{ unread_count }}</span>
@@ -434,7 +484,7 @@
             <li><span class="nav-badge">{{ user.username }}</span></li>
             <li>
                 <a href="{% url 'details-profile' %}"
-                   class="{% if request.resolver_match.url_name == 'details-profile' %}active{% endif %}">
+                   class="{% if url_name == 'details-profile' %}active{% endif %}">
                    Profile
                 </a>
             </li>
@@ -450,6 +500,7 @@
         {% endif %}
     </ul>
 </nav>
+{% endwith %}
 
 <main>
     {% if messages %}
@@ -470,3 +521,6 @@
 {% block extra_js %}{% endblock %}
 </body>
 </html>
+
+
+

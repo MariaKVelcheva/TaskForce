@@ -1,9 +1,15 @@
 {% extends "common/base.html" %}
+{% load urgency_tags %}
+
+{% block title %}{{ location_label }} — Task: Force!{% endblock %}
+
 {% block extra_css %}
-    <style>
-    .board-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; }
+<style>
+.board-header { display: flex; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem; }
 .board-header h1 { font-family: 'Barlow Condensed', sans-serif; text-transform: uppercase;
                    letter-spacing: .08em; color: var(--khaki); }
+.board-unit { font-family: 'Share Tech Mono', monospace; font-size: .65rem; letter-spacing: .12em;
+              text-transform: uppercase; color: var(--muted); margin-left: auto; }
 
 .board-group { margin-bottom: 2rem; }
 .board-group-title { font-family: 'Share Tech Mono', monospace; font-size: .75rem; font-weight: normal;
@@ -33,19 +39,22 @@
 .card-pennant { position: absolute; top: -1px; right: 1rem; width: 12px; height: 18px;
                 background: var(--rust-light); clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 75%, 0 100%); }
 
-.board-empty { text-align: center; padding: 3rem 1rem; border: 1px dashed var(--olive); border-radius: var(--radius); }
-.board-empty-title { font-family: 'Barlow Condensed', sans-serif; font-size: 1.5rem; color: var(--khaki); margin-bottom: .4rem; }
-  .card-progress { display: flex; align-items: center; gap: .5rem; }
+.card-progress { display: flex; align-items: center; gap: .5rem; }
 .card-progress-bar { flex: 1; height: 4px; background: var(--olive-dark); border-radius: 2px; overflow: hidden; }
 .card-progress-bar span { display: block; height: 100%; background: var(--khaki); }
-.card-progress-text, .card-duties { font-family: 'Share Tech Mono', monospace; font-size: .72rem; color: var(--khaki-muted); }
-.card-duties { color: var(--rust-light); }
+.card-progress-text, .card-alert { font-family: 'Share Tech Mono', monospace; font-size: .72rem; color: var(--khaki-muted); }
+.card-alert { color: var(--rust-light); }
+
+.board-empty { text-align: center; padding: 3rem 1rem; border: 1px dashed var(--olive); border-radius: var(--radius); }
+.board-empty-title { font-family: 'Barlow Condensed', sans-serif; font-size: 1.5rem; color: var(--khaki); margin-bottom: .4rem; }
+
 .quick-add { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem;
              background: var(--olive-mid); border: 1px solid var(--khaki-dark);
              border-radius: var(--radius); padding: .85rem; margin-bottom: 2rem; }
 .quick-add input[type="text"] { flex: 1 1 220px; width: auto; }
 
 .chips { display: flex; gap: .3rem; border: none; }
+.chip { margin: 0; }
 .chip input { position: absolute; opacity: 0; width: 1px; height: 1px; }
 .chip span { display: inline-block; font-family: 'Share Tech Mono', monospace; font-size: .72rem;
              letter-spacing: .06em; text-transform: uppercase; padding: .35rem .6rem;
@@ -64,82 +73,103 @@
 }
 
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
-    </style>
+</style>
 {% endblock %}
+
 {% block content %}
-  <h1>{{ location_label }}</h1>
-  {% if missions %}
-{% load urgency_tags %}
-
 <div class="board-header">
-  <a href="{% url 'deploy' %}" class="btn btn-ghost" style="font-size: 0.82rem;">← Map</a>
-  <h1>{{ location_label }}</h1>
+    <a href="{% url 'deploy' %}" class="btn btn-ghost" style="font-size: 0.82rem;">← Map</a>
+    <h1>{{ location_label }}</h1>
+    <span class="board-unit">{% if unit.personal_for_id %}Personal base{% else %}{{ unit.name }}{% endif %}</span>
 </div>
-      
-    <form method="post" class="quick-add">
-  {% csrf_token %}
-  {{ form.name }}
 
-  <fieldset class="chips">
-    <legend class="visually-hidden">Due</legend>
-    {% for radio in form.when %}
-      <label class="chip">{{ radio.tag }}<span>{{ radio.choice_label }}</span></label>
-    {% endfor %}
-  </fieldset>
+{% if off_limits %}
+<div class="board-empty">
+    <p class="board-empty-title">Off limits.</p>
+    <p class="text-muted text-mono">Training is personal. Switch to your own base to train.</p>
+</div>
+{% else %}
 
-  <div class="pick-date">{{ form.due_date }}{{ form.due_date.errors }}</div>
+{% if can_create and form %}
+<form method="post" class="quick-add">
+    {% csrf_token %}
+    {{ form.name }}
 
-  <fieldset class="chips">
-    <legend class="visually-hidden">Priority</legend>
-    {% for radio in form.priority %}
-      <label class="chip chip-p{{ radio.data.value }}">{{ radio.tag }}<span>{{ radio.choice_label }}</span></label>
-    {% endfor %}
-  </fieldset>
+    <fieldset class="chips">
+        <legend class="visually-hidden">Due</legend>
+        {% for radio in form.when %}
+        <label class="chip">{{ radio.tag }}<span>{{ radio.choice_label }}</span></label>
+        {% endfor %}
+    </fieldset>
 
-  <button type="submit" class="btn btn-primary">Deploy</button>
-  {{ form.name.errors }}
+    <div class="pick-date">{{ form.due_date }}{{ form.due_date.errors }}</div>
+
+    <fieldset class="chips">
+        <legend class="visually-hidden">Priority</legend>
+        {% for radio in form.priority %}
+        <label class="chip chip-p{{ radio.data.value }}">{{ radio.tag }}<span>{{ radio.choice_label }}</span></label>
+        {% endfor %}
+    </fieldset>
+
+    <button type="submit" class="btn btn-primary">Deploy</button>
+    {{ form.name.errors }}
 </form>
+{% endif %}
 
-{% for key, label, missions in groups %}
-  <section class="board-group board-{{ key }}">
-    <h2 class="board-group-title">{{ label }} <span>{{ missions|length }}</span></h2>
+{% for key, label, group in groups %}
+<section class="board-group board-{{ key }}">
+    <h2 class="board-group-title">{{ label }} <span>{{ group|length }}</span></h2>
     <div class="board-cards">
-      {% for m in missions %}
+        {% for m in group %}
         <article class="card priority-{{ m.priority }}">
-          {% if m.priority == 1 %}<span class="card-pennant" aria-label="Critical"></span>{% endif %}
-          <a class="card-name" href="{% url 'details-task' m.pk %}?next={{ request.get_full_path|urlencode }}">{{ m.name }}</a>
-          <p class="card-due">
-            {% if key == "overdue" %}
-              {% if m.due_date %}{{ m.due_date|late_by }} late{% endif %}
-              {% if m.has_due_chores %}Duties waiting{% endif %}
-            {% elif key == "today" %}{{ m.due_date|date:"H:i" }}
-            {% elif key == "soon" %}{{ m.due_date|date:"D H:i" }}
-            {% elif key == "later" %}{{ m.due_date|date:"D j M" }}
+            {% if m.priority == 1 %}<span class="card-pennant" aria-label="Critical"></span>{% endif %}
+            <a class="card-name" href="{% url 'details-task' m.pk %}?next={{ request.get_full_path|urlencode }}">{{ m.name }}</a>
+
+            <p class="card-due">
+                {% if key == "overdue" %}
+                    {% if m.has_due_chores %}Duties waiting
+                    {% elif m.has_low_stock %}Stock low
+                    {% elif m.due_date %}{{ m.due_date|late_by }} late
+                    {% endif %}
+                {% elif key == "today" %}{{ m.due_date|date:"H:i" }}
+                {% elif key == "soon" %}{{ m.due_date|date:"D H:i" }}
+                {% elif key == "later" %}{{ m.due_date|date:"D j M" }}
+                {% endif %}
+            </p>
+
+            {% if m.type == "chores" %}
+                {% if m.duties_due %}<p class="card-alert">{{ m.duties_due }} dut{{ m.duties_due|pluralize:"y,ies" }} due</p>{% endif %}
+            {% elif m.type == "pantry" %}
+                {% if m.stock_low %}<p class="card-alert">{{ m.stock_low }} product{{ m.stock_low|pluralize }} low</p>{% endif %}
+            {% elif m.items_total %}
+                <div class="card-progress" aria-label="{{ m.items_done }} of {{ m.items_total }} done">
+                    <div class="card-progress-bar"><span style="width: {% widthratio m.items_done m.items_total 100 %}%"></span></div>
+                    <span class="card-progress-text">{{ m.items_done }}/{{ m.items_total }}</span>
+                </div>
             {% endif %}
-          </p>
-{% if m.type == "chores" %}
-  {% if m.duties_due %}<p class="card-duties">{{ m.duties_due }} dut{{ m.duties_due|pluralize:"y,ies" }} due</p>{% endif %}
-{% elif m.items_total %}
-  <div class="card-progress" aria-label="{{ m.items_done }} of {{ m.items_total }} done">
-    <div class="card-progress-bar"><span style="width: {% widthratio m.items_done m.items_total 100 %}%"></span></div>
-    <span class="card-progress-text">{{ m.items_done }}/{{ m.items_total }}</span>
-  </div>
-{% endif %}          <form method="post" action="{% url 'complete-task' m.pk %}" class="card-action">
-            {% csrf_token %}
-            <input type="hidden" name="next" value="{{ request.get_full_path }}">
-            <button type="submit" class="btn btn-primary">Accomplish ·</button>
-          </form>
+
+            {% if m.type == "oneoff" %}
+            <form method="post" action="{% url 'accomplish-task' m.pk %}" class="card-action">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <button type="submit" class="btn btn-primary">Accomplish · +1</button>
+            </form>
+            {% else %}
+            <div class="card-action">
+                <a href="{% url 'details-task' m.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-ghost">Open</a>
+            </div>
+            {% endif %}
         </article>
-      {% endfor %}
+        {% endfor %}
     </div>
-  </section>
+</section>
 {% empty %}
-  <div class="board-empty">
+<div class="board-empty">
     <p class="board-empty-title">All clear at {{ location_label }}.</p>
     <p class="text-muted text-mono">No open missions here.</p>
-  </div>
+</div>
 {% endfor %}
-  {% else %}
-    <p>No missions here.</p>
-  {% endif %}
+
+{% endif %}
 {% endblock %}
+

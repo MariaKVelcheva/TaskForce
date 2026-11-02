@@ -4,7 +4,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from taskForce.tasks.models import TaskType
-from taskForce.units.services import create_personal_unit
+from taskForce.units.services import create_personal_unit, create_unit
 from taskForce.units.models import Unit, Membership
 
 User = get_user_model()
@@ -115,3 +115,27 @@ class CreateUnitViewTests(TestCase):
         )
         user.avatar.refresh_from_db()
         self.assertEqual(user.avatar.active_unit, unit)
+
+
+class SwitchUnitTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username="op", password="x")
+        self.stranger = User.objects.create_user(username="stranger", password="x")
+        create_personal_unit(self.user)
+        create_personal_unit(self.stranger)
+        self.family = create_unit(name="Family", commander=self.user)
+        self.client.force_login(self.user)
+
+    def test_switch_to_own_unit(self):
+        self.client.post(reverse("switch-unit", args=[self.family.pk]))
+        self.user.avatar.refresh_from_db()
+        self.assertEqual(self.user.avatar.active_unit, self.family)
+
+    def test_cannot_switch_to_a_unit_you_are_not_in(self):
+        other = create_unit(name="Elsewhere", commander=self.stranger)
+        response = self.client.post(reverse("switch-unit", args=[other.pk]))
+        self.assertEqual(response.status_code, 404)
+        self.user.avatar.refresh_from_db()
+        self.assertNotEqual(self.user.avatar.active_unit, other)
+
+

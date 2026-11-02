@@ -1,19 +1,19 @@
 from datetime import timedelta
 
 from django.contrib.auth import get_user_model
-from django.db import connection
-from django.test import TestCase, SimpleTestCase
-from django.test.utils import CaptureQueriesContext
+from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from taskForce.accounts.tests import NOW, PARIS
-from taskForce.common.deploy_map import map_rows, TERRAIN, BUILDINGS, building_positions, find_path
-from taskForce.tasks.locations import LOCATIONS, location_previews, next_objective
-from taskForce.tasks.models import Task
-
+from taskForce.common.deploy_map import BUILDINGS, TERRAIN, building_positions, find_path, map_rows
+from taskForce.tasks.locations import LOCATIONS
+from taskForce.tasks.models import ChoreItem, PantryItem, Task, TaskType
+from taskForce.units.models import Membership
+from taskForce.units.services import create_personal_unit, create_unit
 
 User = get_user_model()
+
+DEPLOY_QUERY_BUDGET = 11
 
 
 class DeployMapTests(SimpleTestCase):
@@ -51,38 +51,203 @@ class DeployMapTests(SimpleTestCase):
                     self.assertEqual(rows[row][col], "=")
 
 
-class DeployIndexViewTests(TestCase):
+class CommonTestCase(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.user = User.objects.create_user("operative", password="x")
-        cls.other = User.objects.create_user("stranger", password="x")
+        cls.mate = User.objects.create_user("mate", password="x")
+        cls.stranger = User.objects.create_user("stranger", password="x")
+        for user in (cls.user, cls.mate, cls.stranger):
+            create_personal_unit(user)
+        cls.family = create_unit(name="Family", commander=cls.user)
+        Membership.objects.create(unit=cls.family, user=cls.mate, role="operative")
 
     def setUp(self):
         self.client.force_login(self.user)
 
-    def test_query_count(self):
-        with self.assertNumQueries(7):
-            self.client.get(reverse("deploy"))
+    def make(self, **kwargs):
+        kwargs.setdefault("user", self.user)
+        kwargs.setdefault("unit", self.user.personal_unit)
+        kwargs.setdefault("name", "mission")
+        return Task.objects.create(**kwargs)
 
+    def switch_to(self, unit):
+        avatar = self.user.avatar
+        avatar.active_unit = unit
+        avatar.save(update_fields=["active_unit"])
+
+    def building(self, response, key):
+        return next(b for b in response.context["buildings"] if b["key"] == key)
+
+
+# --- Deploy map --------------------------------------------------------------
+
+class DeployIndexViewTests(CommonTestCase):
     def test_requires_login(self):
         self.client.logout()
         response = self.client.get(reverse("deploy"))
         self.assertEqual(response.status_code, 302)
 
-    def test_every_location_links_from_the_map(self):
+    def test_query_count(self):
+        with self.assertNumQueries(DEPLOY_QUERY_BUDGET):
+            self.client.get(reverse("deploy"))
+
+    def test_every_location_links_from_the_personal_base(self):
         response = self.client.get(reverse("deploy"))
         for key in LOCATIONS:
             with self.subTest(location=key):
                 self.assertContains(response, reverse("deploy-location", args=[key]))
 
-    def test_other_users_missions_not_counted(self):
-        Task.objects.create(user=self.other, name="secret", type="workout")
+    def test_defaults_to_the_personal_base(self):
         response = self.client.get(reverse("deploy"))
-        training = next(b for b in response.context["buildings"] if b["key"] == "training")
-        self.assertEqual(training["count"], 0)
+        self.assertEqual(response.context["unit"], self.user.personal_unit)
+
+    def test_shows_only_the_active_units_missions(self):
+        self.make(unit=self.family)
+
+        response = self.client.get(reverse("deploy"))
+        self.assertEqual(self.building(response, "hq")["count"], 0)
+
+        self.switch_to(self.family)
+        response = self.client.get(reverse("deploy"))
+        self.assertEqual(self.building(response, "hq")["count"], 1)
+
+    def test_falls_back_when_no_longer_a_member(self):
+        outsider_unit = create_unit(name="Elsewhere", commander=self.stranger)
+        self.switch_to(outsider_unit)
+        response = self.client.get(reverse("deploy"))
+        self.assertEqual(response.context["unit"], self.user.personal_unit)
+
+    def test_other_users_missions_not_counted(self):
+        self.make(user=self.stranger, unit=self.stranger.personal_unit)
+        response = self.client.get(reverse("deploy"))
+        self.assertEqual(self.building(response, "hq")["count"], 0)
+
+    def test_training_is_off_limits_on_a_group_base(self):
+        self.switch_to(self.family)
+        response = self.client.get(reverse("deploy"))
+        self.assertTrue(self.building(response, "training")["off_limits"])
+        self.assertNotContains(response, reverse("deploy-location", args=["training"]))
+
+    def test_training_is_open_on_the_personal_base(self):
+        response = self.client.get(reverse("deploy"))
+        self.assertFalse(self.building(response, "training")["off_limits"])
+
+
+# --- Deploy locations --------------------------------------------------------
+
+class DeployLocationViewTests(CommonTestCase):
+    def post(self, key, **data):
+        data.setdefault("priority", 3)
+        data.setdefault("when", "")
+        return self.client.post(reverse("deploy-location", args=[key]), data)
 
     def test_unknown_location_is_404(self):
         response = self.client.get(reverse("deploy-location", args=["nowhere"]))
         self.assertEqual(response.status_code, 404)
+
+    def test_hq_quick_add_creates_a_standing_order_in_the_active_unit(self):
+        self.switch_to(self.family)
+        self.post("hq", name="Call plumber")
+        task = Task.objects.get(name="Call plumber")
+        self.assertEqual((task.type, task.unit), (TaskType.ONEOFF, self.family))
+
+    def test_rec_room_quick_add_creates_a_list_and_opens_it(self):
+        response = self.post("rec_room", name="Watchlist")
+        task = Task.objects.get(name="Watchlist")
+        self.assertEqual(task.type, TaskType.LIST)
+        self.assertTrue(response.url.startswith(reverse("details-task", args=[task.pk])))
+
+    def test_mission_created_at_a_location_appears_there(self):
+        for key, location in LOCATIONS.items():
+            if location["creates"] is None:
+                continue
+            with self.subTest(location=key):
+                self.post(key, name=f"m-{key}")
+                response = self.client.get(reverse("deploy-location", args=[key]))
+                self.assertIn(Task.objects.get(name=f"m-{key}"), response.context["missions"])
+
+    def test_singleton_locations_refuse_quick_add(self):
+        for key, location in LOCATIONS.items():
+            if location["creates"] is not None:
+                continue
+            with self.subTest(location=key):
+                response = self.post(key, name=f"m-{key}")
+                self.assertEqual(response.status_code, 404)
+                self.assertFalse(Task.objects.filter(name=f"m-{key}").exists())
+
+    def test_lists_only_the_active_units_missions(self):
+        mine = self.make(name="mine")
+        self.make(name="family", unit=self.family)
+        response = self.client.get(reverse("deploy-location", args=["hq"]))
+        self.assertEqual(list(response.context["missions"]), [mine])
+
+    def test_training_on_a_group_base_is_empty_and_closed(self):
+        self.switch_to(self.family)
+        response = self.client.get(reverse("deploy-location", args=["training"]))
+        self.assertTrue(response.context["off_limits"])
+        self.assertEqual(list(response.context["missions"]), [])
+
+    def test_low_stock_puts_supply_in_action_required(self):
+        pantry = self.user.personal_unit.tasks.get(type=TaskType.PANTRY)
+        PantryItem.objects.create(task=pantry, name="milk", quantity=0, threshold=1)
+        response = self.client.get(reverse("deploy-location", args=["supply"]))
+        keys = [key for key, _label, _missions in response.context["groups"]]
+        self.assertEqual(keys[0], "overdue")
+
+
+# --- Debrief -----------------------------------------------------------------
+
+class DebriefViewTests(CommonTestCase):
+    url_name = "debrief"  # adjust to your URL name
+
+    def test_quick_create_lands_in_the_active_unit(self):
+        self.switch_to(self.family)
+        self.client.post(reverse(self.url_name), {"name": "Book dentist", "type": TaskType.ONEOFF})
+        self.assertEqual(Task.objects.get(name="Book dentist").unit, self.family)
+
+    def test_quick_create_refuses_singleton_types(self):
+        self.client.post(reverse(self.url_name), {"name": "Second list", "type": TaskType.GROCERIES})
+        self.assertFalse(Task.objects.filter(name="Second list").exists())
+
+    def test_counts_ignore_singletons_and_count_accomplished(self):
+        self.make(name="open")
+        done = self.make(name="done")
+        done.accomplish(self.user)
+
+        response = self.client.get(reverse(self.url_name))
+        self.assertEqual(response.context["open_tasks_count"], 1)
+        self.assertEqual(response.context["done_tasks_count"], 1)
+
+    def test_overdue_includes_low_stock(self):
+        pantry = self.user.personal_unit.tasks.get(type=TaskType.PANTRY)
+        PantryItem.objects.create(task=pantry, name="milk", quantity=0, threshold=1)
+        response = self.client.get(reverse(self.url_name))
+        self.assertIn(pantry, response.context["overdue_tasks"])
+
+
+# --- Navigation context ------------------------------------------------------
+
+class TypeNavTests(CommonTestCase):
+    def nav(self):
+        response = self.client.get(reverse("deploy"))
+        return {entry["value"]: entry for entry in response.context["type_nav"]}
+
+    def test_labels_are_types_not_priorities(self):
+        self.make()
+        nav = self.nav()
+        self.assertEqual(nav["none"]["label"], TaskType.ONEOFF.label)
+        self.assertEqual(nav["chores"]["label"], TaskType.CHORES.label)
+
+    def test_due_chores_raise_attention(self):
+        chores = self.user.personal_unit.tasks.get(type=TaskType.CHORES)
+        ChoreItem.objects.create(
+            task=chores, name="sweep", frequency_days=1,
+            last_done_at=timezone.now() - timedelta(days=3),
+        )
+        nav = self.nav()
+        self.assertTrue(nav["chores"]["attention"])
+        self.assertFalse(nav["groceries"]["attention"])
+
 
 

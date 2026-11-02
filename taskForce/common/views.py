@@ -2,26 +2,26 @@ from datetime import timedelta
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.auth import get_user_model
-from django.db.models import Q, OuterRef, Count, F, Subquery
+from django.db.models import Count, F, OuterRef, Q, Subquery
 from django.http import Http404
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils import timezone
-from django.views.generic import TemplateView, ListView
-from taskForce.common.deploy_map import TILE, building_positions, map_rows, tiles, find_path
+from django.utils.translation import gettext_lazy as _
+from django.views.generic import ListView, TemplateView
+
+from taskForce.comms.models import Conversation, ConversationRead, Message
+from taskForce.common.deploy_map import TILE, building_positions, find_path, map_rows, tiles
 from taskForce.redirects import with_next
-from taskForce.tasks.locations import location_summary, location_previews, next_objective
-
-from taskForce.comms.models import Message, ConversationRead
-from taskForce.tasks.forms import QuickCreateTaskForm, LocationQuickAddForm
+from taskForce.tasks.forms import LocationQuickAddForm, QuickCreateTaskForm, creatable_type_choices
 from taskForce.tasks.items import ITEM_MODELS, item_progress
-from taskForce.tasks.locations import LOCATIONS, missions_at
-from taskForce.tasks.models import Task, TaskItem, ChoreItem, TaskType
-from taskForce.tasks.urgency import group_by_urgency, has_due_chores
-from taskForce.units.models import Unit
-
-TaskUser = get_user_model()
+from taskForce.tasks.locations import (
+    LOCATIONS, location_previews, location_summary, missions_at, next_objective,
+)
+from taskForce.tasks.models import SINGLETON_TYPES, Task
+from taskForce.tasks.urgency import group_by_urgency, with_urgency
+from taskForce.units.models import Membership, Unit
+from taskForce.units.services import active_unit_for
 
 
 class IndexView(TemplateView):
@@ -34,7 +34,7 @@ class DebriefHomeView(LoginRequiredMixin, TemplateView):
     RECENT_MESSAGES = 5
     VISIBLE_UNITS = 4
     VISIBLE_TASKS = 5
-    VISIBLE_OVER_DUE = 5
+    VISIBLE_OVERDUE = 5
 
     def post(self, request, *args, **kwargs):
         form = QuickCreateTaskForm(request.POST)
@@ -42,6 +42,7 @@ class DebriefHomeView(LoginRequiredMixin, TemplateView):
         if form.is_valid():
             task = form.save(commit=False)
             task.user = request.user
+            task.unit = active_unit_for(request.user)
             task.save()
             if task.type in ITEM_MODELS:
                 return redirect("details-task", pk=task.pk)
@@ -53,23 +54,22 @@ class DebriefHomeView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        now = timezone.now()
 
         context.update(self.get_task_context())
         context.update(self.get_unit_context())
         context.update(self.get_message_context())
-        context.update(self.get_overdue_context())
-        context.update(self.get_soon_due_context())
-
-        avatar = getattr(self.request.user, "avatar", None)
-        context["points"] = avatar.points if avatar else 0
+        context.update(self.get_overdue_context(now))
+        context.update(self.get_soon_due_context(now))
+        context["points"] = self.request.user.avatar.points
 
         return context
 
     def get_task_context(self):
-        tasks = Task.objects.visible_to(self.request.user)
+        tasks = Task.objects.visible_to(self.request.user).exclude(type__in=SINGLETON_TYPES)
         counts = tasks.aggregate(
-            open=Count("pk", filter=Q(is_active=True), distinct=True),
-            done=Count("pk", filter=Q(is_active=True), distinct=True),
+            open=Count("pk", filter=Q(is_active=True)),
+            done=Count("pk", filter=Q(is_accomplished=True)),
         )
         return {
             "open_tasks": (
@@ -77,21 +77,25 @@ class DebriefHomeView(LoginRequiredMixin, TemplateView):
                 .order_by(F("due_date").asc(nulls_last=True), "-created_at")
                 [:self.VISIBLE_TASKS]
             ),
-            "quick_types": [
-                (value, label) for value, label in TaskType.choices
-                if value in ITEM_MODELS
-            ],
+            "quick_types": creatable_type_choices(),
             "open_tasks_count": counts["open"],
             "done_tasks_count": counts["done"],
         }
 
     def get_unit_context(self):
+        member_count = (
+            Membership.objects.filter(unit=OuterRef("pk"))
+            .order_by()
+            .values("unit")
+            .annotate(n=Count("pk"))
+            .values("n")
+        )
         return {
-            "units": Unit.objects.filter(
-                memberships__user=self.request.user
-            ).annotate(
-                user_count=Count("users", distinct=True)
-            ).order_by("name")[:self.VISIBLE_UNITS]
+            "units": (
+                Unit.objects.filter(memberships__user=self.request.user)
+                .annotate(user_count=Subquery(member_count))
+                .order_by("name")[:self.VISIBLE_UNITS]
+            )
         }
 
     def get_message_context(self):
@@ -103,44 +107,48 @@ class DebriefHomeView(LoginRequiredMixin, TemplateView):
 
         return {
             "recent_messages": (
-                Message.objects.filter(conversation__unit__memberships__user=user)
+                Message.objects.filter(conversation__in=Conversation.objects.visible_to(user))
                 .select_related("sender", "conversation", "conversation__unit", "conversation__task")
                 .annotate(last_read_at=Subquery(last_read))
                 .annotate(
-                    is_read=Q(last_read_at__isnull=True) | Q(created_at__gt=F("last_read_at"))
-                )
-                .annotate(
                     is_unread=(Q(last_read_at__isnull=True) | Q(created_at__gt=F("last_read_at")))
-                              & ~Q(sender=user)
+                    & ~Q(sender=user)
                 )
                 .order_by("-created_at")[:self.RECENT_MESSAGES]
             )
         }
 
-    def get_overdue_context(self):
-        due_chore_tasks = ChoreItem.objects.due().values_list("task_id", flat=True)
-        query = (Q(is_active=True) & Q(due_date__lt=timezone.now())) | Q(id__in=due_chore_tasks)
-
+    def get_overdue_context(self, now):
+        missions = with_urgency(
+            Task.objects.visible_to(self.request.user).filter(is_active=True), now,
+        )
         return {
             "overdue_tasks": (
-                Task.objects.visible_to(self.request.user)
-                .filter(query)
-                .annotate(has_due_duties=Q(pk__in=due_chore_tasks))
-                .order_by(F("due_date").asc(nulls_last=True))[:self.VISIBLE_OVER_DUE]
+                missions.filter(
+                    Q(has_due_chores=True) | Q(has_low_stock=True) | Q(due_date__lt=now)
+                )
+                .order_by("priority", F("due_date").asc(nulls_last=True))
+                [:self.VISIBLE_OVERDUE]
             )
         }
 
-    def get_soon_due_context(self):
-        horizon = timezone.now() + timedelta(days=2)
-        due_tasks = (Task.objects.visible_to(self.request.user)
-                     .filter(is_active=True, due_date__gte=timezone.now(), due_date__lte=horizon)
-                     .order_by("due_date")[:self.VISIBLE_OVER_DUE]
-                     )
-        return {"due_tasks": due_tasks}
+    def get_soon_due_context(self, now):
+        horizon = now + timedelta(days=2)
+        return {
+            "due_tasks": (
+                Task.objects.visible_to(self.request.user)
+                .filter(is_active=True, due_date__gte=now, due_date__lte=horizon)
+                .order_by("due_date")[:self.VISIBLE_OVERDUE]
+            )
+        }
+
+
+def _off_limits(key, unit):
+    return key == "training" and unit.personal_for_id is None
 
 
 class DeployIndexView(LoginRequiredMixin, TemplateView):
-    template_name = "tasks/../../templates/common/deploy-index.html"
+    template_name = "common/deploy-index.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -149,14 +157,16 @@ class DeployIndexView(LoginRequiredMixin, TemplateView):
 
     def get_locations_context(self):
         now = timezone.now()
-        summary = location_summary(self.request.user, now=now)
+        unit = active_unit_for(self.request.user)
+        summary = location_summary(unit, now=now)
+        previews = location_previews(unit, now=now)
+        objective = next_objective(previews, now)
+
         positions = building_positions()
         rows = map_rows()
-        buildings = []
-        previews = location_previews(self.request.user, now=now)
-        objective = next_objective(previews, now)
         width, height = len(rows[0]) * TILE, len(rows) * TILE
 
+        buildings = []
         for key, loc in LOCATIONS.items():
             col, row = positions[key]
             buildings.append({
@@ -169,78 +179,95 @@ class DeployIndexView(LoginRequiredMixin, TemplateView):
                 "px": (col * TILE + TILE / 2) / width * 100,
                 "py": (row * TILE - 16) / height * 100,
                 "below": row < 5,
+                "off_limits": _off_limits(key, unit),
                 **summary[key],
-
             })
 
         hq_col, hq_row = positions["hq"]
-        avatar_tile = (hq_col + 1, hq_row)  # at ease, beside HQ
+        avatar_tile = (hq_col + 1, hq_row)
         route = ""
         if objective and objective != "hq":
             path = find_path(positions["hq"], positions[objective])
             if len(path) > 2:
                 walk = path[1:-1]
-                route = " ".join(f"{c * TILE + TILE // 2},{r * TILE + TILE // 2}" for c, r in walk)
+                route = " ".join(
+                    f"{c * TILE + TILE // 2},{r * TILE + TILE // 2}" for c, r in walk
+                )
                 avatar_tile = walk[-1]
 
         return {
+            "unit": unit,
             "tiles": list(tiles()),
             "buildings": buildings,
-            "map_width": len(rows[0]) * TILE,
-            "map_height": len(rows) * TILE,
+            "map_width": width,
+            "map_height": height,
             "route": route,
             "avatar_x": avatar_tile[0] * TILE,
             "avatar_y": avatar_tile[1] * TILE - 16,
             "objective": objective and {
                 "label": LOCATIONS[objective]["label"],
-                "mission": previews[objective][0],}
+                "mission": previews[objective][0],
+            },
         }
 
 
 class DeployLocationView(LoginRequiredMixin, ListView):
-    template_name = "tasks/../../templates/common/deploy-location.html"
+    template_name = "common/deploy-location.html"
     context_object_name = "missions"
 
-    def get_queryset(self):
-        self.location_key = self.kwargs["location"]
+    def dispatch(self, request, *args, **kwargs):
+        self.location_key = kwargs["location"]
         if self.location_key not in LOCATIONS:
             raise Http404
-        return (
-            missions_at(self.request.user, self.location_key)
-            .annotate(has_due_chores=has_due_chores(), **item_progress())
-            .order_by(F("due_date").asc(nulls_last=True), "-created_at")
-        )
+        self.location = LOCATIONS[self.location_key]
+        return super().dispatch(request, *args, **kwargs)
 
-    def get_form(self, data=None):
-        return LocationQuickAddForm(data)
+    def get_queryset(self):
+        self.now = timezone.now()
+        self.unit = active_unit_for(self.request.user)
+        if _off_limits(self.location_key, self.unit):
+            return Task.objects.none()
+        return with_urgency(
+            missions_at(self.unit, self.location_key), self.now,
+        ).annotate(
+            **item_progress(now=self.now),
+        ).order_by(
+            "priority", F("due_date").asc(nulls_last=True), "-created_at",
+        )
 
     def post(self, request, *args, **kwargs):
         self.object_list = self.get_queryset()
-        form = self.get_form(request.POST)
+        creates = self.location["creates"]
+        if creates is None or _off_limits(self.location_key, self.unit):
+            raise Http404
+
+        form = LocationQuickAddForm(request.POST)
         if form.is_valid():
             task = form.save(commit=False)
             task.user = request.user
-            task.type = LOCATIONS[self.location_key]["type"]
+            task.unit = self.unit
+            task.type = creates
             task.save()
-            messages.success(request, "Mission deployed.")
-            if task.type:
-                return redirect(with_next(reverse("details-task", args=[task.pk]),
-                                          request.get_full_path()))
+            messages.success(request, _("Mission deployed."))
+            if task.type in ITEM_MODELS:
+                return redirect(with_next(
+                    reverse("details-task", args=[task.pk]), request.get_full_path(),
+                ))
             return redirect(request.get_full_path())
         return self.render_to_response(self.get_context_data(form=form))
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        location_context = self.get_location_context()
-        location_context.update({k: v for k, v in kwargs.items() if k == "form"})
-        context.update(location_context)
+        context.update({
+            "location_key": self.location_key,
+            "location_label": self.location["label"],
+            "unit": self.unit,
+            "can_create": self.location["creates"] is not None,
+            "off_limits": _off_limits(self.location_key, self.unit),
+            "groups": group_by_urgency(self.object_list, self.now),
+        })
+        if "form" in kwargs:
+            context["form"] = kwargs["form"]
         return context
 
-    def get_location_context(self):
-        location = LOCATIONS[self.location_key]
-        return {
-            "location_key": self.location_key,
-            "location_label": location["label"],
-            "groups": group_by_urgency(self.object_list),
-        }
 

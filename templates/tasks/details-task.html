@@ -521,7 +521,7 @@
 {% endif %}
 
 <div class="danger-zone">
-    {% if task.type == "" %}
+    {% if task.type == "oneoff" %}
         {% if task.is_accomplished %}
             <form method="post" action="{% url 'unaccomplish-task' task.pk %}">
                 {% csrf_token %}

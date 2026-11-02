@@ -1,23 +1,31 @@
 from django.contrib import messages
+from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.http import HttpResponseRedirect
-from django.shortcuts import redirect, get_object_or_404
-from django.urls import reverse_lazy
-from django.views.decorators.http import require_POST
-from django.views.generic import CreateView, UpdateView, DeleteView, DetailView, ListView, FormView
-from django.contrib.auth import get_user_model
+from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse, reverse_lazy
 from django.utils.translation import gettext_lazy as _
+from django.views.decorators.http import require_POST
+from django.views.generic import CreateView, DeleteView, DetailView, FormView, ListView, UpdateView
 
 from taskForce.accounts.models import Avatar
+from taskForce.redirects import get_next
 from taskForce.tasks.models import Task
 from taskForce.units.forms import CreateUnitForm, JoinUnitForm, RenameUnitForm
-from taskForce.units.models import Unit, Membership
+from taskForce.units.models import Membership, Unit
 from taskForce.units.services import create_unit
 
 TaskUser = get_user_model()
+
+
+def _commanded_by(user):
+    return Unit.objects.filter(
+        memberships__user=user,
+        memberships__role="commander",
+    )
 
 
 class CreateUnitView(LoginRequiredMixin, CreateView):
@@ -26,7 +34,7 @@ class CreateUnitView(LoginRequiredMixin, CreateView):
     template_name = "units/create-unit.html"
 
     def get_success_url(self):
-        return reverse_lazy("details-unit", kwargs={"pk": self.object.pk})
+        return reverse("details-unit", kwargs={"pk": self.object.pk})
 
     def form_valid(self, form):
         self.object = create_unit(
@@ -43,13 +51,10 @@ class RenameUnitView(LoginRequiredMixin, UpdateView):
     template_name = "units/rename-unit.html"
 
     def get_queryset(self):
-        return Unit.objects.filter(
-            memberships__user=self.request.user,
-            memberships__role="commander",
-        )
+        return _commanded_by(self.request.user)
 
     def get_success_url(self):
-        return reverse_lazy("details-unit", kwargs={"pk": self.object.pk})
+        return reverse("details-unit", kwargs={"pk": self.object.pk})
 
 
 class DeleteUnitView(LoginRequiredMixin, DeleteView):
@@ -58,17 +63,16 @@ class DeleteUnitView(LoginRequiredMixin, DeleteView):
     success_url = reverse_lazy("index")
 
     def get_queryset(self):
-        return Unit.objects.filter(
-            memberships__user=self.request.user,
-            memberships__role="commander",
-            personal_for__isnull=True,
-        )
+        return _commanded_by(self.request.user).filter(personal_for__isnull=True)
 
 
 class DetailUnitView(LoginRequiredMixin, DetailView):
     model = Unit
     template_name = "units/details-unit.html"
     context_object_name = "unit"
+
+    def get_queryset(self):
+        return Unit.objects.filter(memberships__user=self.request.user)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -77,20 +81,18 @@ class DetailUnitView(LoginRequiredMixin, DetailView):
         memberships = unit.memberships.select_related("user").order_by("role", "user__username")
 
         is_commander = any(
-            m.role == "commander" and m.user == self.request.user for m in memberships
+            m.role == "commander" and m.user_id == self.request.user.id for m in memberships
         )
 
-        context["is_commander"] = is_commander
-        context["can_leave"] = not is_commander
-        context["memberships"] = memberships
-        context["is_personal"] = unit.personal_for_id is not None
-        context["active_tasks"] = tasks.filter(is_active=True)
-        context["inactive_tasks"] = tasks.filter(is_active=False)
-
+        context.update({
+            "is_personal": unit.personal_for_id is not None,
+            "is_commander": is_commander,
+            "can_leave": not is_commander,
+            "memberships": memberships,
+            "active_tasks": tasks.filter(is_active=True),
+            "inactive_tasks": tasks.filter(is_active=False),
+        })
         return context
-
-    def get_queryset(self):
-        return Unit.objects.filter(memberships__user=self.request.user)
 
 
 class CatalogueUnitView(LoginRequiredMixin, ListView):
@@ -99,7 +101,7 @@ class CatalogueUnitView(LoginRequiredMixin, ListView):
     context_object_name = "units"
 
     def get_queryset(self):
-        return Unit.objects.filter(memberships__user=self.request.user)
+        return Unit.objects.filter(memberships__user=self.request.user).order_by("name")
 
 
 class JoinUnitView(LoginRequiredMixin, FormView):
@@ -109,20 +111,14 @@ class JoinUnitView(LoginRequiredMixin, FormView):
     def get_initial(self):
         initial = super().get_initial()
         code = self.request.GET.get("code")
-
         if code:
             initial["invite_code"] = code
-
         return initial
 
     def form_valid(self, form):
         unit = form.unit
 
-        if unit.personal_for_id is not None:
-            form.add_error("invite_code", _("This unit doesn't take new members."))
-            return self.form_invalid(form)
-
-        membership, created = Membership.objects.get_or_create(
+        _membership, created = Membership.objects.get_or_create(
             user=self.request.user,
             unit=unit,
             defaults={"role": "operative"},
@@ -138,18 +134,20 @@ class JoinUnitView(LoginRequiredMixin, FormView):
 
 @login_required
 @require_POST
+def switch_unit(request, pk):
+    unit = get_object_or_404(Unit, pk=pk, memberships__user=request.user)
+    Avatar.objects.filter(user=request.user).update(active_unit=unit)
+    return redirect(get_next(request) or reverse("deploy"))
+
+
+@login_required
+@require_POST
 def remove_member(request, pk, membership_pk):
-    unit = get_object_or_404(Unit.objects.filter(
-        memberships__user=request.user,
-        memberships__role="commander",
-    ), pk=pk)
+    unit = get_object_or_404(_commanded_by(request.user), pk=pk)
+    membership = get_object_or_404(unit.memberships, pk=membership_pk)
 
-    membership = get_object_or_404(
-        unit.memberships, pk=membership_pk
-    )
-
-    if membership.user == request.user:
-        messages.info(request, "Use Leave to stand down from a unit.")
+    if membership.user_id == request.user.id:
+        messages.info(request, _("Use Leave to stand down from a unit."))
         return redirect("details-unit", pk=unit.pk)
 
     with transaction.atomic():
@@ -162,19 +160,8 @@ def remove_member(request, pk, membership_pk):
 @login_required
 @require_POST
 def transfer_command(request, pk, membership_pk):
-    commander = request.user
-
-    unit = get_object_or_404(
-        Unit.objects.filter(
-                            memberships__user=commander,
-                            memberships__role="commander"),
-        pk=pk,
-    )
-
-    membership = get_object_or_404(
-        unit.memberships, pk=membership_pk,
-
-    )
+    unit = get_object_or_404(_commanded_by(request.user), pk=pk)
+    membership = get_object_or_404(unit.memberships, pk=membership_pk)
 
     with transaction.atomic():
         unit.memberships.filter(role="commander").update(role="operative")
@@ -188,17 +175,16 @@ def transfer_command(request, pk, membership_pk):
 @require_POST
 def leave_unit(request, pk):
     unit = get_object_or_404(
-        Unit.objects.filter(memberships__user=request.user), pk=pk
+        Unit.objects.filter(memberships__user=request.user), pk=pk,
     )
 
     if unit.memberships.filter(user=request.user, role="commander").exists():
         raise PermissionDenied
 
     with transaction.atomic():
-        Task.objects.filter(
-            unit=unit,
-            assigned_to=request.user,
-        ).update(assigned_to=None)
+        Task.objects.filter(unit=unit, assigned_to=request.user).update(assigned_to=None)
         unit.memberships.filter(user=request.user).delete()
 
     return redirect("all-units")
+
+

@@ -29,7 +29,6 @@
         margin-top: 0.3rem;
     }
 
-    
     .stats-row {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
@@ -43,6 +42,8 @@
         border-radius: var(--radius-sm);
         padding: 1rem;
         text-align: center;
+        text-decoration: none;
+        display: block;
     }
 
     .stat-value {
@@ -54,6 +55,8 @@
         line-height: 1;
     }
 
+    .stat-value.alert { color: var(--rust-light); }
+
     .stat-label {
         font-family: 'Share Tech Mono', monospace;
         font-size: 0.62rem;
@@ -63,7 +66,6 @@
         margin-top: 0.35rem;
     }
 
-    
     .dashboard-grid {
         display: grid;
         grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -76,6 +78,8 @@
         border-radius: var(--radius);
         padding: 1.25rem;
     }
+
+    .dashboard-section.wide { grid-column: 1 / -1; }
 
     .section-header {
         display: flex;
@@ -108,7 +112,6 @@
 
     .section-link:hover { color: var(--khaki); }
 
-    
     .task-item {
         display: flex;
         align-items: center;
@@ -116,19 +119,9 @@
         padding: 0.55rem 0;
         border-bottom: 1px solid var(--olive);
         text-decoration: none;
-        transition: color 0.15s;
     }
 
     .task-item:last-child { border-bottom: none; }
-
-    .task-item:hover { color: var(--khaki); }
-
-    .task-item-name {
-        flex: 1;
-        min-width: 0;
-        color: var(--khaki);
-    }
-
 
     .task-dot {
         width: 8px;
@@ -138,8 +131,11 @@
         flex-shrink: 0;
     }
 
+    .task-dot.critical { border-color: var(--rust-light); background: var(--rust-light); }
+
     .task-item-name {
         flex: 1;
+        min-width: 0;
         font-size: 0.88rem;
         color: var(--cream-dark);
         transition: color 0.15s;
@@ -148,14 +144,17 @@
         text-overflow: ellipsis;
     }
 
-    .task-item-pts {
+    .task-item:hover .task-item-name { color: var(--khaki); }
+
+    .task-item-unit {
         font-family: 'Share Tech Mono', monospace;
-        font-size: 0.65rem;
+        font-size: 0.6rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
         color: var(--muted);
         flex-shrink: 0;
     }
 
-    
     .unit-item {
         display: flex;
         align-items: center;
@@ -163,7 +162,6 @@
         padding: 0.55rem 0;
         border-bottom: 1px solid var(--olive);
         text-decoration: none;
-        transition: color 0.15s;
     }
 
     .unit-item:last-child { border-bottom: none; }
@@ -179,7 +177,6 @@
         text-overflow: ellipsis;
     }
 
-
     .unit-item:hover .unit-item-name { color: var(--khaki); }
 
     .unit-item-meta {
@@ -191,7 +188,6 @@
         flex-shrink: 0;
     }
 
-    
     .comm-item {
         display: flex;
         align-items: center;
@@ -199,7 +195,6 @@
         padding: 0.55rem 0;
         border-bottom: 1px solid var(--olive);
         text-decoration: none;
-        transition: color 0.15s;
     }
 
     .comm-item:last-child { border-bottom: none; }
@@ -219,7 +214,7 @@
         border: 1px solid var(--muted);
         flex-shrink: 0;
     }
-    
+
     .comm-item-channel {
         font-family: 'Share Tech Mono', monospace;
         font-size: 0.62rem;
@@ -257,7 +252,6 @@
 
     .comm-item.unread .comm-item-preview { color: var(--cream-dark); font-weight: 500; }
 
-    
     .empty-section {
         padding: 1.5rem 0;
         text-align: center;
@@ -267,6 +261,8 @@
         text-transform: uppercase;
         color: var(--muted);
     }
+
+    .quick-add { margin-top: 1rem; }
 
     .quick-add button {
         font-family: 'Barlow Condensed', sans-serif;
@@ -283,6 +279,8 @@
         transition: background 0.15s;
         flex-shrink: 0;
     }
+
+    .quick-add button:hover { background: var(--khaki-dark); }
 
     .quick-add-form {
         display: flex;
@@ -313,6 +311,14 @@
     .quick-add input[type="text"]:focus { border-color: var(--khaki); }
     .quick-add input[type="text"]::placeholder { color: var(--muted); }
 
+    .quick-add-hint {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.6rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--muted);
+    }
+
     .quick-add-types {
         display: flex;
         gap: 0.35rem;
@@ -337,6 +343,7 @@
         border-radius: var(--radius-sm);
         color: var(--khaki-muted);
         cursor: pointer;
+        margin: 0;
         transition: border-color 0.15s, color 0.15s, background 0.15s;
     }
 
@@ -356,37 +363,26 @@
         outline-offset: 2px;
     }
 
-        .overdue-section {
-        border-color: var(--rust-light);
-    }
+    .overdue-section { border-color: var(--rust-light); }
+    .overdue-section .section-title { color: var(--rust-light); }
 
-    .due-section {
-        border-color: #d5ca70;
-    }
+    .due-section { border-color: #d5ca70; }
+    .due-section .section-title { color: #d5ca70; }
 
-    .overdue-section .section-title {
-        color: var(--rust-light);
-    }
-
-        .due-section .section-title {
-        color: #d5ca70;
-    }
-
-    .over-due-item {
+    .flag-item {
         display: flex;
         align-items: center;
         gap: 0.75rem;
         padding: 0.55rem 0;
         border-bottom: 1px solid var(--olive);
         text-decoration: none;
-        transition: color 0.15s;
     }
 
-    .over-due-item:last-child { border-bottom: none; }
+    .flag-item:last-child { border-bottom: none; }
 
-    .over-due-item:hover .over-due-name { color: var(--khaki); }
+    .flag-item:hover .flag-name { color: var(--khaki); }
 
-    .over-due-marker {
+    .flag-marker {
         width: 8px;
         height: 8px;
         border-radius: 50%;
@@ -394,7 +390,9 @@
         flex-shrink: 0;
     }
 
-    .over-due-name {
+    .flag-marker.soon { background: #d5ca70; }
+
+    .flag-name {
         flex: 1;
         min-width: 0;
         font-size: 0.88rem;
@@ -405,7 +403,7 @@
         transition: color 0.15s;
     }
 
-    .over-due-type {
+    .flag-type {
         font-family: 'Share Tech Mono', monospace;
         font-size: 0.62rem;
         letter-spacing: 0.08em;
@@ -417,7 +415,7 @@
         flex-shrink: 0;
     }
 
-    .over-due-late {
+    .flag-reason {
         font-family: 'Share Tech Mono', monospace;
         font-size: 0.65rem;
         letter-spacing: 0.06em;
@@ -425,15 +423,8 @@
         color: var(--rust-light);
         flex-shrink: 0;
     }
-    
-    .due-time {
-        font-family: 'Share Tech Mono', monospace;
-        font-size: 0.65rem;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
-        color: #d5ca70;
-        flex-shrink: 0;
-    }
+
+    .flag-reason.soon { color: #d5ca70; }
 
     @media (max-width: 620px) {
         .stats-row { grid-template-columns: repeat(2, 1fr); }
@@ -450,21 +441,19 @@
         <p class="home-subtitle">Operative: {{ user.username }}</p>
     </div>
     <a href="{% url 'add-task' %}" class="btn btn-primary" style="font-size: 0.85rem;">+ New mission</a>
-
 </div>
 
-
 <div class="stats-row">
-    <div class="stat-card">
+    <a href="{% url 'all-tasks' %}" class="stat-card">
         <div class="stat-value">{{ open_tasks_count }}</div>
         <div class="stat-label">Active missions</div>
-    </div>
-    <a href="{% url 'all-tasks' %}?show=all" class="stat-card" style="text-decoration: none; display: block;">
-        <div class="stat-value">{{ done_tasks_count }}</div>
-        <div class="stat-label">Completed</div>
     </a>
-    <a href="{% url 'inbox' %}" class="stat-card" style="text-decoration: none; display: block;">
-        <div class="stat-value" style="color: var(--rust-light);">{{ unread_count }}</div>
+    <a href="{% url 'all-tasks' %}?show=all" class="stat-card">
+        <div class="stat-value">{{ done_tasks_count }}</div>
+        <div class="stat-label">Accomplished</div>
+    </a>
+    <a href="{% url 'inbox' %}" class="stat-card">
+        <div class="stat-value alert">{{ unread_count }}</div>
         <div class="stat-label">Unread comms</div>
     </a>
     <div class="stat-card">
@@ -475,6 +464,48 @@
 
 <div class="dashboard-grid">
 
+    {% if overdue_tasks %}
+    <div class="dashboard-section overdue-section wide">
+        <div class="section-header">
+            <span class="section-title">// Action required</span>
+            <a href="{% url 'all-tasks' %}" class="section-link">Mission log →</a>
+        </div>
+
+        {% for task in overdue_tasks %}
+        <a href="{% url 'details-task' task.pk %}" class="flag-item">
+            <div class="flag-marker"></div>
+            <span class="flag-name">{{ task.name }}</span>
+            <span class="flag-type">{{ task.get_type_display }}</span>
+            {% if task.has_due_chores %}
+            <span class="flag-reason">duties due</span>
+            {% elif task.has_low_stock %}
+            <span class="flag-reason">stock low</span>
+            {% elif task.due_date %}
+            <span class="flag-reason">{{ task.due_date|timesince }} late</span>
+            {% endif %}
+        </a>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if due_tasks %}
+    <div class="dashboard-section due-section wide">
+        <div class="section-header">
+            <span class="section-title">// Due soon</span>
+            <a href="{% url 'all-tasks' %}?order=due" class="section-link">Mission log →</a>
+        </div>
+
+        {% for task in due_tasks %}
+        <a href="{% url 'details-task' task.pk %}" class="flag-item">
+            <div class="flag-marker soon"></div>
+            <span class="flag-name">{{ task.name }}</span>
+            <span class="flag-type">{{ task.get_type_display }}</span>
+            <span class="flag-reason soon">in {{ task.due_date|timeuntil }}</span>
+        </a>
+        {% endfor %}
+    </div>
+    {% endif %}
+
     <div class="dashboard-section">
         <div class="section-header">
             <span class="section-title">// Active missions</span>
@@ -484,8 +515,9 @@
         {% if open_tasks %}
             {% for task in open_tasks %}
             <a href="{% url 'details-task' task.pk %}" class="task-item">
-                <div class="task-dot"></div>
+                <div class="task-dot{% if task.priority == 1 %} critical{% endif %}"></div>
                 <span class="task-item-name">{{ task.name }}</span>
+                <span class="task-item-unit">{% if task.unit.personal_for_id %}Personal{% else %}{{ task.unit.name }}{% endif %}</span>
             </a>
             {% endfor %}
         {% else %}
@@ -496,11 +528,9 @@
             <form method="post" class="quick-add-form">
                 {% csrf_token %}
                 <div class="quick-add-types">
-                    <input type="radio" name="type" value="" id="qa-type-none" checked>
-                    <label for="qa-type-none">Mission</label>
                     {% for value, label in quick_types %}
-                    <input type="radio" name="type" value="{{ value }}" id="qa-type-{{ value }}">
-                    <label for="qa-type-{{ value }}">{{ label }}</label>
+                    <input type="radio" name="type" value="{{ value }}" id="qa-type-{{ forloop.counter }}"{% if forloop.first %} checked{% endif %}>
+                    <label for="qa-type-{{ forloop.counter }}">{{ label }}</label>
                     {% endfor %}
                 </div>
                 <div class="quick-add-row">
@@ -508,8 +538,12 @@
                            maxlength="100" required>
                     <button type="submit">Add</button>
                 </div>
+                {% if active_unit %}
+                <span class="quick-add-hint">Into: {% if active_unit.personal_for_id %}personal base{% else %}{{ active_unit.name }}{% endif %}</span>
+                {% endif %}
             </form>
-        </div></div>
+        </div>
+    </div>
 
     <div class="dashboard-section">
         <div class="section-header">
@@ -517,82 +551,40 @@
             <a href="{% url 'all-units' %}" class="section-link">All →</a>
         </div>
 
-        {% if units %}
-            {% for unit in units %}
-            <a href="{% url 'details-unit' unit.pk %}" class="unit-item">
-                <span class="unit-item-name">{{ unit.name }}</span>
-                <span class="unit-item-meta">{{ unit.user_count }} ops</span>
-            </a>
-            {% endfor %}
-        {% else %}
-        <div class="empty-section">No units — <a href="{% url 'create-unit' %}" style="color: var(--khaki-muted);">form one</a></div>
-        {% endif %}
-    </div>
-
-    {% if due_tasks %}
-    <div class="dashboard-section due-section" style="grid-column: 1 / -1;">
-        <div class="section-header">
-            <span class="section-title due-soon">// Due soon</span>
-            <a href="{% url 'all-tasks' %}" class="section-link due-soon">Mission log →</a>
-        </div>
-
-        {% for task in due_tasks %}
-        <a href="{% url 'details-task' task.pk %}" class="over-due-item due-soon">
-            <div style="color: khaki;">&#10003;</div>
-            <span class="over-due-name">{{ task.name }}</span>
-            {% if task.type %}<span class="over-due-type">{{ task.get_type_display }}</span>{% endif %}
-            <span class="due-time due-soon">in {{ task.due_date|timeuntil }}</span>
+        {% for unit in units %}
+        <a href="{% url 'details-unit' unit.pk %}" class="unit-item">
+            <span class="unit-item-name">{{ unit.name }}</span>
+            <span class="unit-item-meta">
+                {% if unit.personal_for_id %}Personal{% else %}{{ unit.user_count }} op{{ unit.user_count|pluralize }}{% endif %}
+            </span>
         </a>
         {% endfor %}
+        <a href="{% url 'create-unit' %}" class="section-link" style="display: block; margin-top: 0.75rem;">+ Form a unit</a>
     </div>
-    {% endif %}
 
-    {% if overdue_tasks %}
-    <div class="dashboard-section overdue-section" style="grid-column: 1 / -1;">
-        <div class="section-header">
-            <span class="section-title">// Overdue</span>
-            <a href="{% url 'all-tasks' %}" class="section-link">Mission log →</a>
-        </div>
-
-        {% for task in overdue_tasks %}
-        <a href="{% url 'details-task' task.pk %}" class="over-due-item">
-            <div class="over-due-marker"></div>
-            <span class="over-due-name">{{ task.name }}</span>
-            {% if task.type %}<span class="over-due-type">{{ task.get_type_display }}</span>{% endif %}
-                        {% if task.due_date %}
-            <span class="over-due-late">{{ task.due_date|timesince }} late</span>
-            {% elif task.has_due_duties %}
-            <span class="over-due-late">duties due</span>
-            {% endif %}
-        </a>
-        {% endfor %}
-    </div>
-    {% endif %}
-
-
-    <div class="dashboard-section" style="grid-column: 1 / -1;">
+    <div class="dashboard-section wide">
         <div class="section-header">
             <span class="section-title">// Recent comms</span>
             <a href="{% url 'inbox' %}" class="section-link">Inbox →</a>
         </div>
         {% if recent_messages %}
-        {% for message in recent_messages %}
-    <a href="{% url 'conversation' message.conversation.pk %}" class="comm-item{% if message.is_unread %} unread{% endif %}">
-        {% if message.is_unread %}
-        <div class="comm-unread-dot"></div>
+            {% for message in recent_messages %}
+            <a href="{% url 'conversation' message.conversation.pk %}" class="comm-item{% if message.is_unread %} unread{% endif %}">
+                {% if message.is_unread %}
+                <div class="comm-unread-dot"></div>
+                {% else %}
+                <div class="comm-read-dot"></div>
+                {% endif %}
+                <span class="comm-item-sender">
+                    {% if message.sender == request.user %}You{% elif message.sender %}{{ message.sender.username }}{% else %}Former op{% endif %}
+                </span>
+                <span class="comm-item-preview">{{ message.text|truncatechars:80 }}</span>
+                <span class="comm-item-channel">{{ message.conversation.title }}</span>
+            </a>
+            {% endfor %}
         {% else %}
-        <div class="comm-read-dot"></div>
+        <div class="empty-section">No comms yet</div>
         {% endif %}
-        <span class="comm-item-sender">
-            {% if message.sender == request.user %}You{% else %}{{ message.sender.username }}{% endif %}
-        </span>
-        <span class="comm-item-preview">{{ message.text|truncatechars:80 }}</span>
-        <span class="comm-item-channel">{{ message.conversation.title }}</span>
-    </a>
-    {% endfor %}
-{% else %}
-<div class="empty-section">No comms yet</div>
-{% endif %}
     </div>
 
 </div>
