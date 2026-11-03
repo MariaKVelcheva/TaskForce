@@ -24,22 +24,24 @@ def creatable_type_choices():
 class BaseTaskForm(forms.ModelForm):
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
+        my_units = Unit.objects.filter(users=user)
 
         if "unit" in self.fields:
-            self.fields["unit"].queryset = Unit.objects.filter(users=user)
+            self.fields["unit"].queryset = my_units
 
         if "assigned_to" in self.fields:
-            self.fields["assigned_to"].queryset = User.objects.filter(
-                units__in=Unit.objects.filter(users=user)
-            ).distinct()
+            if self.instance.unit_id:
+                members = self.instance.unit.users.all()
+            else:
+                members = User.objects.filter(units__in=my_units).distinct()
+            self.fields["assigned_to"].queryset = members
 
     def clean(self):
         cleaned = super().clean()
-        unit = cleaned.get("unit")
+        unit = cleaned.get("unit") or (self.instance.unit if self.instance.unit_id else None)
         assigned_to = cleaned.get("assigned_to")
-
         if assigned_to and unit and not unit.users.filter(pk=assigned_to.pk).exists():
-            raise forms.ValidationError("That operative is not in the selected unit.")
+            raise forms.ValidationError(_("That operative is not in the selected unit."))
         return cleaned
 
     class Meta:
@@ -97,7 +99,7 @@ class CreateTaskForm(BaseTaskForm):
         self.fields["type"].choices = creatable_type_choices()
 
     class Meta(BaseTaskForm.Meta):
-        fields = ["name", "priority", "type", "unit", "due_date", "comment"]
+        fields = ["name", "priority", "type", "unit", "assigned_to", "due_date", "comment"]
 
 
 class QuickCreateTaskForm(forms.ModelForm):
@@ -112,7 +114,7 @@ class QuickCreateTaskForm(forms.ModelForm):
 
 class UpdateTaskForm(BaseTaskForm):
     class Meta(BaseTaskForm.Meta):
-        fields = ["name", "priority", "due_date", "comment"]
+        fields = ["name", "priority", "assigned_to", "due_date", "comment"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

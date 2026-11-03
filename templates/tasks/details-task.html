@@ -495,7 +495,7 @@
 
     <div class="detail-field">
         <div class="detail-field-label">Unit</div>
-        <div class="detail-field-value">{{ task.unit.name }}</div>
+        <div class="detail-field-value">{% if task.unit.personal_for_id %}Personal base{% else %}{{ task.unit.name }}{% endif %}</div>
     </div>
 
     {% if task.assigned_to %}

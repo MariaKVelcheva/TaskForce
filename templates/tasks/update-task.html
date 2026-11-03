@@ -54,6 +54,19 @@
         color: var(--muted);
         margin-bottom: 1rem;
     }
+
+    .fixed-fact {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.68rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 1.25rem;
+    }
+
+    @media (max-width: 520px) {
+        .form-row { grid-template-columns: 1fr; }
+    }
 </style>
 {% endblock %}
 
@@ -63,69 +76,49 @@
 
     <div style="margin-bottom: 2rem;">
         <h1 style="font-family: 'Barlow Condensed', sans-serif; font-size: 1.8rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--khaki);">Edit mission</h1>
-        <p style="font-family: 'Share Tech Mono', monospace; overflow-wrap: anywhere; font-size: 0.75rem; letter-spacing: 0.1em;
-         text-transform: uppercase; color: var(--muted); margin-top: 0.3rem;">{{ object.name }}</p>
+        <p style="font-family: 'Share Tech Mono', monospace; overflow-wrap: anywhere; font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-top: 0.3rem;">{{ object.name }}</p>
     </div>
 
     <div class="panel">
         <div class="panel-header">// Amend briefing</div>
 
+        <p class="fixed-fact">
+            {{ object.get_type_display }} · {% if object.unit.personal_for_id %}Personal base{% else %}{{ object.unit.name }}{% endif %}
+        </p>
+
         <form method="post" novalidate>
             {% csrf_token %}
-          {% include "tasks/partials/_next_input.html" %}
+            {% include "tasks/partials/_next_input.html" %}
 
-            <div class="form-group" style="overflow-wrap: anywhere">
-                <label for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
-                {{ form.name }}
-                {% if form.name.errors %}
-                <ul class="errorlist">{% for e in form.name.errors %}<li>{{ e }}</li>{% endfor %}</ul>
-                {% endif %}
-            </div>
+            {% if form.non_field_errors %}
+            <ul class="errorlist" style="margin-bottom: 1rem;">
+                {% for e in form.non_field_errors %}<li>{{ e }}</li>{% endfor %}
+            </ul>
+            {% endif %}
 
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="{{ form.type.id_for_label }}">{{ form.type.label }}</label>
-                    {{ form.type }}
-                </div>
-                                <div class="form-group">
-                    <label for="{{ form.priority.id_for_label }}">{{ form.priority.label }}</label>
-                    {{ form.priority }}
-                </div>
-            </div>
+            {% include 'common/partials/_field.html' with field=form.name %}
 
             <div class="form-row">
-                <div class="form-group">
-                    <label for="{{ form.unit.id_for_label }}">{{ form.unit.label }}</label>
-                    {{ form.unit }}
-                </div>
+                {% include 'common/partials/_field.html' with field=form.priority %}
+                {% include 'common/partials/_field.html' with field=form.assigned_to %}
             </div>
 
+            {% if form.due_date %}
             <div class="form-section">
                 <div class="form-section-label">// Scheduling</div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="{{ form.due_date.id_for_label }}">{{ form.due_date.label }}</label>
-                        {{ form.due_date }}
-                    </div>
-
-                </div>
+                {% include 'common/partials/_field.html' with field=form.due_date %}
             </div>
-                    <div class="form-section">
+            {% endif %}
+
+            <div class="form-section">
                 <div class="form-section-label">// Briefing notes</div>
-                <div class="form-group">
-                    <label for="{{ form.comment.id_for_label }}">{{ form.comment.label }}</label>
-                    {{ form.comment }}
-                    {% if form.comment.help_text %}
-                    <p class="form-help">{{ form.comment.help_text }}</p>
-                    {% endif %}
-                </div>
+                {% include 'common/partials/_field.html' with field=form.comment %}
             </div>
 
             <div style="margin-top: 1.75rem; display: flex; gap: 0.75rem;">
                 <button type="submit" class="btn btn-primary">Save changes</button>
                 <a href="{% url 'details-task' object.pk %}" class="btn btn-ghost">Cancel</a>
             </div>
-
         </form>
     </div>
 

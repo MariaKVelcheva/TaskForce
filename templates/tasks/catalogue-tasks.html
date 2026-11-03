@@ -1,6 +1,7 @@
 {% extends 'common/base.html' %}
 
 {% block title %}Missions — Task: Force!{% endblock %}
+
 {% block extra_css %}
 <style>
     .catalogue-header {
@@ -39,8 +40,18 @@
 
     .filter-group {
         display: flex;
+        align-items: center;
         gap: 0.4rem;
         flex-wrap: wrap;
+    }
+
+    .filter-label {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.62rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-right: 0.2rem;
     }
 
     .filter-chip {
@@ -74,16 +85,6 @@
         gap: 0.6rem;
     }
 
-        .task-tag.priority-1 {
-        color: var(--rust-light);
-        border-color: var(--rust-light);
-    }
-
-    .task-tag.priority-2 {
-        color: var(--khaki);
-        border-color: var(--khaki);
-    }
-
     .task-row {
         display: flex;
         align-items: center;
@@ -100,8 +101,8 @@
         background: var(--olive);
     }
 
-    .task-row.done {
-        opacity: 0.5;
+    .task-row.inactive {
+        opacity: 0.55;
         border-style: dashed;
     }
 
@@ -148,7 +149,7 @@
         text-overflow: ellipsis;
     }
 
-    .task-row.done .task-name {
+    .task-row.accomplished .task-name {
         text-decoration: line-through;
         color: var(--muted);
     }
@@ -160,9 +161,9 @@
         flex-shrink: 0;
     }
 
-        .task-seal {
+    .task-seal {
         font-family: 'Share Tech Mono', monospace;
-        font-size: 1rem;
+        font-size: 0.7rem;
         letter-spacing: 0.12em;
         text-transform: uppercase;
         padding: 0.15rem 0.5rem;
@@ -171,7 +172,7 @@
         color: var(--rust-light);
         white-space: nowrap;
         flex-shrink: 0;
-            transform: rotate(-2deg);
+        transform: rotate(-2deg);
     }
 
     .task-tag {
@@ -186,13 +187,14 @@
         white-space: nowrap;
     }
 
-    .task-points {
-        font-family: 'Share Tech Mono', monospace;
-        font-size: 0.7rem;
+    .task-tag.priority-1 {
+        color: var(--rust-light);
+        border-color: var(--rust-light);
+    }
+
+    .task-tag.priority-2 {
         color: var(--khaki);
-        min-width: 3rem;
-        text-align: right;
-        flex-shrink: 0;
+        border-color: var(--khaki);
     }
 
     .pagination {
@@ -248,8 +250,13 @@
         text-transform: uppercase;
         margin-bottom: 1.5rem;
     }
+
+    @media (max-width: 620px) {
+        .task-meta .task-tag.unit { display: none; }
+    }
 </style>
 {% endblock %}
+
 {% block content %}
 
 <div class="catalogue-header">
@@ -266,53 +273,48 @@
 <div class="filter-bar">
     <div class="filter-group">
         <a href="{% querystring type=None page=None %}"
-           class="filter-chip {% if not active_type %}active{% endif %}">All</a>
+           class="filter-chip{% if not active_type %} active{% endif %}">All</a>
         {% for value, label in type_choices %}
         <a href="{% querystring type=value page=None %}"
-           class="filter-chip {% if active_type == value %}active{% endif %}">{{ label }}</a>
+           class="filter-chip{% if active_type == value %} active{% endif %}">{{ label }}</a>
         {% endfor %}
-        <a href="{% querystring type='none' page=None %}"
-           class="filter-chip {% if active_type == 'none' %}active{% endif %}">Standing orders</a>
     </div>
     <div class="filter-group">
         <span class="filter-label">Sort</span>
         {% for value, label in sort_options %}
         <a href="{% querystring order=value page=None %}"
-           class="filter-chip {% if active_order == value %}active{% endif %}">{{ label }}</a>
+           class="filter-chip{% if active_order == value %} active{% endif %}">{{ label }}</a>
         {% endfor %}
     </div>
     {% if show_all %}
-    <a href="{% querystring show=None page=None %}" class="filter-chip">Hide accomplished</a>
+    <a href="{% querystring show=None page=None %}" class="filter-chip active">Hide inactive</a>
     {% else %}
-    <a href="{% querystring show='all' page=None %}" class="filter-chip">Show accomplished</a>
+    <a href="{% querystring show='all' page=None %}" class="filter-chip">Show inactive</a>
     {% endif %}
-</div>  
+</div>
 
 {% if tasks %}
 <div class="task-list">
     {% for task in tasks %}
-    <div class="task-row {% if task.is_done %}done{% endif %}">
-        <a href="{% url 'details-task' task.pk %}" class="task-row-link">
-            <div class="task-status {% if task.is_done %}done{% endif %}"></div>
+    <div class="task-row{% if task.is_accomplished %} inactive accomplished{% elif not task.is_active %} inactive{% endif %}">
+        <a href="{% url 'details-task' task.pk %}?next={{ request.get_full_path|urlencode }}" class="task-row-link">
+            <div class="task-status{% if task.is_accomplished %} done{% endif %}"></div>
             <span class="task-name">{{ task.name }}</span>
             <div class="task-meta">
-                                {% if task.priority < 3 %}
+                {% if task.is_active and task.has_due_chores %}
+                <span class="task-seal">Duties due</span>
+                {% elif task.is_active and task.has_low_stock %}
+                <span class="task-seal">Stock low</span>
+                {% endif %}
+                {% if task.priority < 3 %}
                 <span class="task-tag priority-{{ task.priority }}">{{ task.get_priority_display }}</span>
                 {% endif %}
-                {% if task.type %}
-                    {% if task.needs_attention %}
-                <span class="task-seal">Requires attention</span>
-                {% endif %}
                 <span class="task-tag">{{ task.get_type_display }}</span>
-
-                {% endif %}
-                {% if task.unit %}
-                <span class="task-tag">{{ task.unit.name }}</span>
-                {% endif %}
+                <span class="task-tag unit">{% if task.unit.personal_for_id %}Personal{% else %}{{ task.unit.name }}{% endif %}</span>
             </div>
-                   </a>
-        {% if task.unit %}
-        <a href="{% url 'task-chat' task.pk %}" class="task-chat-link" title="Unit discussion">&#128172;</a>
+        </a>
+        {% if not task.unit.personal_for_id %}
+        <a href="{% url 'task-chat' task.pk %}" class="task-chat-link" title="Mission discussion">&#128172;</a>
         {% endif %}
     </div>
     {% endfor %}

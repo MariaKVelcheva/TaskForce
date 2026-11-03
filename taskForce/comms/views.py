@@ -122,6 +122,9 @@ class InboxView(LoginRequiredMixin, ListView):
 
         query = self.request.GET.get("query")
 
+        if self.request.GET.get("active"):
+            conversations = conversations.filter(Q(task__isnull=True) | Q(task__is_active=True))
+
         if query:
             matching = Message.objects.filter(
                 conversation=OuterRef("pk"),
