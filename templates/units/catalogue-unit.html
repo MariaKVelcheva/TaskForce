@@ -8,6 +8,8 @@
         display: flex;
         align-items: baseline;
         justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1rem;
         margin-bottom: 2rem;
     }
 
@@ -29,11 +31,17 @@
         margin-top: 0.3rem;
     }
 
+    .catalogue-actions {
+        display: flex;
+        gap: 0.75rem;
+    }
+
     .unit-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
         gap: 1rem;
     }
+
     .unit-card {
         background: var(--olive-mid);
         border: 1px solid var(--khaki-dark);
@@ -48,6 +56,10 @@
     .unit-card:hover {
         border-color: var(--khaki);
         background: var(--olive);
+    }
+
+    .unit-card.personal {
+        border-style: dashed;
     }
 
     .unit-card-head {
@@ -88,11 +100,6 @@
         justify-content: space-between;
         text-decoration: none;
     }
-    .unit-card-meta {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
 
     .unit-card-members {
         font-family: 'Share Tech Mono', monospace;
@@ -124,28 +131,16 @@
         background: transparent;
     }
 
-    .empty-state {
-        text-align: center;
-        padding: 4rem 2rem;
-    }
-
-    .empty-state-title {
-        font-family: 'Barlow Condensed', sans-serif;
-        font-size: 1.2rem;
-        font-weight: 700;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        color: var(--khaki-muted);
-        margin-bottom: 0.5rem;
-    }
-
-    .empty-state-sub {
+    .unit-active-tag {
         font-family: 'Share Tech Mono', monospace;
-        font-size: 0.75rem;
-        letter-spacing: 0.08em;
+        font-size: 0.6rem;
+        letter-spacing: 0.1em;
         text-transform: uppercase;
-        color: var(--muted);
-        margin-bottom: 1.5rem;
+        color: var(--cream);
+        background: var(--khaki-dark);
+        border-radius: var(--radius-sm);
+        padding: 0.1rem 0.45rem;
+        flex-shrink: 0;
     }
 </style>
 {% endblock %}
@@ -155,39 +150,38 @@
 <div class="catalogue-header">
     <div>
         <h1 class="catalogue-title">Your units</h1>
-        <p class="catalogue-count">{{ units|length }} unit{{ units|length|pluralize }} active</p>
+        <p class="catalogue-count">{{ units|length }} base{{ units|length|pluralize }}</p>
     </div>
-    <div style="display: flex; gap: 0.75rem;">
+    <div class="catalogue-actions">
         <a href="{% url 'join-unit' %}" class="btn btn-ghost">Enter code</a>
         <a href="{% url 'create-unit' %}" class="btn btn-primary">+ Form unit</a>
     </div>
 </div>
 
-{% if units %}
-<div class="unit-grid">    {% for unit in units %}
-    <div class="unit-card">
+<div class="unit-grid">
+    {% for unit in units %}
+    <div class="unit-card{% if unit.personal_for_id %} personal{% endif %}">
         <div class="unit-card-head">
-            <a href="{% url 'details-unit' unit.pk %}" class="unit-card-name">{{ unit.name }}</a>
+            <a href="{% url 'details-unit' unit.pk %}" class="unit-card-name">
+                {% if unit.personal_for_id %}Personal base{% else %}{{ unit.name }}{% endif %}
+            </a>
+            {% if active_unit and active_unit.pk == unit.pk %}
+            <span class="unit-active-tag">Active</span>
+            {% endif %}
+            {% if not unit.personal_for_id %}
             <a href="{% url 'unit-chat' unit.pk %}" class="unit-chat-link" title="Unit discussion">&#128172;</a>
+            {% endif %}
         </div>
         <a href="{% url 'details-unit' unit.pk %}" class="unit-card-meta">
             <span class="unit-card-members">
-                {{ unit.user_count }} operative{{ unit.user_count|pluralize }}
+                {% if unit.personal_for_id %}Lone wolf{% else %}{{ unit.user_count }} operative{{ unit.user_count|pluralize }}{% endif %}
             </span>
-            {% if unit.my_role %}
+            {% if unit.my_role and not unit.personal_for_id %}
             <span class="unit-role-badge {{ unit.my_role }}">{{ unit.my_role }}</span>
             {% endif %}
         </a>
     </div>
     {% endfor %}
 </div>
-
-{% else %}
-<div class="empty-state">
-    <div class="empty-state-title">No units on record</div>
-    <p class="empty-state-sub">Form a unit or wait for a clearance code.</p>
-    <a href="{% url 'create-unit' %}" class="btn btn-ghost">Form first unit</a>
-</div>
-{% endif %}
 
 {% endblock %}

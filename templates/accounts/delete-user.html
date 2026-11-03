@@ -14,9 +14,25 @@
     <div class="panel" style="border-color: var(--rust);">
         <div class="panel-header" style="color: var(--rust-light); border-color: rgba(184,92,56,0.3);">// Confirm termination</div>
 
-        <p style="font-size: 0.92rem; color: var(--cream-dark); line-height: 1.6; margin-bottom: 1.5rem;">
-            Operative <strong style="color: var(--cream);">{{ user.username }}</strong> will be permanently removed.
-            All missions, comms, and intel points will be lost.
+        {% if blocking_units %}
+        <p style="font-size: 0.92rem; color: var(--cream-dark); line-height: 1.6; margin-bottom: 0.75rem;">
+            You still command a unit with other operatives in it. Hand over command, or dissolve the unit, before terminating your account:
+        </p>
+        <ul style="list-style: none; margin-bottom: 1.5rem;">
+            {% for unit in blocking_units %}
+            <li style="padding: 0.3rem 0;">
+                <a href="{% url 'details-unit' unit.pk %}" style="color: var(--khaki); text-decoration: none; font-family: 'Barlow Condensed', sans-serif; font-size: 1.1rem; letter-spacing: 0.06em; text-transform: uppercase;">{{ unit.name }} →</a>
+            </li>
+            {% endfor %}
+        </ul>
+        <a href="{% url 'details-profile' %}" class="btn btn-ghost">Stand down</a>
+        {% else %}
+        <p style="font-size: 0.92rem; color: var(--cream-dark); line-height: 1.6; margin-bottom: 0.75rem;">
+            Operative <strong style="color: var(--cream);">{{ request.user.username }}</strong> will be permanently removed.
+        </p>
+        <p style="font-size: 0.85rem; color: var(--muted); line-height: 1.6; margin-bottom: 1.5rem; font-family: 'Share Tech Mono', monospace;">
+            Your personal base and everything in it, your intel points, and any unit you command alone will be deleted.
+            Missions and comms you shared with other units stay with them.
         </p>
 
         <form method="post">
@@ -26,6 +42,7 @@
                 <a href="{% url 'details-profile' %}" class="btn btn-ghost">Stand down</a>
             </div>
         </form>
+        {% endif %}
     </div>
 
 </div>

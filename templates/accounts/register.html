@@ -27,12 +27,16 @@
                 </ul>
                 {% endif %}
                 {% if field.help_text %}
-                <p style="font-size: 0.73rem; color: var(--muted); margin-top: 0.3rem; font-family: 'Share Tech Mono', monospace;">{{ field.help_text }}</p>
+                <div class="field-help">{{ field.help_text }}</div>
                 {% endif %}
             </div>
             {% endfor %}
 
-            <div style="margin-top: 1.75rem;">
+            <p class="field-help" style="margin-bottom: 0.5rem;">
+                Email is optional. You'll get a personal base with your own grocery list, pantry, chores and training.
+            </p>
+
+            <div style="margin-top: 1.25rem;">
                 <button type="submit" class="btn btn-primary" style="width: 100%;">Deploy operative</button>
             </div>
         </form>

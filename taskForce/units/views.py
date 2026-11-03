@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
+from django.db.models import OuterRef, Count, Subquery, F
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
@@ -101,7 +102,20 @@ class CatalogueUnitView(LoginRequiredMixin, ListView):
     context_object_name = "units"
 
     def get_queryset(self):
-        return Unit.objects.filter(memberships__user=self.request.user).order_by("name")
+        user = self.request.user
+        member_count = (
+            Membership.objects.filter(unit=OuterRef("pk"))
+            .order_by()
+            .values("unit")
+            .annotate(n=Count("pk"))
+            .values("n")
+        )
+        my_role = Membership.objects.filter(unit=OuterRef("pk"), user=user).values("role")[:1]
+        return (
+            Unit.objects.filter(memberships__user=user)
+            .annotate(user_count=Subquery(member_count), my_role=Subquery(my_role))
+            .order_by(F("personal_for").asc(nulls_last=True), "name")
+        )
 
 
 class JoinUnitView(LoginRequiredMixin, FormView):

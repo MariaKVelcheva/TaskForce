@@ -1,27 +1,38 @@
 {% extends 'common/base.html' %}
 
-{% block title %}Join {{ unit.name }} — Task: Force!{% endblock %}
+{% block title %}Join a unit — Task: Force!{% endblock %}
 
 {% block content %}
 
 <div style="max-width: 420px; margin: 0 auto;">
 
     <div style="margin-bottom: 2rem; text-align: center;">
-        <h1 style="font-family: 'Barlow Condensed', sans-serif; font-size: 1.8rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--khaki);">Join unit</h1>
-        <p style="font-family: 'Share Tech Mono', monospace; font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-top: 0.4rem;">Clearance code verified</p>
+        <h1 style="font-family: 'Barlow Condensed', sans-serif; font-size: 1.8rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--khaki);">Join a unit</h1>
+        <p style="font-family: 'Share Tech Mono', monospace; font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-top: 0.4rem;">Enter the clearance code you were given</p>
     </div>
 
     <div class="panel">
-        <div class="panel-header">// Confirm enlistment</div>
+        <div class="panel-header">// Enlistment</div>
 
-        <p style="font-size: 0.92rem; color: var(--cream-dark); line-height: 1.6; margin-bottom: 0.75rem;">
-            You are about to join <strong style="color: var(--cream);">{{ unit.name }}</strong> as an <strong style="color: var(--cream);">Operative</strong>.
+        <p style="font-size: 0.92rem; color: var(--cream-dark); line-height: 1.6; margin-bottom: 1.25rem;">
+            You'll join as an <strong style="color: var(--cream);">Operative</strong>, with access to the unit's missions, shared lists and comms.
         </p>
 
-
-        <form method="post">
+        <form method="post" novalidate>
             {% csrf_token %}
-            <div style="margin-bottom: 1rem;">{{ form }}</div>
+
+            {% for field in form %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                <ul class="errorlist">
+                    {% for error in field.errors %}<li>{{ error }}</li>{% endfor %}
+                </ul>
+                {% endif %}
+            </div>
+            {% endfor %}
+
             <div style="display: flex; gap: 0.75rem;">
                 <button type="submit" class="btn btn-primary">Confirm enlistment</button>
                 <a href="{% url 'all-units' %}" class="btn btn-ghost">Stand down</a>
@@ -32,3 +43,4 @@
 </div>
 
 {% endblock %}
+

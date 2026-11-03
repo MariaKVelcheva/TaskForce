@@ -20,7 +20,8 @@
 
         <p style="font-size: 0.85rem; color: var(--muted); line-height: 1.6; margin-bottom: 1.5rem; font-family: 'Share Tech Mono', monospace;">
             {{ object.users.count }} operative{{ object.users.count|pluralize }} will lose access.
-            Shared missions assigned to this unit will be unlinked but not deleted.
+            All of its missions, including the shared grocery list, pantry and chore rota, and all of its comms will be deleted.
+            Operatives keep their personal bases and the points they earned.
         </p>
 
         <form method="post">
@@ -35,3 +36,4 @@
 </div>
 
 {% endblock %}
+

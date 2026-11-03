@@ -1,18 +1,75 @@
 {% extends 'common/base.html' %}
 
-{% block title %}{{ object.name }} — Task: Force!{% endblock %}
+{% block title %}{% if is_personal %}Personal base{% else %}{{ unit.name }}{% endif %} — Task: Force!{% endblock %}
 
 {% block extra_css %}
 <style>
-    .member-controls {
+    .detail-header {
         display: flex;
-        align-items: center;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .detail-title {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 1.8rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--khaki);
+    }
+
+    .detail-subtitle {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.72rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-top: 0.4rem;
+    }
+
+    .detail-actions {
+        display: flex;
         gap: 0.5rem;
         flex-shrink: 0;
     }
 
-    .member-controls form {
+    .detail-actions form { display: flex; }
+
+    .section-label {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.65rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 0.75rem;
+    }
+
+    .member-list {
         display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .member-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        background: var(--olive-mid);
+        border: 1px solid var(--khaki-dark);
+        border-radius: var(--radius-sm);
+        padding: 0.7rem 1rem;
+    }
+
+    .member-name {
+        flex: 1;
+        min-width: 0;
+        font-size: 0.92rem;
+        color: var(--cream);
     }
 
     .member-you {
@@ -22,6 +79,36 @@
         text-transform: uppercase;
         color: var(--muted);
         margin-left: 0.5rem;
+    }
+
+    .member-controls {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-shrink: 0;
+    }
+
+    .member-controls form { display: flex; }
+
+    .member-role {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.63rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.15rem 0.5rem;
+        border-radius: var(--radius-sm);
+        border: 1px solid;
+    }
+
+    .member-role.commander {
+        color: var(--khaki);
+        border-color: var(--khaki-dark);
+        background: rgba(200,185,122,0.1);
+    }
+
+    .member-role.operative {
+        color: var(--muted);
+        border-color: var(--olive);
     }
 
     .member-btn {
@@ -48,44 +135,21 @@
         color: var(--rust-light);
     }
 
-    .member-name {
-        flex: 1;
-        min-width: 0;
-        font-size: 0.92rem;
-        color: var(--cream);
-    }
-    
-        .member-note {
-        font-family: 'Share Tech Mono', monospace;
-        font-size: 0.6rem;
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
-        color: var(--muted);
-        padding: 0.2rem 0.5rem;
-        border: 1px dashed var(--khaki-dark);
-        border-radius: var(--radius-sm);
-        cursor: default;
-    }
-
     .member-hint {
         font-family: 'Share Tech Mono', monospace;
         font-size: 0.65rem;
         letter-spacing: 0.06em;
         color: var(--muted);
-        margin: -1.5rem 0 2rem;
-        padding-left: 0.2rem;
+        margin-bottom: 2rem;
         line-height: 1.5;
     }
 
-    .chat-icon {
-        font-size: 0.95rem;
-        text-decoration: none;
-        opacity: 0.55;
-        flex-shrink: 0;
-        transition: opacity 0.15s;
+    .task-preview-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+        margin-bottom: 1.5rem;
     }
-
-    .chat-icon:hover { opacity: 1; }
 
     .task-preview-row {
         display: flex;
@@ -109,6 +173,50 @@
         min-width: 0;
     }
 
+    .task-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        border: 2px solid var(--khaki-dark);
+        flex-shrink: 0;
+    }
+
+    .task-dot.done { background: var(--khaki-dark); }
+
+    .task-preview-name {
+        flex: 1;
+        min-width: 0;
+        font-size: 0.88rem;
+        color: var(--cream);
+        overflow-wrap: anywhere;
+    }
+
+    .task-preview-name.inactive { color: var(--muted); }
+
+    .task-preview-name.done {
+        text-decoration: line-through;
+        color: var(--muted);
+    }
+
+    .task-preview-type {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.6rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+        flex-shrink: 0;
+    }
+
+    .chat-icon {
+        font-size: 0.95rem;
+        text-decoration: none;
+        opacity: 0.55;
+        flex-shrink: 0;
+        transition: opacity 0.15s;
+    }
+
+    .chat-icon:hover { opacity: 1; }
+
     .empty-note {
         font-family: 'Share Tech Mono', monospace;
         font-size: 0.7rem;
@@ -117,81 +225,6 @@
         color: var(--muted);
         padding: 1rem 0;
         margin-bottom: 1.5rem;
-    }
-
-    .detail-header {
-        display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        gap: 1rem;
-        margin-bottom: 2rem;
-    }
-
-    .detail-title {
-        font-family: 'Barlow Condensed', sans-serif;
-        font-size: 1.8rem;
-        font-weight: 700;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        color: var(--khaki);
-    }
-
-    .detail-actions {
-        display: flex;
-        gap: 0.5rem;
-        flex-shrink: 0;
-    }
-
-    .section-label {
-        font-family: 'Share Tech Mono', monospace;
-        font-size: 0.65rem;
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-        color: var(--muted);
-        margin-bottom: 0.75rem;
-    }
-
-    .member-list {
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-        margin-bottom: 2rem;
-    }
-
-    .member-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        background: var(--olive-mid);
-        border: 1px solid var(--khaki-dark);
-        border-radius: var(--radius-sm);
-        padding: 0.7rem 1rem;
-    }
-
-    .member-name {
-        font-size: 0.92rem;
-        color: var(--cream);
-    }
-
-    .member-role {
-        font-family: 'Share Tech Mono', monospace;
-        font-size: 0.63rem;
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
-        padding: 0.15rem 0.5rem;
-        border-radius: var(--radius-sm);
-        border: 1px solid;
-    }
-
-    .member-role.commander {
-        color: var(--khaki);
-        border-color: var(--khaki-dark);
-        background: rgba(200,185,122,0.1);
-    }
-
-    .member-role.operative {
-        color: var(--muted);
-        border-color: var(--olive);
     }
 
     .clearance-box {
@@ -243,109 +276,89 @@
         color: var(--khaki);
     }
 
-    .task-preview-list {
-        display: flex;
-        flex-direction: column;
-        gap: 0.4rem;
-        margin-bottom: 1.5rem;
-    }
-
-    .task-dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        border: 2px solid var(--khaki-dark);
-        flex-shrink: 0;
-    }
-
-    .task-dot.done {
-        background: var(--khaki-dark);
-    }
-
-    .task-preview-name {
-        flex: 1;
-        font-size: 0.88rem;
-        color: var(--cream);
-    }
-
-    .task-preview-name.done {
-        text-decoration: line-through;
-        color: var(--muted);
-    }
-
     .danger-zone {
         margin-top: 2.5rem;
         padding-top: 1.5rem;
         border-top: 1px solid var(--olive-mid);
     }
+
+    .danger-zone-label {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.65rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 1rem;
+    }
 </style>
-{% endblock %}{% block content %}
+{% endblock %}
+
+{% block content %}
 
 <div class="detail-header">
     <div>
-        <h1 class="detail-title">{{ unit.name }}</h1>
-        <p style="font-family: 'Share Tech Mono', monospace; font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-top: 0.4rem;">
-            {{ memberships|length }} operative{{ memberships|length|pluralize }}
+        <h1 class="detail-title">{% if is_personal %}Personal base{% else %}{{ unit.name }}{% endif %}</h1>
+        <p class="detail-subtitle">
+            {% if is_personal %}Lone wolf — your own missions{% else %}{{ memberships|length }} operative{{ memberships|length|pluralize }}{% endif %}
         </p>
     </div>
     <div class="detail-actions">
+        {% if not active_unit or active_unit.pk != unit.pk %}
+        <form method="post" action="{% url 'switch-unit' unit.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-ghost" style="font-size: 0.82rem;">Deploy here</button>
+        </form>
+        {% endif %}
+        {% if not is_personal %}
         <a href="{% url 'unit-chat' unit.pk %}" class="btn btn-primary" style="font-size: 0.82rem;">Discussion</a>
         {% if is_commander %}
         <a href="{% url 'update-unit' unit.pk %}" class="btn btn-ghost" style="font-size: 0.82rem;">Rename</a>
         {% endif %}
+        {% endif %}
     </div>
 </div>
+
+{% if not is_personal %}
 <div class="section-label">// Operatives</div>
 <div class="member-list">
     {% for membership in memberships %}
     <div class="member-row">
         <span class="member-name">
             {{ membership.user.username }}
-            {% if membership.user == request.user %}<span class="member-you">you</span>{% endif %}
+            {% if membership.user_id == request.user.id %}<span class="member-you">you</span>{% endif %}
         </span>
 
         <div class="member-controls">
             <span class="member-role {{ membership.role }}">{{ membership.get_role_display }}</span>
 
-            {% if is_commander %}
-                {% if membership.role == "commander" %}
-                    {% if commander_count > 1 %}
-                    <form method="post" action="{% url 'transfer-command' unit.pk membership.pk %}">
-                        {% csrf_token %}
-                        <input type="hidden" name="role" value="operative">
-                        <button type="submit" class="member-btn">Demote</button>
-                    </form>
-                    {% endif %}
-                {% else %}
-                <form method="post" action="{% url 'transfer-command' unit.pk membership.pk %}">
-                    {% csrf_token %}
-                    <input type="hidden" name="role" value="commander">
-                    <button type="submit" class="member-btn">Promote</button>
-                </form>
-                {% endif %}
-
-                {% if membership.user != request.user %}
-                <form method="post" action="{% url 'remove-member' unit.pk membership.pk %}">
-                    {% csrf_token %}
-                    <button type="submit" class="member-btn danger" title="Remove from unit">&times;</button>
-                </form>
-                {% endif %}
+            {% if is_commander and membership.user_id != request.user.id %}
+            <form method="post" action="{% url 'transfer-command' unit.pk membership.pk %}"
+                  onsubmit="return confirm('Hand over command to {{ membership.user.username|escapejs }}? You will become an operative.');">
+                {% csrf_token %}
+                <button type="submit" class="member-btn">Hand over command</button>
+            </form>
+            <form method="post" action="{% url 'remove-member' unit.pk membership.pk %}"
+                  onsubmit="return confirm('Remove {{ membership.user.username|escapejs }} from the unit?');">
+                {% csrf_token %}
+                <button type="submit" class="member-btn danger" title="Remove from unit">&times;</button>
+            </form>
             {% endif %}
 
-{% if membership.user == request.user %}
-                {% if can_leave %}
-            <form method="post" action="{% url 'leave-unit' unit.pk %}">
+            {% if membership.user_id == request.user.id and can_leave %}
+            <form method="post" action="{% url 'leave-unit' unit.pk %}"
+                  onsubmit="return confirm('Leave this unit?');">
                 {% csrf_token %}
                 <button type="submit" class="member-btn danger">Leave</button>
             </form>
-                {% else %}
-                <p class="member-hint">You hold command of this unit. Transfer command to another operative before standing down.</p>
             {% endif %}
-        {% endif %}
         </div>
     </div>
     {% endfor %}
 </div>
+{% if is_commander %}
+<p class="member-hint">You hold command of this unit. Hand over command to another operative before standing down.</p>
+{% endif %}
+{% endif %}
 
 <div class="section-label">// Active missions</div>
 {% if active_tasks %}
@@ -355,8 +368,11 @@
         <a href="{% url 'details-task' task.pk %}" class="task-preview-link">
             <div class="task-dot"></div>
             <span class="task-preview-name">{{ task.name }}</span>
+            <span class="task-preview-type">{{ task.get_type_display }}</span>
         </a>
+        {% if not is_personal %}
         <a href="{% url 'task-chat' task.pk %}" class="chat-icon" title="Discussion">&#128172;</a>
+        {% endif %}
     </div>
     {% endfor %}
 </div>
@@ -364,33 +380,36 @@
 <div class="empty-note">No active missions</div>
 {% endif %}
 
-{% if finished_tasks %}
-<div class="section-label">// Completed</div>
+{% if inactive_tasks %}
+<div class="section-label">// Inactive</div>
 <div class="task-preview-list">
-    {% for task in finished_tasks %}
+    {% for task in inactive_tasks %}
     <div class="task-preview-row">
         <a href="{% url 'details-task' task.pk %}" class="task-preview-link">
-            <div class="task-dot done"></div>
-            <span class="task-preview-name done">{{ task.name }}</span>
+            <div class="task-dot{% if task.is_accomplished %} done{% endif %}"></div>
+            <span class="task-preview-name{% if task.is_accomplished %} done{% else %} inactive{% endif %}">{{ task.name }}</span>
+            <span class="task-preview-type">{% if task.is_accomplished %}Accomplished{% else %}Deactivated{% endif %}</span>
         </a>
+        {% if not is_personal %}
         <a href="{% url 'task-chat' task.pk %}" class="chat-icon" title="Discussion">&#128172;</a>
+        {% endif %}
     </div>
     {% endfor %}
 </div>
 {% endif %}
 
-{% if is_commander %}
+{% if is_commander and not is_personal %}
 <div class="section-label">// Clearance code</div>
 <div class="clearance-box">
     <div style="min-width: 0;">
         <div class="clearance-label">Share to recruit operatives</div>
         <div class="clearance-code" id="invite-code">{{ unit.invite_code }}</div>
     </div>
-    <button class="copy-btn" onclick="copyCode()">Copy</button>
+    <button type="button" class="copy-btn" onclick="copyCode()">Copy</button>
 </div>
 
 <div class="danger-zone">
-    <div style="font-family: 'Share Tech Mono', monospace; font-size: 0.65rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 1rem;">Danger zone</div>
+    <div class="danger-zone-label">Danger zone</div>
     <a href="{% url 'delete-unit' unit.pk %}" class="btn btn-danger" style="font-size: 0.82rem;">Dissolve unit</a>
 </div>
 {% endif %}
@@ -410,3 +429,4 @@
     }
 </script>
 {% endblock %}
+

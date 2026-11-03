@@ -61,6 +61,11 @@ class DeleteUserView(LoginRequiredMixin, DeleteView):
     def get_object(self, queryset=None):
         return self.request.user
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["blocking_units"] = blocking_commands(self.request.user)
+        return context
+
 
 class UpdateAvatarView(LoginRequiredMixin, UpdateView):
     model = Avatar

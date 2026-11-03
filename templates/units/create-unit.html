@@ -2,26 +2,6 @@
 
 {% block title %}Form a unit — Task: Force!{% endblock %}
 
-{% block extra_css %}
-<style>
-    select {
-        width: 100%;
-        background: var(--olive-dark);
-        border: 1px solid var(--khaki-dark);
-        border-radius: var(--radius-sm);
-        padding: 0.6rem 0.85rem;
-        color: var(--cream);
-        font-family: 'Barlow', sans-serif;
-        font-size: 0.95rem;
-        outline: none;
-        transition: border-color 0.15s;
-    }
-
-    select:focus { border-color: var(--khaki); }
-    select option { background: var(--olive-dark); color: var(--cream); }
-</style>
-{% endblock %}
-
 {% block content %}
 
 <div style="max-width: 480px; margin: 0 auto;">
@@ -47,10 +27,14 @@
                 </ul>
                 {% endif %}
                 {% if field.help_text %}
-                <p style="font-size: 0.72rem; color: var(--muted); margin-top: 0.3rem; font-family: 'Share Tech Mono', monospace;">{{ field.help_text }}</p>
+                <p class="field-help">{{ field.help_text }}</p>
                 {% endif %}
             </div>
             {% endfor %}
+
+            <p class="field-help" style="margin-bottom: 1.25rem;">
+                The unit comes with a shared grocery list, pantry and chore rota. You'll switch to its base when it's formed.
+            </p>
 
             <div style="display: flex; gap: 0.75rem;">
                 <button type="submit" class="btn btn-primary">Form unit</button>

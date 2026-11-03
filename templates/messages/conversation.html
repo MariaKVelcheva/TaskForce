@@ -52,6 +52,11 @@
     }
 
     .status-pill.done {
+        border-color: #4a7a3a;
+        color: #7aab6a;
+    }
+
+    .status-pill.inactive {
         border-color: var(--olive);
         color: var(--muted);
     }
@@ -106,7 +111,7 @@
         position: sticky;
         bottom: 0;
         background: var(--olive-dark);
-        padding-top: 1rem;
+        padding: 1rem 0;
         border-top: 1px solid var(--olive);
     }
 
@@ -125,6 +130,8 @@
     }
 
     .send-box textarea:focus { border-color: var(--khaki); }
+
+    .send-box label { display: none; }
 
     .send-row {
         display: flex;
@@ -163,19 +170,23 @@
         </div>
 
         {% if conversation.task %}
-        <span class="status-pill {% if conversation.task.is_done %}done{% endif %}">
-            {% if conversation.task.is_done %}Complete{% else %}Active{% endif %}
-        </span>
+            {% if conversation.task.is_accomplished %}
+            <span class="status-pill done">Accomplished</span>
+            {% elif not conversation.task.is_active %}
+            <span class="status-pill inactive">Inactive</span>
+            {% else %}
+            <span class="status-pill">Active</span>
+            {% endif %}
         {% endif %}
     </div>
 
     {% if messages_list %}
     <div class="message-stream">
         {% for message in messages_list %}
-        <div class="msg {% if message.sender == request.user %}mine{% endif %}">
+        <div class="msg{% if message.sender_id == request.user.id %} mine{% endif %}">
             <div class="msg-meta">
                 <span class="msg-sender">
-                    {% if message.sender == request.user %}You{% elif message.sender %}{{ message.sender.username }}{% else %}Unknown{% endif %}
+                    {% if message.sender_id == request.user.id %}You{% elif message.sender %}{{ message.sender.username }}{% else %}Former op{% endif %}
                 </span>
                 <span>{{ message.created_at|date:"d M, H:i" }}</span>
             </div>
@@ -190,6 +201,7 @@
     <div class="send-box">
         <form method="post">
             {% csrf_token %}
+            <label for="{{ form.text.id_for_label }}">{{ form.text.label }}</label>
             {{ form.text }}
             {% if form.text.errors %}
             <ul class="errorlist">{% for e in form.text.errors %}<li>{{ e }}</li>{% endfor %}</ul>
@@ -207,3 +219,11 @@
 </div>
 
 {% endblock %}
+
+{% block extra_js %}
+<script>
+    const stream = document.querySelector(".message-stream .msg:last-child");
+    if (stream) stream.scrollIntoView({ block: "end" });
+</script>
+{% endblock %}
+

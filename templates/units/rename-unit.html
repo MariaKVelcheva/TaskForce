@@ -2,26 +2,6 @@
 
 {% block title %}Rename {{ object.name }} — Task: Force!{% endblock %}
 
-{% block extra_css %}
-<style>
-    select {
-        width: 100%;
-        background: var(--olive-dark);
-        border: 1px solid var(--khaki-dark);
-        border-radius: var(--radius-sm);
-        padding: 0.6rem 0.85rem;
-        color: var(--cream);
-        font-family: 'Barlow', sans-serif;
-        font-size: 0.95rem;
-        outline: none;
-        transition: border-color 0.15s;
-    }
-
-    select:focus { border-color: var(--khaki); }
-    select option { background: var(--olive-dark); color: var(--cream); }
-</style>
-{% endblock %}
-
 {% block content %}
 
 <div style="max-width: 480px; margin: 0 auto;">
@@ -59,3 +39,4 @@
 </div>
 
 {% endblock %}
+

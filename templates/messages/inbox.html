@@ -32,12 +32,13 @@
     .search-bar {
         display: flex;
         align-items: center;
+        flex-wrap: wrap;
         gap: 0.5rem;
         margin-bottom: 1.5rem;
     }
 
     .search-bar input[type="text"] {
-        flex: 1;
+        flex: 1 1 220px;
         background: var(--olive-dark);
         border: 1px solid var(--khaki-dark);
         border-radius: var(--radius-sm);
@@ -81,6 +82,7 @@
         color: var(--muted);
         white-space: nowrap;
         cursor: pointer;
+        margin: 0;
     }
 
     .filter-toggle input {
@@ -136,6 +138,7 @@
         letter-spacing: 0.06em;
         text-transform: uppercase;
         color: var(--cream-dark);
+        overflow-wrap: anywhere;
     }
 
     .conversation-row.unread .conversation-name { color: var(--khaki); }
@@ -236,17 +239,21 @@
 <div class="conversation-list">
     {% for conversation in conversations %}
     <a href="{% url 'conversation' conversation.pk %}"
-       class="conversation-row {% if conversation.has_unread %}unread{% endif %}">
+       class="conversation-row{% if conversation.has_unread %} unread{% endif %}">
 
         <div class="status-dot"></div>
 
-        <div>
+        <div style="min-width: 0;">
             <div class="conversation-name">
                 {{ conversation.title }}
                 {% if conversation.task %}
-                <span class="task-badge {% if conversation.task.is_done %}done{% endif %}">
-                    {% if conversation.task.is_done %}Complete{% else %}Mission{% endif %}
-                </span>
+                    {% if conversation.task.is_accomplished %}
+                    <span class="task-badge done">Accomplished</span>
+                    {% elif not conversation.task.is_active %}
+                    <span class="task-badge done">Inactive</span>
+                    {% else %}
+                    <span class="task-badge">Mission</span>
+                    {% endif %}
                 {% endif %}
             </div>
             <div class="conversation-sub">{{ conversation.unit.name }}</div>
@@ -270,10 +277,11 @@
     <a href="{% url 'inbox' %}" class="btn btn-ghost">Clear filters</a>
     {% else %}
     <div class="empty-state-title">No channels</div>
-    <p class="empty-state-sub">Join or form a unit to start talking.</p>
+    <p class="empty-state-sub">Form or join a unit to start talking. Your personal base has no comms.</p>
     <a href="{% url 'all-units' %}" class="btn btn-ghost">Your units</a>
     {% endif %}
 </div>
 {% endif %}
 
 {% endblock %}
+

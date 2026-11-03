@@ -59,6 +59,11 @@
         font-weight: 700;
         letter-spacing: 0.06em;
         color: var(--khaki);
+        overflow-wrap: anywhere;
+    }
+
+    .detail-value.small {
+        font-size: 1rem;
     }
 
     .unit-list {
@@ -66,6 +71,13 @@
         padding: 0;
         margin: 0;
     }
+
+    .unit-list a {
+        color: var(--khaki);
+        text-decoration: none;
+    }
+
+    .unit-list a:hover { color: var(--cream); }
 
     .danger-zone {
         margin-top: 2.5rem;
@@ -81,6 +93,10 @@
         color: var(--muted);
         margin-bottom: 1rem;
     }
+
+    @media (max-width: 520px) {
+        .detail-grid { grid-template-columns: 1fr; }
+    }
 </style>
 {% endblock %}
 
@@ -91,9 +107,9 @@
     <div class="profile-header">
         <div>
             <h1 class="profile-title">Operative file</h1>
-            <p class="profile-subtitle">{{ profile.user.username }}</p>
+            <p class="profile-subtitle">{{ request.user.username }}</p>
         </div>
-        {# <a href="{% url 'update-profile' %}" class="btn btn-ghost" style="font-size: 0.8rem;">Edit profile</a> #}
+        <a href="{% url 'update-profile' %}" class="btn btn-ghost" style="font-size: 0.8rem;">Settings</a>
     </div>
 
     <div class="panel">
@@ -103,7 +119,7 @@
 
             <div>
                 <div class="detail-label">Code name</div>
-                <div class="detail-value">{{ profile.username }}</div>
+                <div class="detail-value">{{ request.user.username }}</div>
             </div>
 
             <div>
@@ -111,13 +127,28 @@
                 <div class="detail-value">{{ points }}</div>
             </div>
 
+            {% if request.user.email %}
+            <div>
+                <div class="detail-label">Email</div>
+                <div class="detail-value small">{{ request.user.email }}</div>
+            </div>
+            {% endif %}
+
+            <div>
+                <div class="detail-label">Time zone</div>
+                <div class="detail-value small">{{ request.user.avatar.time_zone }}</div>
+            </div>
+
             <div class="detail-full">
-                <div class="detail-label">Joined units</div>
+                <div class="detail-label">Bases</div>
                 <ul class="unit-list">
-                    {% for unit in profile.units.all %}
-                    <li class="detail-value">{{ unit.name }}</li>
-                    {% empty %}
-                    <li class="detail-value">No units yet</li>
+                    {% for unit in request.user.units.all %}
+                    <li class="detail-value small">
+                        <a href="{% url 'details-unit' unit.pk %}">
+                            {% if unit.personal_for_id %}Personal base{% else %}{{ unit.name }}{% endif %}
+                        </a>
+                        {% if active_unit and active_unit.pk == unit.pk %}<span class="profile-subtitle" style="margin-left: 0.5rem;">active</span>{% endif %}
+                    </li>
                     {% endfor %}
                 </ul>
             </div>
@@ -133,3 +164,4 @@
 </div>
 
 {% endblock %}
+
