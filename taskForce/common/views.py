@@ -13,12 +13,12 @@ from django.views.generic import ListView, TemplateView
 from taskForce.comms.models import Conversation, ConversationRead, Message
 from taskForce.common.deploy_map import TILE, building_positions, find_path, map_rows, tiles
 from taskForce.redirects import with_next
-from taskForce.tasks.forms import LocationQuickAddForm, QuickCreateTaskForm, creatable_type_choices
+from taskForce.tasks.forms import LocationQuickAddForm, QuickCreateTaskForm
 from taskForce.tasks.items import ITEM_MODELS, item_progress
 from taskForce.tasks.locations import (
     LOCATIONS, location_previews, location_summary, missions_at, next_objective,
 )
-from taskForce.tasks.models import SINGLETON_TYPES, Task
+from taskForce.tasks.models import SINGLETON_TYPES, Task, TaskType
 from taskForce.tasks.urgency import group_by_urgency, with_urgency
 from taskForce.units.models import Membership, Unit
 from taskForce.units.services import active_unit_for
@@ -43,9 +43,9 @@ class DebriefHomeView(LoginRequiredMixin, TemplateView):
             task = form.save(commit=False)
             task.user = request.user
             task.unit = active_unit_for(request.user)
+            task.type = TaskType.ONEOFF
             task.save()
-            if task.type in ITEM_MODELS:
-                return redirect("details-task", pk=task.pk)
+            messages.success(request, _("Standing order added."))
         else:
             for error in form.errors.get("name", []):
                 messages.error(request, error)
@@ -77,7 +77,6 @@ class DebriefHomeView(LoginRequiredMixin, TemplateView):
                 .order_by(F("due_date").asc(nulls_last=True), "-created_at")
                 [:self.VISIBLE_TASKS]
             ),
-            "quick_types": creatable_type_choices(),
             "open_tasks_count": counts["open"],
             "done_tasks_count": counts["done"],
         }
@@ -145,6 +144,13 @@ class DebriefHomeView(LoginRequiredMixin, TemplateView):
 
 def _off_limits(key, unit):
     return key == "training" and unit.personal_for_id is None
+
+
+def _single_singleton_type(location):
+    types = location["types"]
+    if len(types) == 1 and types[0] in SINGLETON_TYPES:
+        return types[0]
+    return None
 
 
 class DeployIndexView(LoginRequiredMixin, TemplateView):
@@ -222,6 +228,18 @@ class DeployLocationView(LoginRequiredMixin, ListView):
         self.location = LOCATIONS[self.location_key]
         return super().dispatch(request, *args, **kwargs)
 
+    def get(self, request, *args, **kwargs):
+        singleton_type = _single_singleton_type(self.location)
+        if singleton_type:
+            unit = active_unit_for(request.user)
+            if not _off_limits(self.location_key, unit):
+                task = unit.tasks.filter(type=singleton_type).first()
+                if task:
+                    return redirect(with_next(
+                        reverse("details-task", args=[task.pk]), reverse("deploy"),
+                    ))
+        return super().get(request, *args, **kwargs)
+
     def get_queryset(self):
         self.now = timezone.now()
         self.unit = active_unit_for(self.request.user)
@@ -258,16 +276,16 @@ class DeployLocationView(LoginRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        can_create = self.location["creates"] is not None
         context.update({
             "location_key": self.location_key,
             "location_label": self.location["label"],
             "unit": self.unit,
-            "can_create": self.location["creates"] is not None,
+            "can_create": can_create,
             "off_limits": _off_limits(self.location_key, self.unit),
             "groups": group_by_urgency(self.object_list, self.now),
+            "form": kwargs.get("form") or (LocationQuickAddForm() if can_create else None),
         })
-        if "form" in kwargs:
-            context["form"] = kwargs["form"]
         return context
 
 

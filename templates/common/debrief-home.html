@@ -440,7 +440,6 @@
         <h1 class="home-title">Headquarters</h1>
         <p class="home-subtitle">Operative: {{ user.username }}</p>
     </div>
-    <a href="{% url 'add-task' %}" class="btn btn-primary" style="font-size: 0.85rem;">+ New mission</a>
 </div>
 
 <div class="stats-row">
@@ -467,8 +466,11 @@
     {% if overdue_tasks %}
     <div class="dashboard-section overdue-section wide">
         <div class="section-header">
-            <span class="section-title">// Action required</span>
-            <a href="{% url 'all-tasks' %}" class="section-link">Mission log →</a>
+            <span class="section-title">// Active missions</span>
+            <span style="display: flex; gap: 1rem;">
+                <a href="{% url 'add-task' %}" class="section-link">Full briefing →</a>
+                <a href="{% url 'all-tasks' %}" class="section-link">All →</a>
+            </span>
         </div>
 
         {% for task in overdue_tasks %}
@@ -524,17 +526,11 @@
         <div class="empty-section">No active missions</div>
         {% endif %}
 
-        <div class="quick-add">
+                <div class="quick-add">
             <form method="post" class="quick-add-form">
                 {% csrf_token %}
-                <div class="quick-add-types">
-                    {% for value, label in quick_types %}
-                    <input type="radio" name="type" value="{{ value }}" id="qa-type-{{ forloop.counter }}"{% if forloop.first %} checked{% endif %}>
-                    <label for="qa-type-{{ forloop.counter }}">{{ label }}</label>
-                    {% endfor %}
-                </div>
                 <div class="quick-add-row">
-                    <input type="text" name="name" placeholder="Quick add mission..."
+                    <input type="text" name="name" placeholder="Quick add a standing order..."
                            maxlength="100" required>
                     <button type="submit">Add</button>
                 </div>

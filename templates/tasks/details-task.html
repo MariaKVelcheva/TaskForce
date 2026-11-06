@@ -436,10 +436,52 @@
         margin-top: 0.4rem;
         overflow-wrap: anywhere;
     }
+
+        .switch-hint {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+        background: var(--olive-mid);
+        border: 1px solid var(--khaki-dark);
+        border-left: 3px solid var(--khaki);
+        border-radius: var(--radius-sm);
+        padding: 0.7rem 1rem;
+        margin-bottom: 1.5rem;
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.72rem;
+        letter-spacing: 0.04em;
+        color: var(--cream-dark);
+        line-height: 1.5;
+    }
+
+    .switch-hint[hidden] { display: none; }
+
+    .switch-hint-close {
+        background: none;
+        border: none;
+        color: var(--muted);
+        font-size: 1.1rem;
+        line-height: 1;
+        cursor: pointer;
+        flex-shrink: 0;
+    }
+
+    .switch-hint-close:hover { color: var(--cream); }
+
 </style>
 {% endblock %}
 
 {% block content %}
+    {% if show_switch_hint %}
+<div class="switch-hint" id="switch-hint" hidden>
+    <span>
+        Showing {% if task.unit.personal_for_id %}your personal base's{% else %}{{ task.unit.name }}'s{% endif %} list.
+        Switch bases from the Units menu to see your other lists.
+    </span>
+    <button type="button" class="switch-hint-close" aria-label="Dismiss">&times;</button>
+</div>
+{% endif %}
 {% if not task.unit.personal_for_id %}
 <a href="{% url 'task-chat' task.pk %}" class="btn btn-ghost" style="margin-bottom: 1.5rem;">Discussion</a>
 {% endif %}
@@ -560,6 +602,19 @@
 {% endblock %}
 
 {% block extra_js %}
+    <script>
+(function () {
+    const hint = document.getElementById("switch-hint");
+    if (!hint) return;
+    let dismissed = false;
+    try { dismissed = localStorage.getItem("tf-switch-hint") === "1"; } catch (e) {}
+    if (!dismissed) hint.hidden = false;
+    hint.querySelector(".switch-hint-close").addEventListener("click", () => {
+        hint.hidden = true;
+        try { localStorage.setItem("tf-switch-hint", "1"); } catch (e) {}
+    });
+})();
+</script>
 <script>
 (function () {
     const block = document.querySelector(".items-block");

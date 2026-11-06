@@ -430,9 +430,9 @@
                 {% if type_nav %}
                 <div class="nav-dropdown">
                     {% for entry in type_nav %}
-                    <a href="{% url 'all-tasks' %}?type={{ entry.value }}" class="nav-dropdown-link">
+                    <a href="{{ entry.url }}" class="nav-dropdown-link">
                         <span>{{ entry.label }}{% if entry.attention %} <span class="nav-attention">●</span>{% endif %}</span>
-                        <span class="nav-dropdown-count">{{ entry.count }}</span>
+                        {% if entry.count %}<span class="nav-dropdown-count">{{ entry.count }}</span>{% endif %}
                     </a>
                     {% endfor %}
                 </div>

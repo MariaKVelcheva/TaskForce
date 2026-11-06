@@ -134,13 +134,23 @@ class DeployIndexViewTests(CommonTestCase):
         self.assertFalse(self.building(response, "training")["off_limits"])
 
 
-# --- Deploy locations --------------------------------------------------------
-
 class DeployLocationViewTests(CommonTestCase):
     def post(self, key, **data):
         data.setdefault("priority", 3)
         data.setdefault("when", "")
         return self.client.post(reverse("deploy-location", args=[key]), data)
+
+    def test_barracks_opens_the_chore_rota(self):
+        chores = self.user.personal_unit.tasks.get(type=TaskType.CHORES)
+        response = self.client.get(reverse("deploy-location", args=["barracks"]))
+        self.assertTrue(response.url.startswith(reverse("details-task", args=[chores.pk])))
+
+    def test_nav_groceries_opens_the_active_units_list(self):
+        self.switch_to(self.family)
+        grocery = self.family.tasks.get(type=TaskType.GROCERIES)
+        response = self.client.get(reverse("deploy"))
+        nav = {entry["value"]: entry for entry in response.context["type_nav"]}
+        self.assertEqual(nav[TaskType.GROCERIES]["url"], reverse("details-task", args=[grocery.pk]))
 
     def test_unknown_location_is_404(self):
         response = self.client.get(reverse("deploy-location", args=["nowhere"]))
@@ -196,19 +206,17 @@ class DeployLocationViewTests(CommonTestCase):
         self.assertEqual(keys[0], "overdue")
 
 
-# --- Debrief -----------------------------------------------------------------
-
 class DebriefViewTests(CommonTestCase):
-    url_name = "debrief"  # adjust to your URL name
+    url_name = "debrief"
 
     def test_quick_create_lands_in_the_active_unit(self):
         self.switch_to(self.family)
         self.client.post(reverse(self.url_name), {"name": "Book dentist", "type": TaskType.ONEOFF})
         self.assertEqual(Task.objects.get(name="Book dentist").unit, self.family)
 
-    def test_quick_create_refuses_singleton_types(self):
+    def test_quick_create_always_makes_a_standing_order(self):
         self.client.post(reverse(self.url_name), {"name": "Second list", "type": TaskType.GROCERIES})
-        self.assertFalse(Task.objects.filter(name="Second list").exists())
+        self.assertEqual(Task.objects.get(name="Second list").type, TaskType.ONEOFF)
 
     def test_counts_ignore_singletons_and_count_accomplished(self):
         self.make(name="open")
@@ -225,8 +233,6 @@ class DebriefViewTests(CommonTestCase):
         response = self.client.get(reverse(self.url_name))
         self.assertIn(pantry, response.context["overdue_tasks"])
 
-
-# --- Navigation context ------------------------------------------------------
 
 class TypeNavTests(CommonTestCase):
     def nav(self):

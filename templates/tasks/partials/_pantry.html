@@ -50,7 +50,7 @@
             <span class="item-low-badge">Low</span>
             {% endif %}
             {% if item.threshold is not None %}
-            <span class="item-threshold">restock at {{ item.threshold }}</span>
+            <span class="item-threshold">low at {{ item.threshold }}</span>
             {% endif %}
             <span class="item-stock">× {{ item.quantity }}</span>
 
@@ -85,9 +85,9 @@
             <span class="item-add-sep">·</span>
 
             <span class="item-add-unit">
-                <label for="id_pantry_threshold">restock at</label>
+                <label for="id_pantry_threshold">low at</label>
                 <input type="number" name="threshold" id="id_pantry_threshold" class="item-add-num"
-                       placeholder="—" min="0" aria-label="Restock threshold">
+                       placeholder="—" min="0" aria-label="Low stock level">
             </span>
         </div>
     </form>

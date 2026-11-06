@@ -49,7 +49,7 @@
 
             <span class="item-name">{{ item.name }}</span>
             {% if item.quantity %}<span class="item-qty">{{ item.quantity }}</span>{% endif %}
-            {% if item.is_recurring %}<span class="item-cycle due" title="Every {{ item.frequency_days }} days">restock</span>{% endif %}
+            {% if item.is_recurring %}<span class="item-cycle due" title="Every {{ item.frequency_days }} days">regular</span>{% endif %}
 
             <form method="post" action="{% url 'delete-item' task.pk item.pk %}" class="item-delete-form">
                 {% csrf_token %}
@@ -62,7 +62,7 @@
     </ul>
 
     <details class="items-resting">
-        <summary>Restocks coming up</summary>
+        <summary>Back on the list soon:</summary>
         <ul class="item-list">
             {% for item in items %}
             {% if item.is_recurring and item.is_done %}
@@ -113,9 +113,9 @@
         </div>
         <div class="item-add-line secondary">
             <span class="item-add-unit">
-                <label for="id_grocery_frequency">restock every</label>
+                <label for="id_grocery_frequency">buy every</label>
                 <input type="number" name="frequency_days" id="id_grocery_frequency" class="item-add-num"
-                       placeholder="—" min="1" max="365" aria-label="Restock frequency in days">
+                       placeholder="—" min="1" max="365" aria-label="Buy frequency in days">
                 <label for="id_grocery_frequency">days</label>
             </span>
         </div>

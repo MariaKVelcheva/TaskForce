@@ -1,7 +1,8 @@
 from django.db.models import Count, F, OuterRef, Q, Subquery
+from django.urls import reverse
 
 from taskForce.comms.models import Conversation, ConversationRead, Message
-from taskForce.tasks.models import ChoreItem, PantryItem, Task, TaskType
+from taskForce.tasks.models import SINGLETON_TYPES, ChoreItem, PantryItem, Task, TaskType
 from taskForce.units.models import Unit
 from taskForce.units.services import active_unit_for
 
@@ -34,7 +35,8 @@ def task_type_counts(request):
     if not request.user.is_authenticated:
         return {}
 
-    active_tasks = Task.objects.visible_to(request.user).filter(is_active=True)
+    user = request.user
+    active_tasks = Task.objects.visible_to(user).filter(is_active=True)
 
     counts = dict(
         active_tasks
@@ -43,33 +45,58 @@ def task_type_counts(request):
         .annotate(total=Count("pk"))
     )
 
-    attention_types = set(
+    flagged = set(
         ChoreItem.objects.due()
         .filter(task__in=active_tasks)
         .order_by()
-        .values_list("task__type", flat=True)
+        .values_list("task_id", "task__type")
     ) | set(
         PantryItem.objects.low()
         .filter(task__in=active_tasks)
         .order_by()
-        .values_list("task__type", flat=True)
+        .values_list("task_id", "task__type")
     )
+    flagged_tasks = {task_id for task_id, _type in flagged}
+    flagged_types = {task_type for _id, task_type in flagged}
 
-    type_nav = [
-        {
-            "value": "none" if value == TaskType.ONEOFF else value,
-            "label": label,
-            "count": counts[value],
-            "attention": value in attention_types,
-        }
-        for value, label in TaskType.choices
-        if counts.get(value)
-    ]
+    unit = active_unit_for(user)
+    singletons = dict(
+        unit.tasks.filter(type__in=SINGLETON_TYPES).values_list("type", "pk")
+    )
+    if TaskType.WORKOUT not in singletons:
+        workout = (
+            user.personal_unit.tasks.filter(type=TaskType.WORKOUT)
+            .values_list("pk", flat=True).first()
+        )
+        if workout:
+            singletons[TaskType.WORKOUT] = workout
+
+    log_url = reverse("all-tasks")
+    type_nav = []
+    for value, label in TaskType.choices:
+        if value in singletons:
+            pk = singletons[value]
+            type_nav.append({
+                "value": value,
+                "label": label,
+                "url": reverse("details-task", args=[pk]),
+                "count": None,
+                "attention": pk in flagged_tasks,
+            })
+        elif counts.get(value):
+            token = "none" if value == TaskType.ONEOFF else value
+            type_nav.append({
+                "value": token,
+                "label": label,
+                "url": f"{log_url}?type={token}",
+                "count": counts[value],
+                "attention": value in flagged_types,
+            })
 
     return {
         "type_nav": type_nav,
         "unsorted_count": counts.get(TaskType.ONEOFF, 0),
-        "any_attention": bool(attention_types),
+        "any_attention": bool(flagged),
     }
 
 
@@ -88,5 +115,4 @@ def active_unit(request):
         "switch_units": others[:3],
         "more_units": len(others) > 3,
     }
-
 

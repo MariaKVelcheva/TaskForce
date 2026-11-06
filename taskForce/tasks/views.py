@@ -15,6 +15,7 @@ from taskForce.tasks.items import ITEM_FORMS, ITEM_MODELS, ITEM_PARTIALS
 from taskForce.tasks.mixins import CheckableItem, RecurringItem
 from taskForce.tasks.models import SINGLETON_TYPES, Task, TaskType
 from taskForce.tasks.urgency import with_urgency
+from taskForce.units.models import Membership
 from taskForce.units.services import active_unit_for
 
 
@@ -97,7 +98,12 @@ class DetailTaskView(NextMixin, LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         context.update(get_item_context(self.object))
         context.update(self.get_next_context())
-        context["is_singleton"] = self.object.type in SINGLETON_TYPES
+        is_singleton = self.object.type in SINGLETON_TYPES
+        context["is_singleton"] = is_singleton
+        context["show_switch_hint"] = (
+                is_singleton
+                and Membership.objects.filter(user=self.request.user).count() > 1
+        )
         return context
 
 
