@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from django.contrib.auth import get_user_model
 from django.urls import reverse_lazy
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -104,6 +105,7 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+
 
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = reverse_lazy('index')

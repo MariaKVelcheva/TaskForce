@@ -7,7 +7,7 @@
 .deploy-header { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
 .deploy-base { font-family: 'Barlow Condensed', sans-serif; font-size: 1.4rem; letter-spacing: .08em;
                text-transform: uppercase; color: var(--khaki); }
-.deploy-base-tag { font-family: 'Share Tech Mono', monospace; font-size: .65rem; letter-spacing: .12em;
+.deploy-base-tag { font-family: 'Share Tech Mono', monospace; font-size: .85rem; letter-spacing: .12em;
                    text-transform: uppercase; color: var(--muted); }
 
 .deploy-map svg { display: block; width: 100%; height: auto; }
@@ -23,6 +23,8 @@
 
 .is-empty .building-art   { filter: grayscale(1) brightness(.8); opacity: .55; }
 .is-empty .building-label { opacity: .6; }
+
+.deploy-map { margin: 0 auto; --deploy-chrome: 12rem; }
 
 .is-off-limits .building-art,
 .is-off-limits:hover .building-art,
@@ -67,7 +69,7 @@
          stroke-linecap: round; opacity: .85; animation: march 1s linear infinite; }
 @keyframes march { to { stroke-dashoffset: -8; } }
 
-.objective { margin-top: 1rem; display: flex; flex-wrap: wrap; align-items: baseline; gap: .5rem; }
+.objective { margin: 1rem 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: .5rem; }
 .objective-tag { font-family: 'Share Tech Mono', monospace; font-size: .7rem; letter-spacing: .12em;
                  text-transform: uppercase; color: var(--rust-light); }
 .objective a { font-family: 'Barlow Condensed', sans-serif; font-size: 1.25rem; color: var(--cream); text-decoration: none; }
@@ -89,8 +91,19 @@
     <span class="deploy-base-tag">{% if unit.personal_for_id %}Lone wolf{% else %}Unit base{% endif %}</span>
 </div>
 
+{% if objective %}
+<p class="objective">
+    <span class="objective-tag">Next objective</span>
+    <a href="{% url 'details-task' objective.mission.pk %}?next={{ request.get_full_path|urlencode }}">{{ objective.mission.name }}</a>
+    <span class="text-muted">at {{ objective.label }}</span>
+</p>
+{% else %}
+<p class="objective text-muted">No urgent orders. At ease, operative.</p>
+{% endif %}
+
+
 <div class="deploy-map-scroll">
-<div class="deploy-map">
+<div class="deploy-map" style="width: min(100%, calc((100dvh - var(--deploy-chrome)) * {{ map_width }} / {{ map_height }}));">
   {% include "tasks/partials/_deploy_sprites.html" %}
   <svg viewBox="0 0 {{ map_width }} {{ map_height }}" aria-label="Base map">
     <g aria-hidden="true">
@@ -163,16 +176,6 @@
   </style>
 </div>
 </div>
-
-{% if objective %}
-<p class="objective">
-    <span class="objective-tag">Next objective</span>
-    <a href="{% url 'details-task' objective.mission.pk %}?next={{ request.get_full_path|urlencode }}">{{ objective.mission.name }}</a>
-    <span class="text-muted">at {{ objective.label }}</span>
-</p>
-{% else %}
-<p class="objective text-muted">No urgent orders. At ease, operative.</p>
-{% endif %}
 {% endblock %}
 
 {% block extra_js %}

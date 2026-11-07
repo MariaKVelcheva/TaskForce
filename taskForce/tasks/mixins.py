@@ -1,12 +1,16 @@
 from datetime import timedelta
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.db import models, transaction
 from django.db.models import CheckConstraint, F, Q
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from taskForce.tasks.managers import RecurringItemManager, CheckableItemManager
+
+
+User = get_user_model()
 
 
 def _add_points(user_id, delta):
@@ -20,8 +24,9 @@ class CheckableItem(models.Model):
         default=False,
         verbose_name=_("checked"),
     )
+
     checked_by = models.ForeignKey(
-        to=settings.AUTH_USER_MODEL,
+        to=User,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,

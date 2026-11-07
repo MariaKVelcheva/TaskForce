@@ -505,3 +505,76 @@ class TaskViewTests(TaskTestCase):
         task.accomplish(self.user)
         response = self.client.post(reverse("reactivate-task", args=[task.pk]))
         self.assertEqual(response.status_code, 404)
+
+
+class PantryLinkTests(TaskTestCase):
+    def setUp(self):
+        self.pantry = self.singleton(TaskType.PANTRY)
+        self.groceries = self.singleton(TaskType.GROCERIES)
+
+    def product(self, **kwargs):
+        kwargs.setdefault("name", "milk")
+        kwargs.setdefault("quantity", 3)
+        kwargs.setdefault("threshold", 1)
+        return PantryItem.objects.create(task=self.pantry, **kwargs)
+
+    def on_list(self, product):
+        return GroceryItem.objects.filter(pantry_item=product, is_checked=False).first()
+
+    def test_crossing_into_low_puts_it_on_the_list(self):
+        milk = self.product(quantity=2)
+        self.assertIsNone(self.on_list(milk))
+        milk.adjust(-1)
+        item = self.on_list(milk)
+        self.assertEqual((item.task, item.amount), (self.groceries, 1))
+
+    def test_creating_a_low_product_puts_it_on_the_list(self):
+        milk = self.product(quantity=0)
+        self.assertEqual(self.on_list(milk).amount, 2)
+
+    def test_deleted_list_item_stays_deleted_while_still_low(self):
+        milk = self.product(quantity=1)
+        GroceryItem.objects.filter(pantry_item=milk).delete()
+        milk.adjust(-1)
+        self.assertIsNone(self.on_list(milk))
+
+    def test_buying_restocks_the_shelf_and_earns_a_point(self):
+        milk = self.product(quantity=0)
+        item = self.on_list(milk)
+        item.tick(self.user)
+        milk.refresh_from_db()
+        self.assertEqual(milk.quantity, 2)
+        self.assertEqual(self.points(self.user), 1)
+
+    def test_running_low_again_reuses_the_bought_item_and_keeps_the_point(self):
+        milk = self.product(quantity=0)
+        self.on_list(milk).tick(self.user)
+        milk.refresh_from_db()
+        milk.adjust(-2)
+        self.assertEqual(GroceryItem.objects.filter(pantry_item=milk).count(), 1)
+        self.assertIsNotNone(self.on_list(milk))
+        self.assertEqual(self.points(self.user), 1)
+
+    def test_untick_takes_stock_back_but_not_below_zero(self):
+        milk = self.product(quantity=0)
+        item = self.on_list(milk)
+        item.tick(self.user)
+        milk.refresh_from_db()
+        milk.adjust(-2)
+        item.refresh_from_db()
+        item.untick()
+        milk.refresh_from_db()
+        self.assertEqual(milk.quantity, 0)
+
+    def test_stock_never_goes_below_zero(self):
+        milk = self.product(quantity=0, threshold=None)
+        self.assertEqual(milk.adjust(-1).quantity, 0)
+
+    def test_linked_item_cannot_be_recurring(self):
+        milk = self.product(quantity=0)
+        item = self.on_list(milk)
+        with self.assertRaises(IntegrityError):
+            with transaction.atomic():
+                GroceryItem.objects.filter(pk=item.pk).update(frequency_days=7)
+
+

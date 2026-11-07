@@ -61,8 +61,9 @@ def task_type_counts(request):
 
     unit = active_unit_for(user)
     singletons = dict(
-        unit.tasks.filter(type__in=SINGLETON_TYPES).values_list("type", "pk")
+        unit.tasks.filter(type__in=SINGLETON_TYPES).order_by().values_list("type", "pk")
     )
+    
     if TaskType.WORKOUT not in singletons:
         workout = (
             user.personal_unit.tasks.filter(type=TaskType.WORKOUT)

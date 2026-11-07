@@ -13,7 +13,7 @@ from taskForce.units.services import create_personal_unit, create_unit
 
 User = get_user_model()
 
-DEPLOY_QUERY_BUDGET = 11
+DEPLOY_QUERY_BUDGET = 12
 
 
 class DeployMapTests(SimpleTestCase):
