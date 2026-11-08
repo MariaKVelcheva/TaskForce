@@ -1,0 +1,95 @@
+{% extends "common/base.html" %}
+
+{% block title %}Shopping run — Task: Force!{% endblock %}
+
+{% block extra_css %}
+{% include "tasks/partials/_items_css.html" %}
+<style>
+    .run-header {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .run-title {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 1.8rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--khaki);
+    }
+
+    .run-sub {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.68rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-top: 0.3rem;
+    }
+
+    .item-unit-tag {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.58rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+        border: 1px solid var(--olive);
+        border-radius: var(--radius-sm);
+        padding: 0.05rem 0.4rem;
+        flex-shrink: 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="max-width: 640px; margin: 0 auto;">
+
+    <div class="run-header">
+        <div>
+            <h1 class="run-title">Shopping run</h1>
+            <p class="run-sub">Everything to buy, across all your bases</p>
+        </div>
+        <a href="{% url 'debrief' %}" class="btn btn-ghost" style="font-size: 0.8rem;">← HQ</a>
+    </div>
+
+    <div class="items-block" data-block="run" data-refresh="page">
+        {% if items %}
+        <ul class="item-list">
+            {% for item in items %}
+            <li class="item-row{% if item.is_checked %} done{% endif %}">
+                <form method="post" action="{% url 'toggle-item' item.task_id item.pk %}" class="item-toggle-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ next_url }}">
+                    <button type="submit" class="item-toggle" title="{% if item.is_checked %}Uncheck{% else %}Bought{% endif %}">
+                        <span class="item-box{% if item.is_checked %} checked{% endif %}"></span>
+                    </button>
+                </form>
+
+                <span class="item-name">{{ item.name }}</span>
+
+                {% if item.is_linked %}
+                <span class="item-qty">&times;{{ item.amount|default:1 }}</span>
+                {% elif item.quantity %}
+                <span class="item-qty">{{ item.quantity }}</span>
+                {% endif %}
+
+                <span class="item-unit-tag">{% if item.task.unit.personal_for_id %}Personal{% else %}{{ item.task.unit.name }}{% endif %}</span>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <div class="items-empty">Nothing to buy. Fully stocked.</div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% include "tasks/partials/_items_js.html" %}
+{% endblock %}
+

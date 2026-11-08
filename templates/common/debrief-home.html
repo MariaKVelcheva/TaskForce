@@ -154,6 +154,26 @@
         color: var(--muted);
         flex-shrink: 0;
     }
+    
+        .unit-status {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.2rem 0.75rem;
+        margin-top: 0.2rem;
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.62rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--muted);
+    }
+
+    .unit-status a {
+        color: var(--khaki-muted);
+        text-decoration: none;
+    }
+
+    .unit-status a:hover { color: var(--cream); }
+    .unit-status a.alert { color: var(--rust-light); }
 
     .unit-item {
         display: flex;
@@ -543,17 +563,30 @@
 
     <div class="dashboard-section">
         <div class="section-header">
-            <span class="section-title">// Your units</span>
-            <a href="{% url 'all-units' %}" class="section-link">All →</a>
+            <span class="section-title">// Your bases</span>
+            <span style="display: flex; gap: 1rem;">
+                <a href="{% url 'shopping-run' %}" class="section-link">Shopping run →</a>
+                <a href="{% url 'all-units' %}" class="section-link">All →</a>
+            </span>
         </div>
 
         {% for unit in units %}
-        <a href="{% url 'details-unit' unit.pk %}" class="unit-item">
-            <span class="unit-item-name">{{ unit.name }}</span>
+        <div class="unit-item">
+            <div style="min-width: 0; flex: 1;">
+                <a href="{% url 'details-unit' unit.pk %}" class="unit-item-name" style="display: block; text-decoration: none;">
+                    {% if unit.personal_for_id %}Personal base{% else %}{{ unit.name }}{% endif %}
+                </a>
+                <div class="unit-status">
+                    {% if unit.to_buy %}<a href="{% url 'details-task' unit.grocery_pk %}">{{ unit.to_buy }} to buy</a>{% endif %}
+                    {% if unit.duties_pending %}<a href="{% url 'details-task' unit.chores_pk %}">{{ unit.duties_pending }} dut{{ unit.duties_pending|pluralize:"y,ies" }} pending</a>{% endif %}
+                    {% if unit.stock_low %}<a href="{% url 'details-task' unit.pantry_pk %}" class="alert">{{ unit.stock_low }} low</a>{% endif %}
+                    {% if not unit.to_buy and not unit.duties_pending and not unit.stock_low %}<span>All in order</span>{% endif %}
+                </div>
+            </div>
             <span class="unit-item-meta">
                 {% if unit.personal_for_id %}Personal{% else %}{{ unit.user_count }} op{{ unit.user_count|pluralize }}{% endif %}
             </span>
-        </a>
+        </div>
         {% endfor %}
         <a href="{% url 'create-unit' %}" class="section-link" style="display: block; margin-top: 0.75rem;">+ Form a unit</a>
     </div>

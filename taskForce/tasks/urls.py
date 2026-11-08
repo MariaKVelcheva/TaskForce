@@ -5,6 +5,7 @@ from taskForce.tasks import views
 urlpatterns = [
     path("add/", views.CreateTaskView.as_view(), name="add-task"),
     path("all-tasks/", views.CatalogueTaskView.as_view(), name="all-tasks"),
+    path("shopping-run/", views.ShoppingRunView.as_view(), name="shopping-run"),
 
     path("<int:pk>/", include([
         path("details/", views.DetailTaskView.as_view(), name="details-task"),

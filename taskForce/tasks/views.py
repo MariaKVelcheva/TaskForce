@@ -2,6 +2,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import F, Q
+from django.db.models.functions import Lower
 from django.http import Http404, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -320,4 +321,23 @@ def clear_bought(request, task_pk):
     GroceryItem.objects.filter(task=task, is_checked=True).delete()
     return _item_response(request, task)
 
+
+class ShoppingRunView(LoginRequiredMixin, ListView):
+    template_name = "tasks/shopping-run.html"
+    context_object_name = "items"
+
+    def get_queryset(self):
+        pending = GroceryItem.objects.pending().values("pk")
+        return (
+            GroceryItem.objects
+            .filter(task__in=Task.objects.visible_to(self.request.user))
+            .filter(Q(pk__in=pending) | Q(is_checked=True))
+            .select_related("task__unit")
+            .order_by(Lower("name"), "task__unit__name")
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["next_url"] = self.request.get_full_path()
+        return context
 

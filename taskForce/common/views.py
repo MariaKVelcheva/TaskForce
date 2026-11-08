@@ -14,7 +14,7 @@ from taskForce.comms.models import Conversation, ConversationRead, Message
 from taskForce.common.deploy_map import TILE, building_positions, find_path, map_rows, tiles
 from taskForce.redirects import with_next
 from taskForce.tasks.forms import LocationQuickAddForm, QuickCreateTaskForm
-from taskForce.tasks.items import ITEM_MODELS, item_progress, get_item_context
+from taskForce.tasks.items import ITEM_MODELS, item_progress, get_item_context, unit_status
 from taskForce.tasks.locations import (
     LOCATIONS, location_previews, location_summary, missions_at, next_objective,
 )
@@ -92,10 +92,13 @@ class DebriefHomeView(LoginRequiredMixin, TemplateView):
         return {
             "units": (
                 Unit.objects.filter(memberships__user=self.request.user)
-                .annotate(user_count=Subquery(member_count))
-                .order_by("name")[:self.VISIBLE_UNITS]
+                .annotate(user_count=Subquery(member_count), **unit_status())
+                .order_by(F("personal_for").asc(nulls_last=True), "name")[:self.VISIBLE_UNITS]
             )
         }
+
+
+
 
     def get_message_context(self):
         user = self.request.user

@@ -614,3 +614,36 @@ class PantryLinkTests(TaskTestCase):
                 GroceryItem.objects.filter(pk=item.pk).update(frequency_days=7)
 
 
+class ShoppingRunTests(TaskTestCase):
+    def setUp(self):
+        self.client.force_login(self.user)
+        self.mine = self.singleton(TaskType.GROCERIES)
+        self.family = create_unit(name="Family", commander=self.user)
+        self.theirs = self.singleton(TaskType.GROCERIES, unit=self.family)
+
+    def run_items(self):
+        return list(self.client.get(reverse("shopping-run")).context["items"])
+
+    def test_lists_items_from_every_base_sorted_by_name(self):
+        GroceryItem.objects.create(task=self.mine, name="milk")
+        GroceryItem.objects.create(task=self.theirs, name="Bread")
+        GroceryItem.objects.create(task=self.theirs, name="Milk")
+        names = [item.name for item in self.run_items()]
+        self.assertEqual([n.lower() for n in names], ["bread", "milk", "milk"])
+
+    def test_resting_recurring_items_are_not_listed(self):
+        GroceryItem.objects.create(
+            task=self.mine, name="coffee", frequency_days=7, last_done_at=timezone.now(),
+        )
+        self.assertEqual(self.run_items(), [])
+
+    def test_ticking_from_the_run_earns_the_point(self):
+        item = GroceryItem.objects.create(task=self.theirs, name="eggs")
+        self.client.post(reverse("toggle-item", args=[self.theirs.pk, item.pk]))
+        self.assertEqual(self.points(self.user), 1)
+
+    def test_other_users_lists_are_hidden(self):
+        stranger = User.objects.create_user("stranger", password="x")
+        theirs = create_personal_unit(stranger).tasks.get(type=TaskType.GROCERIES)
+        GroceryItem.objects.create(task=theirs, name="secret")
+        self.assertEqual(self.run_items(), [])

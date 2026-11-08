@@ -61,3 +61,13 @@ class RecurringItemManager(TaskItemManager):
             | Q(frequency_days__isnull=False, last_done_at__isnull=False, due_at__gt=now)
         )
 
+    def pending(self, now=None):
+        now = Now() if now is None else now
+        return self.annotate(due_at=self.DUE_AT).filter(
+            Q(frequency_days__isnull=True, is_checked=False)
+            | Q(frequency_days__isnull=False, last_done_at__isnull=True)
+            | Q(frequency_days__isnull=False, due_at__lte=now)
+        )
+
+
+

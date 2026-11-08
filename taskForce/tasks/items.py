@@ -6,7 +6,7 @@ from taskForce.tasks.forms import (
 )
 from taskForce.tasks.mixins import CheckableItem
 from taskForce.tasks.models import (
-    ChoreItem, GroceryItem, ListItem, PantryItem, TaskType, WorkoutItem,
+    ChoreItem, GroceryItem, ListItem, PantryItem, TaskType, WorkoutItem, Task,
 )
 
 ITEM_MODELS = {
@@ -75,5 +75,31 @@ def item_progress(now=None):
         "items_done": done,
         "duties_due": _count_items(ChoreItem.objects.due(now)),
         "stock_low": _count_items(PantryItem.objects.low()),
+    }
+
+
+def unit_status(now=None):
+    def per_unit(queryset):
+        counts = (
+            queryset.filter(task__unit=OuterRef("pk"), task__is_active=True)
+            .order_by()
+            .values("task__unit")
+            .annotate(n=Count("pk"))
+            .values("n")
+        )
+        return Coalesce(Subquery(counts, output_field=IntegerField()), Value(0))
+
+    def singleton_pk(task_type):
+        return Subquery(
+            Task.objects.filter(unit=OuterRef("pk"), type=task_type).values("pk")[:1]
+        )
+
+    return {
+        "to_buy": per_unit(GroceryItem.objects.pending(now)),
+        "duties_pending": per_unit(ChoreItem.objects.pending(now)),
+        "stock_low": per_unit(PantryItem.objects.low()),
+        "grocery_pk": singleton_pk(TaskType.GROCERIES),
+        "chores_pk": singleton_pk(TaskType.CHORES),
+        "pantry_pk": singleton_pk(TaskType.PANTRY),
     }
 
