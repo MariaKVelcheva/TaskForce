@@ -1,0 +1,79 @@
+{% extends "common/base.html" %}
+
+{% block title %}{{ location_label }} — Task: Force!{% endblock %}
+
+{% block extra_css %}
+{% include "tasks/partials/_items_css.html" %}
+<style>
+    .interior-header {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .interior-title {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 1.8rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--khaki);
+    }
+
+    .interior-unit {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.65rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-left: auto;
+    }
+
+    .interior-panels {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1.5rem;
+        align-items: start;
+    }
+
+    .interior-panel {
+        background: var(--olive-mid);
+        border: 1px solid var(--khaki-dark);
+        border-radius: var(--radius);
+        padding: 0 1.1rem;
+    }
+
+    .interior-panel .items-block {
+        margin: 0;
+        border-top: none;
+        padding: 1rem 0 1.1rem;
+    }
+
+    @media (max-width: 720px) {
+        .interior-panels { grid-template-columns: 1fr; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="interior-header">
+    <a href="{% url 'deploy' %}" class="btn btn-ghost" style="font-size: 0.82rem;">← Map</a>
+    <h1 class="interior-title">{{ location_label }}</h1>
+    <span class="interior-unit">{% if unit.personal_for_id %}Personal base{% else %}{{ unit.name }}{% endif %}</span>
+</div>
+
+<div class="interior-panels">
+    {% for panel in panels %}
+    <section class="interior-panel">
+        {% include panel.item_partial with task=panel.task items=panel.items item_form=panel.item_form items_done=panel.items_done items_total=panel.items_total next_url=panel.next_url %}
+    </section>
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% include "tasks/partials/_items_js.html" %}
+{% endblock %}
+

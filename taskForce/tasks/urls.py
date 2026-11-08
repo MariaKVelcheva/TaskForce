@@ -18,8 +18,12 @@ urlpatterns = [
 
     path("<int:task_pk>/items/", include([
         path("add/", views.add_item, name="add-item"),
+        path("clear-bought/", views.clear_bought, name="clear-bought"),
         path("<int:item_pk>/toggle/", views.toggle_item, name="toggle-item"),
         path("<int:item_pk>/need-now/", views.need_item_now, name="need-item-now"),
+        path("<int:item_pk>/stock/", views.adjust_stock, name="adjust-stock"),
+        path("<int:item_pk>/amount/", views.set_item_amount, name="set-item-amount"),
         path("<int:item_pk>/delete/", views.delete_item, name="delete-item"),
     ])),
 ]
+

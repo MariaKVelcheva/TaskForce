@@ -180,6 +180,13 @@ class GroceryItemForm(forms.ModelForm):
 
 
 class PantryItemForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["threshold"].required = False
+
+    def clean_threshold(self):
+        return self.cleaned_data.get("threshold") or 0
+
     class Meta:
         model = PantryItem
         fields = ("name", "quantity", "threshold")
@@ -189,7 +196,7 @@ class PantryItemForm(forms.ModelForm):
             "threshold": _("Low at"),
         }
         help_texts = {
-            "threshold": _("Flag the product when stock drops to this number or below."),
+            "threshold": _("Optional. Products always go on the list at 0; set a level to restock earlier."),
         }
         widgets = {
             "name": forms.TextInput(attrs={"placeholder": _("Add product...")}),

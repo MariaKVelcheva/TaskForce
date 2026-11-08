@@ -3,19 +3,8 @@
 {% block title %}{{ task.name }} — Task: Force!{% endblock %}
 
 {% block extra_css %}
+{% include "tasks/partials/_items_css.html" %}
 <style>
-    .status-badge.priority-1 {
-        color: var(--rust-light);
-        border-color: var(--rust-light);
-        background: rgba(180, 90, 60, 0.12);
-    }
-
-    .status-badge.priority-2 {
-        color: var(--khaki);
-        border-color: var(--khaki-dark);
-        background: rgba(200, 185, 122, 0.08);
-    }
-
     .detail-header {
         display: flex;
         align-items: flex-start;
@@ -40,9 +29,7 @@
         color: var(--khaki-muted);
     }
 
-    .detail-title.inactive {
-        color: var(--khaki-muted);
-    }
+    .detail-title.inactive { color: var(--khaki-muted); }
 
     .detail-subtitle {
         font-family: 'Share Tech Mono', monospace;
@@ -64,16 +51,6 @@
         grid-template-columns: 1fr 1fr;
         gap: 1rem;
         margin-bottom: 1.5rem;
-    }
-
-    .task-tag.priority-1 {
-        color: var(--rust-light);
-        border-color: var(--rust-light);
-    }
-
-    .task-tag.priority-2 {
-        color: var(--khaki);
-        border-color: var(--khaki);
     }
 
     .detail-field {
@@ -126,301 +103,6 @@
         background: none;
     }
 
-    .danger-zone {
-        margin-top: 2.5rem;
-        padding-top: 1.5rem;
-        border-top: 1px solid var(--olive-mid);
-        display: flex;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 0.75rem;
-    }
-
-    .danger-zone form {
-        display: flex;
-    }
-
-    .item-room {
-        font-family: 'Share Tech Mono', monospace;
-        font-size: 0.62rem;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        padding: 0.1rem 0.45rem;
-        border: 1px solid var(--khaki-dark);
-        border-radius: var(--radius-sm);
-        color: var(--khaki-muted);
-        flex-shrink: 0;
-    }
-
-    .item-cycle {
-        font-family: 'Share Tech Mono', monospace;
-        font-size: 0.62rem;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        color: var(--muted);
-        flex-shrink: 0;
-    }
-
-    .item-cycle.due {
-        color: var(--rust-light);
-        font-weight: 700;
-    }
-
-    .item-row.due .item-name {
-        color: var(--cream);
-    }
-
-    .item-row.due .item-box {
-        border-color: var(--rust-light);
-    }
-
-    .item-add-wide {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 0.55rem;
-    }
-
-    .item-add-unit {
-        display: flex;
-        align-items: baseline;
-        gap: 0.3rem;
-    }
-
-    .item-add-sep {
-        font-family: 'Share Tech Mono', monospace;
-        font-size: 0.65rem;
-        color: var(--khaki-dark);
-        flex-shrink: 0;
-    }
-
-    .item-add-unit label {
-        font-family: 'Share Tech Mono', monospace;
-        font-size: 0.65rem;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
-        color: var(--muted);
-        white-space: nowrap;
-    }
-
-    .item-add-num::-webkit-outer-spin-button,
-    .item-add-num::-webkit-inner-spin-button {
-        -webkit-appearance: none;
-        margin: 0;
-    }
-
-    .item-add-num {
-        -moz-appearance: textfield;
-        appearance: textfield;
-    }
-
-    .item-add-line {
-        display: flex;
-        align-items: center;
-        gap: 0.7rem;
-    }
-
-    .item-add-line.secondary {
-        padding-left: 1.4rem;
-    }
-
-    .item-add-room,
-    .item-add-num {
-        background: none;
-        border: none;
-        border-bottom: 1px solid var(--khaki-dark);
-        outline: none;
-        color: var(--khaki-muted);
-        font-family: 'Share Tech Mono', monospace;
-        font-size: 0.72rem;
-        padding: 0.15rem 0.2rem;
-        transition: border-color 0.15s, color 0.15s;
-    }
-
-    .item-add-room:focus,
-    .item-add-num:focus {
-        border-color: var(--khaki);
-        color: var(--cream);
-    }
-
-    .item-add-room { flex: 0 0 110px; }
-    .item-add-num { flex: 0 0 48px; min-width: 0; text-align: center; }
-
-    .item-add-num::placeholder { color: var(--muted); }
-
-    .items-block {
-        margin-top: 1.5rem;
-        margin-bottom: 2rem;
-        padding-top: 1.25rem;
-        border-top: 1px solid var(--olive);
-    }
-
-    .items-empty {
-        padding: 1rem 0;
-        font-family: 'Share Tech Mono', monospace;
-        font-size: 0.7rem;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        color: var(--muted);
-    }
-
-    .items-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 0.75rem;
-    }
-
-    .items-title, .items-progress {
-        font-family: 'Share Tech Mono', monospace;
-        font-size: 0.65rem;
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-        color: var(--muted);
-    }
-
-    .item-list {
-        list-style: none;
-        margin: 0;
-        padding: 0;
-    }
-
-    .item-row {
-        display: flex;
-        align-items: center;
-        gap: 0.7rem;
-        padding: 0.45rem 0;
-        border-bottom: 1px solid var(--olive);
-    }
-
-    .item-row:last-child { border-bottom: none; }
-
-    .item-toggle-form, .item-delete-form {
-        display: flex;
-        flex-shrink: 0;
-    }
-
-    .item-toggle, .item-delete {
-        background: none;
-        border: none;
-        padding: 0;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-    }
-
-    .item-box {
-        width: 13px;
-        height: 13px;
-        border: 1px solid var(--khaki-dark);
-        border-radius: 2px;
-        display: block;
-        transition: background 0.15s, border-color 0.15s;
-    }
-
-    .item-toggle:hover .item-box { border-color: var(--khaki); }
-
-    .item-box.checked {
-        background: var(--khaki);
-        border-color: var(--khaki);
-    }
-
-    .item-name {
-        flex: 1;
-        min-width: 0;
-        font-size: 0.9rem;
-        color: var(--cream-dark);
-        overflow-wrap: anywhere;
-    }
-
-    .item-row.done .item-name {
-        text-decoration: line-through;
-        color: var(--muted);
-    }
-
-    .item-qty, .item-reps, .item-weight {
-        font-family: 'Share Tech Mono', monospace;
-        font-size: 0.68rem;
-        color: var(--khaki-muted);
-        flex-shrink: 0;
-    }
-
-    .item-delete {
-        color: var(--muted);
-        font-size: 1.1rem;
-        line-height: 1;
-        transition: color 0.15s;
-    }
-
-    .item-delete:hover { color: var(--rust-light); }
-
-    .item-add {
-        display: flex;
-        align-items: center;
-        gap: 0.7rem;
-        margin-top: 0.5rem;
-        padding: 0.7rem 0.8rem;
-        background: var(--olive-dark);
-        border: 1px solid var(--khaki-dark);
-        border-radius: var(--radius-sm);
-        transition: border-color 0.15s, background 0.15s;
-    }
-
-    .item-add-box {
-        width: 13px;
-        height: 13px;
-        border: 1px dashed var(--khaki-dark);
-        border-radius: 2px;
-        flex-shrink: 0;
-        transition: border-color 0.15s;
-    }
-
-    .item-add:focus-within .item-add-box { border-color: var(--khaki); }
-
-    .item-add input {
-        background: none;
-        border: none;
-        outline: none;
-        color: var(--cream);
-        font-family: 'Barlow', sans-serif;
-        font-size: 0.95rem;
-        padding: 0;
-    }
-
-    .item-add input::placeholder { color: var(--muted); }
-
-    .item-add-name {
-        flex: 1;
-        min-width: 0;
-    }
-
-    .item-add-qty, .item-add-reps, .item-add-weight {
-        flex: 0 0 70px;
-        font-family: 'Share Tech Mono', monospace !important;
-        font-size: 0.78rem !important;
-        text-align: right;
-        color: var(--khaki-muted) !important;
-    }
-
-    .item-add button {
-        flex-shrink: 0;
-        background: var(--khaki);
-        color: var(--ink);
-        border: none;
-        border-radius: var(--radius-sm);
-        padding: 0.35rem 0.9rem;
-        font-family: 'Barlow Condensed', sans-serif;
-        font-size: 0.8rem;
-        font-weight: 700;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        cursor: pointer;
-        transition: background 0.15s;
-    }
-
-    .item-add button:hover { background: var(--khaki-dark); }
-
-    .item-add input:focus { border-color: var(--khaki); }
-
     .detail-comment {
         background: var(--olive-mid);
         border: 1px solid var(--khaki-dark);
@@ -437,7 +119,19 @@
         overflow-wrap: anywhere;
     }
 
-        .switch-hint {
+    .danger-zone {
+        margin-top: 2.5rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--olive-mid);
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+
+    .danger-zone form { display: flex; }
+
+    .switch-hint {
         display: flex;
         align-items: flex-start;
         justify-content: space-between;
@@ -469,11 +163,14 @@
 
     .switch-hint-close:hover { color: var(--cream); }
 
+    @media (max-width: 520px) {
+        .detail-grid { grid-template-columns: 1fr; }
+    }
 </style>
 {% endblock %}
 
 {% block content %}
-    {% if show_switch_hint %}
+{% if show_switch_hint %}
 <div class="switch-hint" id="switch-hint" hidden>
     <span>
         Showing {% if task.unit.personal_for_id %}your personal base's{% else %}{{ task.unit.name }}'s{% endif %} list.
@@ -482,6 +179,7 @@
     <button type="button" class="switch-hint-close" aria-label="Dismiss">&times;</button>
 </div>
 {% endif %}
+
 {% if not task.unit.personal_for_id %}
 <a href="{% url 'task-chat' task.pk %}" class="btn btn-ghost" style="margin-bottom: 1.5rem;">Discussion</a>
 {% endif %}
@@ -602,7 +300,7 @@
 {% endblock %}
 
 {% block extra_js %}
-    <script>
+<script>
 (function () {
     const hint = document.getElementById("switch-hint");
     if (!hint) return;
@@ -615,38 +313,5 @@
     });
 })();
 </script>
-<script>
-(function () {
-    const block = document.querySelector(".items-block");
-    if (!block) return;
-
-    async function send(form) {
-        const response = await fetch(form.action, {
-            method: "POST",
-            body: new FormData(form),
-            headers: { "X-Requested-With": "fetch" },
-        });
-        if (!response.ok) { form.submit(); return; }
-
-        const html = await response.text();
-        const current = document.querySelector(".items-block");
-        current.outerHTML = html;
-        bind();
-
-        const input = document.querySelector(".item-add-name");
-        if (input) input.focus();
-    }
-
-    function bind() {
-        const current = document.querySelector(".items-block");
-        if (!current) return;
-        current.addEventListener("submit", (event) => {
-            event.preventDefault();
-            send(event.target);
-        });
-    }
-
-    bind();
-})();
-</script>
+{% include "tasks/partials/_items_js.html" %}
 {% endblock %}

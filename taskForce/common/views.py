@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count, F, OuterRef, Q, Subquery
 from django.http import Http404
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -14,7 +14,7 @@ from taskForce.comms.models import Conversation, ConversationRead, Message
 from taskForce.common.deploy_map import TILE, building_positions, find_path, map_rows, tiles
 from taskForce.redirects import with_next
 from taskForce.tasks.forms import LocationQuickAddForm, QuickCreateTaskForm
-from taskForce.tasks.items import ITEM_MODELS, item_progress
+from taskForce.tasks.items import ITEM_MODELS, item_progress, get_item_context
 from taskForce.tasks.locations import (
     LOCATIONS, location_previews, location_summary, missions_at, next_objective,
 )
@@ -229,15 +229,33 @@ class DeployLocationView(LoginRequiredMixin, ListView):
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
+        unit = active_unit_for(request.user)
+        off_limits = _off_limits(self.location_key, unit)
+
         singleton_type = _single_singleton_type(self.location)
-        if singleton_type:
-            unit = active_unit_for(request.user)
-            if not _off_limits(self.location_key, unit):
-                task = unit.tasks.filter(type=singleton_type).first()
-                if task:
-                    return redirect(with_next(
-                        reverse("details-task", args=[task.pk]), reverse("deploy"),
-                    ))
+        if singleton_type and not off_limits:
+            task = unit.tasks.filter(type=singleton_type).first()
+            if task:
+                return redirect(with_next(
+                    reverse("details-task", args=[task.pk]), reverse("deploy"),
+                ))
+
+        interior = self.location.get("interior")
+        if interior and not off_limits:
+            tasks = {t.type: t for t in unit.tasks.filter(type__in=self.location["types"])}
+            panels = []
+            for task_type in self.location["types"]:
+                if task_type in tasks:
+                    panel = get_item_context(tasks[task_type])
+                    panel["next_url"] = request.get_full_path()
+                    panels.append(panel)
+            return render(request, interior, {
+                "unit": unit,
+                "location_key": self.location_key,
+                "location_label": self.location["label"],
+                "panels": panels,
+            })
+
         return super().get(request, *args, **kwargs)
 
     def get_queryset(self):

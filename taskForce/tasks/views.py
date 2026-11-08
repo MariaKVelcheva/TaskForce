@@ -2,7 +2,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import F, Q
-from django.http import Http404
+from django.http import Http404, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
@@ -11,30 +11,12 @@ from django.views.generic import CreateView, DeleteView, DetailView, ListView, U
 
 from taskForce.redirects import NextMixin, get_next, with_next
 from taskForce.tasks.forms import CreateTaskForm, UpdateTaskForm
-from taskForce.tasks.items import ITEM_FORMS, ITEM_MODELS, ITEM_PARTIALS
+from taskForce.tasks.items import ITEM_FORMS, ITEM_MODELS, get_item_context
 from taskForce.tasks.mixins import CheckableItem, RecurringItem
-from taskForce.tasks.models import SINGLETON_TYPES, Task, TaskType
+from taskForce.tasks.models import SINGLETON_TYPES, Task, TaskType, GroceryItem, PantryItem
 from taskForce.tasks.urgency import with_urgency
 from taskForce.units.models import Membership
 from taskForce.units.services import active_unit_for
-
-
-def get_item_context(task):
-    item_model = ITEM_MODELS.get(task.type)
-    if item_model is None:
-        return {"items": None}
-
-    items = list(item_model.objects.filter(task=task))
-    checkable = issubclass(item_model, CheckableItem)
-
-    return {
-        "items": items,
-        "item_form": ITEM_FORMS[task.type](),
-        "items_done": sum(1 for item in items if item.is_done) if checkable else None,
-        "items_total": len(items),
-        "item_partial": ITEM_PARTIALS[task.type],
-        "task": task,
-    }
 
 
 def get_task_and_item_model(user, task_pk):
@@ -289,3 +271,53 @@ def delete_item(request, task_pk, item_pk):
     item.delete()
 
     return _item_response(request, task)
+
+
+@login_required
+@require_POST
+def adjust_stock(request, task_pk, item_pk):
+    task, item_model = get_task_and_item_model(request.user, task_pk)
+    if item_model is not PantryItem:
+        raise Http404
+
+    item = get_object_or_404(PantryItem, pk=item_pk, task=task)
+    try:
+        delta = int(request.POST.get("delta", ""))
+    except ValueError:
+        delta = 0
+    if delta not in (-1, 1):
+        return HttpResponseBadRequest()
+
+    item.adjust(delta)
+    return _item_response(request, task)
+
+
+@login_required
+@require_POST
+def set_item_amount(request, task_pk, item_pk):
+    task, item_model = get_task_and_item_model(request.user, task_pk)
+    if item_model is not GroceryItem:
+        raise Http404
+
+    item = get_object_or_404(GroceryItem, pk=item_pk, task=task, pantry_item__isnull=False)
+    try:
+        amount = int(request.POST.get("amount", ""))
+    except ValueError:
+        amount = None
+    if amount is not None and 1 <= amount <= 999:
+        GroceryItem.objects.filter(pk=item.pk).update(amount=amount)
+
+    return _item_response(request, task)
+
+
+@login_required
+@require_POST
+def clear_bought(request, task_pk):
+    task, item_model = get_task_and_item_model(request.user, task_pk)
+    if item_model is not GroceryItem:
+        raise Http404
+
+    GroceryItem.objects.filter(task=task, is_checked=True).delete()
+    return _item_response(request, task)
+
+

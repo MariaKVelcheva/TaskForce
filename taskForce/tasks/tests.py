@@ -507,6 +507,42 @@ class TaskViewTests(TaskTestCase):
         self.assertEqual(response.status_code, 404)
 
 
+    def test_stock_buttons_adjust_by_one(self):
+        pantry = self.singleton(TaskType.PANTRY)
+        rice = PantryItem.objects.create(task=pantry, name="rice", quantity=3)
+        url = reverse("adjust-stock", args=[pantry.pk, rice.pk])
+        self.client.post(url, {"delta": "-1"})
+        rice.refresh_from_db()
+        self.assertEqual(rice.quantity, 2)
+
+    def test_stock_rejects_other_amounts(self):
+        pantry = self.singleton(TaskType.PANTRY)
+        rice = PantryItem.objects.create(task=pantry, name="rice", quantity=3)
+        response = self.client.post(reverse("adjust-stock", args=[pantry.pk, rice.pk]), {"delta": "-50"})
+        self.assertEqual(response.status_code, 400)
+        rice.refresh_from_db()
+        self.assertEqual(rice.quantity, 3)
+
+    def test_amount_can_be_edited_on_linked_items(self):
+        pantry = self.singleton(TaskType.PANTRY)
+        milk = PantryItem.objects.create(task=pantry, name="milk", quantity=0, threshold=1)
+        item = GroceryItem.objects.get(pantry_item=milk)
+        groceries = self.singleton(TaskType.GROCERIES)
+        self.client.post(reverse("set-item-amount", args=[groceries.pk, item.pk]), {"amount": "6"})
+        item.refresh_from_db()
+        self.assertEqual(item.amount, 6)
+
+    def test_clear_bought_removes_only_checked_items_and_keeps_points(self):
+        groceries = self.singleton(TaskType.GROCERIES)
+        bought = GroceryItem.objects.create(task=groceries, name="bread")
+        bought.tick(self.user)
+        pending = GroceryItem.objects.create(task=groceries, name="eggs")
+        self.client.post(reverse("clear-bought", args=[groceries.pk]))
+        self.assertFalse(GroceryItem.objects.filter(pk=bought.pk).exists())
+        self.assertTrue(GroceryItem.objects.filter(pk=pending.pk).exists())
+        self.assertEqual(self.points(self.user), 1)
+
+
 class PantryLinkTests(TaskTestCase):
     def setUp(self):
         self.pantry = self.singleton(TaskType.PANTRY)

@@ -10,9 +10,9 @@ class PantryItem(TaskItem):
         default=0,
         verbose_name=_("in stock"),
     )
+
     threshold = models.PositiveSmallIntegerField(
-        null=True,
-        blank=True,
+        default=0,
         verbose_name=_("low at"),
     )
 
@@ -20,12 +20,10 @@ class PantryItem(TaskItem):
 
     @property
     def is_low(self):
-        return self.threshold is not None and self.quantity <= self.threshold
+        return self.quantity <= self.threshold
 
     @property
     def restock_amount(self):
-        if self.threshold is None:
-            return 1
         return max(self.threshold + 1 - self.quantity, 1)
 
     def save(self, *args, **kwargs):

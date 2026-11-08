@@ -1,58 +1,33 @@
-<div class="items-block">
-    <style>
-        .item-stock {
-            font-family: 'Share Tech Mono', monospace;
-            font-size: 0.72rem;
-            color: var(--cream);
-            flex-shrink: 0;
-            min-width: 2.2rem;
-            text-align: right;
-        }
-        .item-threshold {
-            font-family: 'Share Tech Mono', monospace;
-            font-size: 0.6rem;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
-            color: var(--muted);
-            flex-shrink: 0;
-        }
-        .item-row.low .item-name { color: var(--cream); }
-        .item-row.low .item-stock { color: var(--rust-light); font-weight: 700; }
-        .item-low-badge {
-            font-family: 'Share Tech Mono', monospace;
-            font-size: 0.6rem;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            color: var(--rust-light);
-            border: 1px solid var(--rust-light);
-            border-radius: var(--radius-sm);
-            padding: 0.05rem 0.4rem;
-            flex-shrink: 0;
-        }
-    </style>
-
+<div class="items-block" data-block="{{ task.pk }}">
     <div class="items-header">
-        <span class="items-title">// Pantry</span>
+        <span class="items-title">// Shelves</span>
         <span class="items-progress">{{ items_total }} product{{ items_total|pluralize }}</span>
     </div>
 
     {% if items %}
     <ul class="item-list">
         {% for item in items %}
-        {% if item.threshold is not None and item.quantity <= item.threshold %}
-        <li class="item-row low">
-        {% else %}
-        <li class="item-row">
-        {% endif %}
+        <li class="item-row{% if item.is_low %} low{% endif %}">
             <span class="item-name">{{ item.name }}</span>
 
-            {% if item.threshold is not None and item.quantity <= item.threshold %}
-            <span class="item-low-badge">Low</span>
-            {% endif %}
-            {% if item.threshold is not None %}
-            <span class="item-threshold">low at {{ item.threshold }}</span>
-            {% endif %}
-            <span class="item-stock">× {{ item.quantity }}</span>
+            {% if item.is_low %}<span class="item-low-badge">Low</span>{% endif %}
+            {% if item.threshold %}<span class="item-threshold">low at {{ item.threshold }}</span>{% endif %}
+
+            <form method="post" action="{% url 'adjust-stock' task.pk item.pk %}" class="item-stock-form">
+                {% csrf_token %}
+                {% if next_url %}<input type="hidden" name="next" value="{{ next_url }}">{% endif %}
+                <input type="hidden" name="delta" value="-1">
+                <button type="submit" class="item-stock-btn" aria-label="One less {{ item.name }}"{% if item.quantity == 0 %} disabled{% endif %}>&minus;</button>
+            </form>
+
+            <span class="item-stock" aria-label="{{ item.quantity }} in stock">{{ item.quantity }}</span>
+
+            <form method="post" action="{% url 'adjust-stock' task.pk item.pk %}" class="item-stock-form">
+                {% csrf_token %}
+                {% if next_url %}<input type="hidden" name="next" value="{{ next_url }}">{% endif %}
+                <input type="hidden" name="delta" value="1">
+                <button type="submit" class="item-stock-btn" aria-label="One more {{ item.name }}">+</button>
+            </form>
 
             <form method="post" action="{% url 'delete-item' task.pk item.pk %}" class="item-delete-form">
                 {% csrf_token %}
@@ -63,7 +38,7 @@
         {% endfor %}
     </ul>
     {% else %}
-    <div class="items-empty">Pantry empty</div>
+    <div class="items-empty">Shelves empty</div>
     {% endif %}
 
     <form method="post" action="{% url 'add-item' task.pk %}" class="item-add item-add-wide">
@@ -72,26 +47,24 @@
         <div class="item-add-line">
             <span class="item-add-box"></span>
             <input type="text" name="name" class="item-add-name"
-                   placeholder="Add product..." maxlength="50" required autofocus>
+                   placeholder="Add product..." maxlength="50" required>
             <button type="submit">Add</button>
         </div>
         <div class="item-add-line secondary">
             <span class="item-add-unit">
-                <label for="id_pantry_quantity">in stock</label>
-                <input type="number" name="quantity" id="id_pantry_quantity" class="item-add-num"
+                <label for="id_pantry_quantity_{{ task.pk }}">in stock</label>
+                <input type="number" name="quantity" id="id_pantry_quantity_{{ task.pk }}" class="item-add-num"
                        value="0" min="0" aria-label="Quantity in stock">
             </span>
 
             <span class="item-add-sep">·</span>
 
             <span class="item-add-unit">
-                <label for="id_pantry_threshold">low at</label>
-                <input type="number" name="threshold" id="id_pantry_threshold" class="item-add-num"
-                       placeholder="—" min="0" aria-label="Low stock level">
+                <label for="id_pantry_threshold_{{ task.pk }}">low at (optional)</label>
+                <input type="number" name="threshold" id="id_pantry_threshold_{{ task.pk }}" class="item-add-num"
+                       placeholder="0" min="0" aria-label="Low stock level">
             </span>
         </div>
     </form>
 </div>
-
-
 

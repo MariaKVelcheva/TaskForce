@@ -1,36 +1,6 @@
-<div class="items-block">
-    <style>
-        .items-resting { margin-top: 0.9rem; }
-        .items-resting:not(:has(li)) { display: none; }
-        .items-resting summary {
-            cursor: pointer;
-            font-family: 'Share Tech Mono', monospace;
-            font-size: 0.65rem;
-            letter-spacing: 0.14em;
-            text-transform: uppercase;
-            color: var(--muted);
-            padding: 0.3rem 0;
-        }
-        .items-resting summary:hover { color: var(--khaki); }
-        .item-need-now {
-            background: none;
-            border: 1px solid var(--khaki-dark);
-            border-radius: var(--radius-sm);
-            color: var(--khaki-muted);
-            font-family: 'Share Tech Mono', monospace;
-            font-size: 0.6rem;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            padding: 0.15rem 0.5rem;
-            cursor: pointer;
-            flex-shrink: 0;
-        }
-        .item-need-now:hover { border-color: var(--khaki); color: var(--cream); }
-        .item-row.resting .item-name { color: var(--muted); }
-    </style>
-
+<div class="items-block" data-block="{{ task.pk }}">
     <div class="items-header">
-        <span class="items-title">// Supplies</span>
+        <span class="items-title">// Shopping list</span>
         <span class="items-progress">{{ items_done }}/{{ items_total }}</span>
     </div>
 
@@ -48,7 +18,24 @@
             </form>
 
             <span class="item-name">{{ item.name }}</span>
-            {% if item.quantity %}<span class="item-qty">{{ item.quantity }}</span>{% endif %}
+
+            {% if item.is_linked %}
+                {% if item.is_checked %}
+                <span class="item-qty">&times;{{ item.amount|default:1 }}</span>
+                {% else %}
+                <form method="post" action="{% url 'set-item-amount' task.pk item.pk %}" class="item-amount-form">
+                    {% csrf_token %}
+                    {% if next_url %}<input type="hidden" name="next" value="{{ next_url }}">{% endif %}
+                    <span aria-hidden="true">&times;</span>
+                    <input type="number" name="amount" value="{{ item.amount|default:1 }}" min="1" max="999"
+                           class="item-amount-input" aria-label="How many {{ item.name }} to buy">
+                </form>
+                {% endif %}
+                <span class="item-shelves-tag" title="Buying this restocks the shelves">shelves</span>
+            {% elif item.quantity %}
+                <span class="item-qty">{{ item.quantity }}</span>
+            {% endif %}
+
             {% if item.is_recurring %}<span class="item-cycle due" title="Every {{ item.frequency_days }} days">regular</span>{% endif %}
 
             <form method="post" action="{% url 'delete-item' task.pk item.pk %}" class="item-delete-form">
@@ -61,8 +48,16 @@
         {% endfor %}
     </ul>
 
+    <div class="items-actions">
+        <form method="post" action="{% url 'clear-bought' task.pk %}" class="clear-bought-form">
+            {% csrf_token %}
+            {% if next_url %}<input type="hidden" name="next" value="{{ next_url }}">{% endif %}
+            <button type="submit" class="items-action-btn">Clear bought</button>
+        </form>
+    </div>
+
     <details class="items-resting">
-        <summary>Back on the list soon:</summary>
+        <summary>Back on the list soon</summary>
         <ul class="item-list">
             {% for item in items %}
             {% if item.is_recurring and item.is_done %}
@@ -97,7 +92,7 @@
         </ul>
     </details>
     {% else %}
-    <div class="items-empty">No supplies listed</div>
+    <div class="items-empty">Nothing to buy</div>
     {% endif %}
 
     <form method="post" action="{% url 'add-item' task.pk %}" class="item-add item-add-wide">
@@ -106,23 +101,19 @@
         <div class="item-add-line">
             <span class="item-add-box"></span>
             <input type="text" name="name" class="item-add-name"
-                   placeholder="Add supply..." maxlength="50" required autofocus>
+                   placeholder="Add supply..." maxlength="50" required>
             <input type="text" name="quantity" class="item-add-qty"
                    placeholder="Qty" maxlength="50">
             <button type="submit">Add</button>
         </div>
         <div class="item-add-line secondary">
             <span class="item-add-unit">
-                <label for="id_grocery_frequency">buy every</label>
-                <input type="number" name="frequency_days" id="id_grocery_frequency" class="item-add-num"
-                       placeholder="—" min="1" max="365" aria-label="Buy frequency in days">
-                <label for="id_grocery_frequency">days</label>
+                <label for="id_grocery_frequency_{{ task.pk }}">buy every</label>
+                <input type="number" name="frequency_days" id="id_grocery_frequency_{{ task.pk }}" class="item-add-num"
+                       placeholder="—" min="1" max="365" aria-label="Buy every N days">
+                <label for="id_grocery_frequency_{{ task.pk }}">days</label>
             </span>
         </div>
     </form>
 </div>
-
-
-
-
 

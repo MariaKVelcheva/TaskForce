@@ -31,7 +31,7 @@ class CheckableItemManager(TaskItemManager):
 
 class PantryItemManager(TaskItemManager):
     def low(self):
-        return self.filter(threshold__isnull=False, quantity__lte=F("threshold"))
+        return self.filter(quantity__lte=F("threshold"))
 
 
 class RecurringItemManager(TaskItemManager):
@@ -60,3 +60,4 @@ class RecurringItemManager(TaskItemManager):
             Q(frequency_days__isnull=True, is_checked=True)
             | Q(frequency_days__isnull=False, last_done_at__isnull=False, due_at__gt=now)
         )
+

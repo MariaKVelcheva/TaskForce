@@ -34,6 +34,24 @@ ITEM_PARTIALS = {
 }
 
 
+def get_item_context(task):
+    item_model = ITEM_MODELS.get(task.type)
+    if item_model is None:
+        return {"items": None}
+
+    items = list(item_model.objects.filter(task=task))
+    checkable = issubclass(item_model, CheckableItem)
+
+    return {
+        "items": items,
+        "item_form": ITEM_FORMS[task.type](),
+        "items_done": sum(1 for item in items if item.is_done) if checkable else None,
+        "items_total": len(items),
+        "item_partial": ITEM_PARTIALS[task.type],
+        "task": task,
+    }
+
+
 def _count_items(queryset):
     counts = (
         queryset.filter(task=OuterRef("pk"))
@@ -58,3 +76,4 @@ def item_progress(now=None):
         "duties_due": _count_items(ChoreItem.objects.due(now)),
         "stock_low": _count_items(PantryItem.objects.low()),
     }
+

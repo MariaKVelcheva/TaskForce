@@ -1,0 +1,58 @@
+<script>
+(function () {
+    if (window.itemBlocksBound) return;
+    window.itemBlocksBound = true;
+
+    async function refreshAllBlocks() {
+        const response = await fetch(window.location.href);
+        if (!response.ok) { window.location.reload(); return; }
+        const page = new DOMParser().parseFromString(await response.text(), "text/html");
+        page.querySelectorAll(".items-block[data-block]").forEach((fresh) => {
+            const current = document.querySelector(`.items-block[data-block="${fresh.dataset.block}"]`);
+            if (current) current.replaceWith(document.adoptNode(fresh));
+        });
+    }
+
+    async function send(form) {
+        const block = form.closest(".items-block");
+        const key = block.dataset.block;
+        const wasAdd = form.classList.contains("item-add");
+
+        const response = await fetch(form.action, {
+            method: "POST",
+            body: new FormData(form),
+            headers: { "X-Requested-With": "fetch" },
+        });
+        if (!response.ok) { form.submit(); return; }
+
+        if (document.querySelectorAll(".items-block").length > 1) {
+            await refreshAllBlocks();
+        } else {
+            const holder = document.createElement("div");
+            holder.innerHTML = await response.text();
+            block.replaceWith(holder.querySelector(".items-block"));
+        }
+
+        if (wasAdd) {
+            const fresh = document.querySelector(`.items-block[data-block="${key}"]`)
+                || document.querySelector(".items-block");
+            const input = fresh && fresh.querySelector(".item-add-name");
+            if (input) input.focus();
+        }
+    }
+
+    document.addEventListener("submit", (event) => {
+        const form = event.target;
+        if (!form.closest(".items-block")) return;
+        event.preventDefault();
+        send(form);
+    });
+
+    document.addEventListener("change", (event) => {
+        if (event.target.matches(".item-amount-input")) {
+            event.target.form.requestSubmit();
+        }
+    });
+})();
+</script>
+
