@@ -1,4 +1,4 @@
-from collections import deque
+from taskForce.common.grid_map import GridMap
 
 MAP = """
 TTTTTTTTTTTTTTTTTTTTTTTT
@@ -36,48 +36,28 @@ BUILDINGS = {
 
 TILE = 32
 
+BASE = GridMap(
+    grid=MAP,
+    terrain=TERRAIN,
+    places=BUILDINGS,
+    walkable=frozenset("="),
+    default_terrain="grass",
+    tile=TILE,
+)
+
 
 def map_rows():
-    return MAP.strip().splitlines()
+    return BASE.rows
 
 
 def building_positions():
-    positions = {}
-    for row, line in enumerate(map_rows()):
-        for col, char in enumerate(line):
-            if char in BUILDINGS:
-                positions[BUILDINGS[char]] = (col, row)
-    return positions
+    return BASE.place_positions()
 
 
 def tiles():
-    for row, line in enumerate(map_rows()):
-        for col, char in enumerate(line):
-            yield {"kind": TERRAIN.get(char, "grass"), "x": col * TILE, "y": row * TILE}
+    return BASE.tiles()
 
 
 def find_path(start, goal):
-    rows = map_rows()
-    came_from = {start: None}
-    queue = deque([start])
-    while queue:
-        current = queue.popleft()
-        if current == goal:
-            break
-        col, row = current
-        for dc, dr in ((1, 0), (-1, 0), (0, 1), (0, -1)):
-            nxt = (col + dc, row + dr)
-            c, r = nxt
-            if not (0 <= r < len(rows) and 0 <= c < len(rows[r])) or nxt in came_from:
-                continue
-            if rows[r][c] == "=" or nxt == goal:
-                came_from[nxt] = current
-                queue.append(nxt)
+    return BASE.find_path(start, goal)
 
-    if goal not in came_from:
-        return []
-    path, node = [], goal
-    while node is not None:
-        path.append(node)
-        node = came_from[node]
-    return path[::-1]
