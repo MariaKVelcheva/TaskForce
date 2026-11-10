@@ -1,5 +1,6 @@
 from taskForce.common.grid_map import GridMap
 
+
 MAP = """
 TTTTTTTTTTTTTTTTTTTTTTTT
 TT....TTT...~~~...TTT.TT
@@ -44,20 +45,4 @@ BASE = GridMap(
     default_terrain="grass",
     tile=TILE,
 )
-
-
-def map_rows():
-    return BASE.rows
-
-
-def building_positions():
-    return BASE.place_positions()
-
-
-def tiles():
-    return BASE.tiles()
-
-
-def find_path(start, goal):
-    return BASE.find_path(start, goal)
 

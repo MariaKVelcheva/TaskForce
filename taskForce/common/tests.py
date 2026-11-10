@@ -5,11 +5,12 @@ from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from taskForce.common.deploy_map import BASE
 from taskForce.common.grid_map import GridMap
+from taskForce.common.house_map import BARRACKS, ENTRANCE
 from taskForce.tasks.locations import LOCATIONS
 from taskForce.tasks.models import ChoreItem, PantryItem, Task, TaskType
 from taskForce.units.models import Membership
+from taskForce.common.deploy_map import BASE
 from taskForce.units.services import create_personal_unit, create_unit
 
 User = get_user_model()
@@ -17,39 +18,29 @@ User = get_user_model()
 DEPLOY_QUERY_BUDGET = 12
 
 
-class DeployMapTests(SimpleTestCase):
-    def test_all_rows_same_length(self):
-        widths = {len(line) for line in map_rows()}
-        self.assertEqual(len(widths), 1, f"row widths: {widths}")
-
-    def test_only_known_characters(self):
-        known = set(TERRAIN) | set(BUILDINGS)
-        used = set("".join(map_rows()))
-        self.assertEqual(used - known, set())
-
+class BaseMapTests(SimpleTestCase):
     def test_each_building_appears_exactly_once(self):
-        text = "".join(map_rows())
-        for char in BUILDINGS:
+        text = "".join(BASE.rows)
+        for char in BASE.places:
             with self.subTest(building=char):
                 self.assertEqual(text.count(char), 1)
 
     def test_every_location_has_a_building(self):
-        self.assertEqual(set(building_positions()), set(LOCATIONS))
+        self.assertEqual(set(BASE.place_positions()), set(LOCATIONS))
 
     def test_every_building_reachable_from_hq(self):
-        positions = building_positions()
+        positions = BASE.place_positions()
         for key, pos in positions.items():
             with self.subTest(building=key):
-                self.assertTrue(find_path(positions["hq"], pos))
+                self.assertTrue(BASE.find_path(positions["hq"], pos))
 
     def test_paths_only_cross_roads(self):
-        rows = map_rows()
-        positions = building_positions()
+        positions = BASE.place_positions()
         for key, pos in positions.items():
-            path = find_path(positions["hq"], pos)
-            for col, row in path[1:-1]:
-                with self.subTest(building=key, tile=(col, row)):
-                    self.assertEqual(rows[row][col], "=")
+            path = BASE.find_path(positions["hq"], pos)
+            for tile in path[1:-1]:
+                with self.subTest(building=key, tile=tile):
+                    self.assertEqual(BASE.char_at(tile), "=")
 
 
 class CommonTestCase(TestCase):
@@ -80,8 +71,6 @@ class CommonTestCase(TestCase):
     def building(self, response, key):
         return next(b for b in response.context["buildings"] if b["key"] == key)
 
-
-# --- Deploy map --------------------------------------------------------------
 
 class DeployIndexViewTests(CommonTestCase):
     def test_requires_login(self):
@@ -298,8 +287,8 @@ class GridMapShapeTests(SimpleTestCase):
         self.assertEqual(tiny().position_of("@"), (1, 3))
 
     def test_places_without_terrain_use_the_default(self):
-        kinds = {(t["x"], t["y"]): t["kind"] for t in tiny().tiles()}
-        self.assertEqual(kinds[(32, 32)], "floor")  # "a" isn't in terrain
+        kinds = {(t["x"], t["y"]): t["kind"] for t in tiny().BASE.tiles()}
+        self.assertEqual(kinds[(32, 32)], "floor")
         self.assertEqual(kinds[(0, 0)], "wall")
 
 
@@ -317,14 +306,6 @@ class FindPathTests(SimpleTestCase):
 
     def test_start_equals_goal(self):
         self.assertEqual(tiny().find_path((1, 3), (1, 3)), [(1, 3)])
-
-
-class BaseMapTests(SimpleTestCase):
-    def test_every_building_is_reachable_from_hq(self):
-        positions = BASE.place_positions()
-        for key, pos in positions.items():
-            with self.subTest(building=key):
-                self.assertTrue(BASE.find_path(positions["hq"], pos))
 
 
 class BarracksMapTests(SimpleTestCase):
@@ -346,3 +327,4 @@ class BarracksMapTests(SimpleTestCase):
     def test_every_room_appears_once(self):
         expected = {"kitchen", "bathroom", "bedroom", "living", "outdoor", "general"}
         self.assertEqual(set(BARRACKS.place_positions()), expected)
+

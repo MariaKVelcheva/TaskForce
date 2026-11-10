@@ -1,15 +1,5 @@
-"""Barracks floor plan: placeholder layout (data only, no engine yet).
+from taskForce.common.grid_map import GridMap
 
-Same conventions as common/deploy_map.py: one character = one 32x32 tile.
-
-Room markers work like buildings on the base map: they mark where the room's
-furniture sprite, badge and label sit. Each marker is ALSO listed in TERRAIN,
-so tiles() draws the right floor underneath it.
-
-The avatar starts on the entrance tile ("@"), like it starts at HQ outside.
-"""
-
-from common.grid_map import GridMap
 
 HOUSE = """
 \"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"
