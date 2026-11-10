@@ -1,124 +1,321 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
-  <defs>
-    <style>
-      .grass       { fill: #8c955a; }
-      .grass-dark  { fill: #737c46; }
-      .road        { fill: #c4b183; }
-      .road-edge   { fill: #a8956a; }
-      .water       { fill: #4e6b6a; }
-      .wave        { fill: none; stroke: #7f9b92; stroke-width: 1.2; stroke-linecap: round; }
-      .leaf        { fill: #4a5530; }
-      .leaf-light  { fill: #5d6a3b; }
-      .trunk       { fill: #5b4630; }
-      .shadow      { fill: #000; opacity: .22; }
-      .canvas      { fill: #b7a777; }
-      .canvas-dark { fill: #968659; }
-      .steel       { fill: #6f7462; }
-      .steel-dark  { fill: #545846; }
-      .wood        { fill: #8f6f45; }
-      .wood-dark   { fill: #6e5332; }
-      .door        { fill: #3a3a2c; }
-      .flag        { fill: #9c4a2f; }
-      .pole        { fill: #3a3a2c; }
-      .sandbag     { fill: #a99a6b; stroke: #847650; stroke-width: .6; }
-    </style>
 
-    <symbol id="tile-grass" viewBox="0 0 32 32">
-      <rect class="grass" width="32" height="32"/>
-      <path class="grass-dark" d="M6 9l1-3 1 3zM22 6l1-3 1 3zM14 22l1-3 1 3zM26 25l1-3 1 3zM4 27l1-3 1 3z"/>
-    </symbol>
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="0" height="0"
+     style="position:absolute"
+     aria-hidden="true"
+     focusable="false">
+<defs>
+  <style>
+    .ground-shadow { fill:#20271e; opacity:.30; }
+    .outline { stroke:#373b2c; stroke-width:1.2; stroke-linejoin:round; }
+    .wood-grain { fill:none; stroke:#654a30; stroke-width:.7; opacity:.65; }
+    .metal-edge { stroke:#41483b; stroke-width:1; stroke-linejoin:round; }
+    .window { fill:#a9b3a0; stroke:#454a3a; stroke-width:1; }
+    .window-glint { fill:#d5d1a8; opacity:.55; }
+    .sandbag { fill:#b4a47a; stroke:#857650; stroke-width:.8; }
+    .grass-mark { fill:#647344; }
+    .grass-light { fill:#b1a878; opacity:.45; }
+  </style>
 
-    <symbol id="tile-road" viewBox="0 0 32 32">
-      <rect class="road" width="32" height="32"/>
-      <circle class="road-edge" cx="7" cy="9" r="1"/>
-      <circle class="road-edge" cx="20" cy="5" r=".8"/>
-      <circle class="road-edge" cx="25" cy="21" r="1"/>
-      <circle class="road-edge" cx="11" cy="25" r=".8"/>
-    </symbol>
+  <linearGradient id="tf-grass" x2="1" y2="1">
+    <stop stop-color="#99996c"/>
+    <stop offset="1" stop-color="#697849"/>
+  </linearGradient>
+  <linearGradient id="tf-road" x2="0.8" y2="1">
+    <stop stop-color="#d0bd94"/>
+    <stop offset="1" stop-color="#a28e66"/>
+  </linearGradient>
+  <linearGradient id="tf-water" x2="1" y2="1">
+    <stop stop-color="#688781"/>
+    <stop offset="1" stop-color="#344f50"/>
+  </linearGradient>
+  <linearGradient id="tf-steel" x2="0" y2="1">
+    <stop stop-color="#92917c"/>
+    <stop offset=".55" stop-color="#6e7565"/>
+    <stop offset="1" stop-color="#424b3f"/>
+  </linearGradient>
+  <linearGradient id="tf-wood" x2="0.8" y2="1">
+    <stop stop-color="#bd9560"/>
+    <stop offset="1" stop-color="#795735"/>
+  </linearGradient>
+  <linearGradient id="tf-canvas" x2="1" y2="1">
+    <stop stop-color="#d4c49a"/>
+    <stop offset=".6" stop-color="#b6a477"/>
+    <stop offset="1" stop-color="#857b5c"/>
+  </linearGradient>
 
-    <symbol id="tile-water" viewBox="0 0 32 32">
-      <rect class="water" width="32" height="32"/>
-      <path class="wave" d="M4 10q3-3 6 0t6 0M16 22q3-3 6 0t6 0"/>
-    </symbol>
+  <!-- TERRAIN -->
 
-    <symbol id="tile-forest" viewBox="0 0 32 32">
-      <rect class="grass" width="32" height="32"/>
-      <ellipse class="shadow" cx="10" cy="15" rx="7" ry="2.5"/>
-      <rect class="trunk" x="9" y="11" width="2" height="4"/>
-      <circle class="leaf" cx="10" cy="8" r="6"/>
-      <circle class="leaf-light" cx="8" cy="6" r="2.5"/>
-      <ellipse class="shadow" cx="22" cy="29" rx="7" ry="2.5"/>
-      <rect class="trunk" x="21" y="25" width="2" height="4"/>
-      <circle class="leaf" cx="22" cy="21" r="6.5"/>
-      <circle class="leaf-light" cx="20" cy="19" r="2.5"/>
-    </symbol>
+  <symbol id="tile-grass" viewBox="0 0 32 32">
+    <rect width="32" height="32" fill="url(#tf-grass)"/>
+    <path d="M0 6Q8 1 16 6T32 4V12Q22 16 13 11T0 14Z"
+          fill="#c0b17c" opacity=".12"/>
+    <path d="M0 25Q9 19 18 24T32 22V32H0Z"
+          fill="#394c32" opacity=".2"/>
+    <g class="grass-mark">
+      <path d="M4 9l1.5-4L7 9zM23 6l1.5-4L26 6z"/>
+      <path d="M13 20l1.5-4L16 20zM27 28l1.5-4L29 28z"/>
+      <path d="M3 29l1.5-3L6 29z"/>
+    </g>
+    <g class="grass-light">
+      <circle cx="10" cy="13" r=".7"/>
+      <circle cx="20" cy="7" r=".6"/>
+      <circle cx="22" cy="26" r=".8"/>
+      <circle cx="6" cy="22" r=".6"/>
+    </g>
+  </symbol>
 
-    <symbol id="building-hq" viewBox="0 0 32 48">
-      <ellipse class="shadow" cx="16" cy="44" rx="15" ry="3.5"/>
-      <rect class="steel-dark" x="4" y="26" width="24" height="16"/>
-      <rect class="steel" x="4" y="22" width="24" height="6"/>
-      <rect class="door" x="13" y="32" width="6" height="10"/>
-      <rect class="sandbag" x="1" y="38" width="7" height="4" rx="2"/>
-      <rect class="sandbag" x="24" y="38" width="7" height="4" rx="2"/>
-      <rect class="sandbag" x="3" y="35" width="6" height="4" rx="2"/>
-      <rect class="sandbag" x="23" y="35" width="6" height="4" rx="2"/>
-      <rect class="pole" x="15.3" y="3" width="1.4" height="20"/>
-      <path class="flag" d="M16.7 3h10l-2.5 3.5 2.5 3.5h-10z"/>
-    </symbol>
+  <symbol id="tile-road" viewBox="0 0 32 32">
+    <rect width="32" height="32" fill="url(#tf-road)"/>
+    <path d="M0 0H32V4Q20 7 0 5Z" fill="#e6d5ad" opacity=".35"/>
+    <path d="M0 27Q13 24 32 26V32H0Z" fill="#766b4f" opacity=".18"/>
+    <g fill="none" stroke="#857451" stroke-linecap="round" opacity=".35">
+      <path d="M7 0Q10 12 8 20T9 32" stroke-width="1"/>
+      <path d="M24 0Q22 12 25 22T23 32" stroke-width="1"/>
+      <path d="M14 8l3 1M17 23l3 1M3 18l3-1" stroke-width=".7"/>
+    </g>
+    <g fill="#786b4e" opacity=".55">
+      <ellipse cx="4" cy="10" rx="1.1" ry=".6"/>
+      <ellipse cx="19" cy="6" rx=".8" ry=".5"/>
+      <ellipse cx="27" cy="18" rx="1.2" ry=".7"/>
+      <ellipse cx="12" cy="27" rx=".9" ry=".6"/>
+    </g>
+    <g fill="#e6d7b5" opacity=".55">
+      <circle cx="11" cy="14" r=".6"/>
+      <circle cx="22" cy="25" r=".7"/>
+    </g>
+  </symbol>
 
-    <symbol id="building-training" viewBox="0 0 32 48">
-      <ellipse class="shadow" cx="16" cy="44" rx="13" ry="3"/>
-      <rect class="wood-dark" x="7" y="26" width="2.5" height="17"/>
-      <rect class="wood-dark" x="22.5" y="26" width="2.5" height="17"/>
-      <rect class="wood" x="5" y="12" width="22" height="20" rx="1"/>
-      <circle cx="16" cy="22" r="7.5" fill="#e8dcb8"/>
-      <circle cx="16" cy="22" r="5" fill="#9c4a2f"/>
-      <circle cx="16" cy="22" r="2.6" fill="#e8dcb8"/>
-      <circle cx="16" cy="22" r="1" fill="#9c4a2f"/>
-    </symbol>
+  <symbol id="tile-water" viewBox="0 0 32 32">
+    <rect width="32" height="32" fill="url(#tf-water)"/>
+    <path d="M0 6Q9 1 17 6T32 5V13Q22 17 14 12T0 15Z"
+          fill="#a8b7a0" opacity=".12"/>
+    <g fill="none" stroke="#b2c2ae" stroke-linecap="round">
+      <path d="M3 8q3-2 6 0t6 0" stroke-width="1" opacity=".7"/>
+      <path d="M18 14q3-2 6 0t5 0" stroke-width=".8" opacity=".55"/>
+      <path d="M5 23q3-2 6 0t5 0" stroke-width="1" opacity=".6"/>
+      <path d="M19 28q2-1.5 4 0t5 0" stroke-width=".8" opacity=".5"/>
+    </g>
+    <g fill="#d0d0ad" opacity=".3">
+      <circle cx="22" cy="5" r=".7"/>
+      <circle cx="12" cy="17" r=".5"/>
+      <circle cx="29" cy="20" r=".6"/>
+    </g>
+  </symbol>
 
-    <symbol id="building-supply" viewBox="0 0 32 48">
-      <ellipse class="shadow" cx="16" cy="44" rx="15" ry="3.5"/>
-      <rect class="wood" x="2" y="30" width="14" height="13"/>
-      <rect class="wood" x="16" y="30" width="14" height="13"/>
-      <rect class="wood" x="9" y="17" width="14" height="13"/>
-      <path class="wood-dark" d="M2 30l14 13M16 30l-14 13M16 30l14 13M30 30l-14 13M9 17l14 13M23 17l-14 13" stroke="#6e5332" stroke-width="1.4"/>
-      <rect fill="none" stroke="#6e5332" stroke-width="1.4" x="2" y="30" width="14" height="13"/>
-      <rect fill="none" stroke="#6e5332" stroke-width="1.4" x="16" y="30" width="14" height="13"/>
-      <rect fill="none" stroke="#6e5332" stroke-width="1.4" x="9" y="17" width="14" height="13"/>
-    </symbol>
+  <symbol id="tile-forest" viewBox="0 0 32 32">
+    <rect width="32" height="32" fill="url(#tf-grass)"/>
+    <ellipse cx="10" cy="20" rx="9" ry="3" class="ground-shadow"/>
+    <ellipse cx="24" cy="29" rx="8" ry="2.5" class="ground-shadow"/>
+    <!-- Rear tree -->
+    <path d="M22 20V11" stroke="#59442f" stroke-width="2.2"/>
+    <path d="M16 13L22 2l7 11z" fill="#35452e" class="outline"/>
+    <path d="M18 11l4-8 3 9z" fill="#71804b"/>
+    <path d="M22 12l4-8 4 9z" fill="#50623a"/>
+    <!-- Main tree -->
+    <path d="M9 24V14" stroke="#59442f" stroke-width="2.5"/>
+    <path d="M0 17L9 1l10 16z" fill="#35452e" class="outline"/>
+    <path d="M2 14L9 2l4 12z" fill="#657747"/>
+    <path d="M8 15l6-11 5 12z" fill="#4b6036"/>
+    <path d="M4 12l5-9 3 10z" fill="#879057" opacity=".75"/>
+    <g fill="#58663c">
+      <path d="M1 28l2-4 2 4zM14 30l2-4 2 4zM27 22l2-4 2 4z"/>
+    </g>
+  </symbol>
 
-    <symbol id="building-barracks" viewBox="0 0 32 48">
-      <ellipse class="shadow" cx="16" cy="44" rx="15" ry="3.5"/>
-      <path class="steel" d="M2 43V30a14 14 0 0 1 28 0v13z"/>
-      <path class="steel-dark" d="M7 43V30a9 9 0 0 1 18 0v13z" opacity=".35"/>
-      <path d="M6 22v21M11 18v25M16 16v27M21 18v25M26 22v21" stroke="#545846" stroke-width=".8"/>
-      <rect class="door" x="13" y="34" width="6" height="9"/>
-      <rect fill="#d9cfa0" x="5" y="33" width="4" height="3"/>
-      <rect fill="#d9cfa0" x="23" y="33" width="4" height="3"/>
-    </symbol>
+  <!-- HQ: command hut with roof, windows, antenna and sandbags -->
+  <symbol id="building-hq" viewBox="0 0 64 64">
+    <ellipse class="ground-shadow" cx="32" cy="58" rx="28" ry="5"/>
+    <!-- Sandbag perimeter -->
+    <g class="sandbag">
+      <rect x="5" y="48" width="13" height="5" rx="2"/>
+      <rect x="19" y="49" width="13" height="5" rx="2"/>
+      <rect x="34" y="49" width="13" height="5" rx="2"/>
+      <rect x="48" y="48" width="11" height="5" rx="2"/>
+      <path d="M8 50h7M22 51h7M37 51h7M51 50h6" fill="none"/>
+    </g>
+    <!-- Building body -->
+    <path d="M10 30L32 17 54 30V51H10Z"
+          fill="url(#tf-wood)" class="outline"/>
+    <path d="M10 30L32 17V51H10Z" fill="#a47c4d"/>
+    <path d="M32 17L54 30V51H32Z" fill="#765638"/>
+    <!-- Roof -->
+    <path d="M6 30L31 12 58 29 53 34 32 20 11 35Z"
+          fill="url(#tf-steel)" class="outline"/>
+    <path d="M6 30L31 12 32 20 11 35Z" fill="#a0a08a"/>
+    <path d="M32 20L58 29 53 34Z" fill="#555f50"/>
+    <path d="M12 29L31 16M36 21l17 9" fill="none" stroke="#c2b99a" opacity=".45"/>
+    <!-- Windows -->
+    <rect class="window" x="15" y="34" width="8" height="8" rx=".5"/>
+    <path d="M19 34v8M15 38h8" stroke="#515847" stroke-width=".8"/>
+    <path class="window-glint" d="M16 35h2v2h-2z"/>
+    <rect class="window" x="41" y="34" width="8" height="8" rx=".5"/>
+    <path d="M45 34v8M41 38h8" stroke="#515847" stroke-width=".8"/>
+    <path class="window-glint" d="M42 35h2v2h-2z"/>
+    <!-- Entrance -->
+    <path d="M27 51V39Q32 33 37 39V51Z" fill="#383c2e" class="outline"/>
+    <path d="M32 38V51" stroke="#98815b" stroke-width=".8"/>
+    <circle cx="35" cy="45" r=".7" fill="#d1b77e"/>
+    <!-- Antenna and flag -->
+    <path d="M32 13V3" stroke="#34392d" stroke-width="1.5"/>
+    <path d="M33 4h13l-3 3 3 3H33Z" fill="#a84e36" stroke="#633e30" stroke-width=".7"/>
+    <path d="M32 12l-3 2" stroke="#34392d" stroke-width=".8"/>
+    <!-- Small roof fittings -->
+    <path d="M19 25l2-1M42 26l2 1" stroke="#d3c49b" stroke-width=".8"/>
+  </symbol>
 
+  <!-- TRAINING: wooden target board -->
+  <symbol id="building-training" viewBox="0 0 64 64">
+    <ellipse class="ground-shadow" cx="32" cy="57" rx="25" ry="4"/>
+    <!-- Ground platform -->
+    <path d="M7 50L32 44 57 50 32 57Z" fill="#8a7955" opacity=".7"/>
+    <path d="M12 49l20-5 20 5-20 5z" fill="#b49a69" stroke="#69583e" stroke-width="1"/>
+    <!-- Legs -->
+    <path d="M17 29L19 52M47 29L45 52" stroke="#624a31" stroke-width="4"/>
+    <path d="M17 29L19 52M47 29L45 52" stroke="#c09a64" stroke-width="1"/>
+    <!-- Target board -->
+    <rect x="9" y="8" width="46" height="29" rx="1.5"
+          fill="url(#tf-wood)" class="outline"/>
+    <path d="M11 11h42v23H11Z" fill="#b99460" stroke="#6f5538" stroke-width=".8"/>
+    <path d="M14 14h36M14 31h36" stroke="#d2b27a" opacity=".5"/>
+    <!-- Target rings -->
+    <circle cx="32" cy="22.5" r="11" fill="#e0d5b6" stroke="#67573f" stroke-width=".8"/>
+    <circle cx="32" cy="22.5" r="8" fill="#a84e36"/>
+    <circle cx="32" cy="22.5" r="5" fill="#e0d5b6"/>
+    <circle cx="32" cy="22.5" r="2.2" fill="#a84e36"/>
+    <circle cx="32" cy="22.5" r=".8" fill="#34392d"/>
+    <!-- Target bolts -->
+    <g fill="#4e5142">
+      <circle cx="12" cy="11" r=".8"/><circle cx="52" cy="11" r=".8"/>
+      <circle cx="12" cy="34" r=".8"/><circle cx="52" cy="34" r=".8"/>
+    </g>
+    <!-- Side equipment -->
+    <rect x="3" y="43" width="9" height="8" rx="1" fill="#6e765c" stroke="#41483b"/>
+    <path d="M5 45h5M5 48h5" stroke="#c0b58b" stroke-width=".8"/>
+  </symbol>
 
-    <symbol id="building-rec_room" viewBox="0 0 32 48">
-      <ellipse class="shadow" cx="16" cy="44" rx="15" ry="3.5"/>
-      <path class="canvas" d="M2 43L16 17l14 26z"/>
-      <path class="canvas-dark" d="M16 17l14 26h-8z"/>
-      <path class="door" d="M12 43l4-11 4 11z"/>
-      <rect class="pole" x="15.3" y="12" width="1.4" height="6"/>
-      <circle cx="16" cy="11" r="2.2" fill="#f0c862"/>
-    </symbol>
-      
-<symbol id="avatar" viewBox="0 0 32 48">
-  <ellipse class="shadow" cx="16" cy="45" rx="7" ry="2"/>
-  <rect fill="#2e3228" x="12.5" y="34" width="3" height="10" rx="1"/>
-  <rect fill="#2e3228" x="16.5" y="34" width="3" height="10" rx="1"/>
-  <rect fill="#5d6a3b" x="11" y="22" width="10" height="14" rx="2"/>
-  <rect fill="#4a5530" x="8.5" y="23" width="3" height="10" rx="1.5"/>
-  <rect fill="#4a5530" x="20.5" y="23" width="3" height="10" rx="1.5"/>
-  <rect fill="#3a3a2c" x="11" y="31" width="10" height="2"/>
-  <circle fill="#d9b48f" cx="16" cy="17.5" r="4.5"/>
-  <path fill="#4a5530" d="M10.5 16.5a5.5 5.5 0 0 1 11 0z"/>
-  <rect fill="#3f4526" x="9.5" y="15.5" width="13" height="2" rx="1"/>
-</symbol>
-  </defs>
+  <!-- SUPPLY: three stacked wooden crates -->
+  <symbol id="building-supply" viewBox="0 0 64 64">
+    <ellipse class="ground-shadow" cx="32" cy="57" rx="28" ry="5"/>
+    <!-- Rear crate -->
+    <path d="M20 13L37 8 53 15 36 21Z" fill="#c09a63" class="outline"/>
+    <path d="M20 13L36 21V39L20 31Z" fill="#946d43" class="outline"/>
+    <path d="M36 21L53 15V33L36 39Z" fill="#765638" class="outline"/>
+    <path d="M24 15l12 6M40 20l9-3M24 18v10M32 22v13"
+          class="wood-grain"/>
+    <path d="M23 12l3-1 13 6-3 1z" fill="#d0ad76" opacity=".65"/>
+    <!-- Left lower crate -->
+    <path d="M4 31L21 25 37 32 20 39Z" fill="#c29a61" class="outline"/>
+    <path d="M4 31L20 39V56L4 48Z" fill="#9a7145" class="outline"/>
+    <path d="M20 39L37 32V49L20 56Z" fill="#795839" class="outline"/>
+    <path d="M8 34l11 5M8 38v8M14 37v12M24 40v12"
+          class="wood-grain"/>
+    <path d="M6 32l3-1 13 6-3 1z" fill="#d2ad76" opacity=".65"/>
+    <!-- Right lower crate -->
+    <path d="M28 37L45 31 61 38 44 45Z" fill="#bd955e" class="outline"/>
+    <path d="M28 37L44 45V60L28 52Z" fill="#8d6942" class="outline"/>
+    <path d="M44 45L61 38V53L44 60Z" fill="#705235" class="outline"/>
+    <path d="M32 40l11 5M32 44v7M39 43v12M48 45v12"
+          class="wood-grain"/>
+    <!-- Metal straps -->
+    <g fill="none" stroke="#4d5549" stroke-width="1.5">
+      <path d="M12 29v23M29 35v17M48 34v22"/>
+      <path d="M5 34l15 7M29 40l15 7"/>
+    </g>
+    <!-- Stencilled markings -->
+    <g fill="#e0d0a9" opacity=".8" font-family="monospace" font-size="4" font-weight="bold">
+      <text x="24" y="30">SUP</text>
+      <text x="8" y="44">01</text>
+      <text x="47" y="51">02</text>
+    </g>
+  </symbol>
+
+  <!-- BARRACKS: rounded corrugated shelter -->
+  <symbol id="building-barracks" viewBox="0 0 64 64">
+    <ellipse class="ground-shadow" cx="32" cy="57" rx="29" ry="5"/>
+    <!-- Rear wall -->
+    <path d="M7 49V31A25 25 0 0 1 57 31V49Z"
+          fill="#525d4e" class="outline"/>
+    <!-- Roof surface -->
+    <path d="M5 33A27 27 0 0 1 59 33L55 42A23 23 0 0 0 9 42Z"
+          fill="url(#tf-steel)" class="outline"/>
+    <path d="M8 31A24 24 0 0 1 56 31L52 38A20 20 0 0 0 12 38Z"
+          fill="#93937d" opacity=".55"/>
+    <!-- Corrugation -->
+    <g fill="none" stroke="#444d40" stroke-width="1" opacity=".8">
+      <path d="M13 42Q13 19 20 14"/>
+      <path d="M20 41Q20 13 26 9"/>
+      <path d="M27 40Q27 8 32 7"/>
+      <path d="M34 40Q34 8 38 9"/>
+      <path d="M41 41Q41 13 45 14"/>
+      <path d="M48 42Q48 19 51 21"/>
+    </g>
+    <g fill="none" stroke="#c2b99a" stroke-width=".7" opacity=".55">
+      <path d="M14 31Q17 15 23 12"/>
+      <path d="M28 30Q29 10 32 9"/>
+      <path d="M41 31Q41 17 45 16"/>
+    </g>
+    <!-- Front facade -->
+    <path d="M8 39Q32 31 56 39V51H8Z" fill="#626c59" class="outline"/>
+    <path d="M24 51V41Q32 35 40 41V51Z" fill="#343b30" class="outline"/>
+    <path d="M32 39v12" stroke="#8c8d71" stroke-width=".8"/>
+    <!-- Windows -->
+    <rect class="window" x="12" y="42" width="7" height="5"/>
+    <rect class="window" x="45" y="42" width="7" height="5"/>
+    <path d="M15.5 42v5M48.5 42v5" stroke="#485142" stroke-width=".7"/>
+    <!-- Door sign -->
+    <rect x="27" y="35" width="10" height="3" rx=".5" fill="#a99b72"/>
+    <path d="M29 36.5h6" stroke="#4d4b38" stroke-width=".6"/>
+    <!-- Foundation -->
+    <path d="M5 51H59L56 55H8Z" fill="#4b5142" stroke="#343b30"/>
+  </symbol>
+
+  <!-- REC ROOM: canvas tent with entrance and flag -->
+  <symbol id="building-rec_room" viewBox="0 0 64 64">
+    <ellipse class="ground-shadow" cx="32" cy="57" rx="28" ry="5"/>
+    <!-- Tent floor -->
+    <path d="M4 51L32 43 60 51 32 59Z" fill="#8d805e" opacity=".7"/>
+    <!-- Rear tent silhouette -->
+    <path d="M5 50L32 9 59 50Z" fill="#867b5c" class="outline"/>
+    <!-- Main canvas panels -->
+    <path d="M5 50L32 9 32 50Z" fill="url(#tf-canvas)" class="outline"/>
+    <path d="M32 9L59 50H32Z" fill="#a99a70" class="outline"/>
+    <!-- Canvas folds -->
+    <path d="M12 47L29 16M19 50L31 19"
+          fill="none" stroke="#e2d3a9" stroke-width="1.1" opacity=".55"/>
+    <path d="M36 17L52 47M41 23L56 49"
+          fill="none" stroke="#766e50" stroke-width="1" opacity=".5"/>
+    <!-- Entrance flap -->
+    <path d="M23 50L32 29 41 50Z" fill="#554e39" class="outline"/>
+    <path d="M32 29V50" stroke="#b5a47c" stroke-width=".9"/>
+    <path d="M26 50l6-15 6 15" fill="none" stroke="#d4c49a" opacity=".45"/>
+    <!-- Guy ropes -->
+    <g fill="none" stroke="#534a35" stroke-width=".8">
+      <path d="M9 47L3 55M55 47l6 8"/>
+    </g>
+    <g fill="#65583d">
+      <circle cx="3" cy="55" r="1.2"/><circle cx="61" cy="55" r="1.2"/>
+    </g>
+    <!-- Flag -->
+    <path d="M32 10V2" stroke="#373c2e" stroke-width="1.4"/>
+    <path d="M33 3h12l-3 3 3 3H33Z" fill="#a84e36" stroke="#633e30" stroke-width=".7"/>
+    <!-- Small sign -->
+    <rect x="26" y="44" width="12" height="3" rx=".5" fill="#c8b98e" opacity=".9"/>
+    <path d="M28 45.5h8" stroke="#655b40" stroke-width=".6"/>
+  </symbol>
+
+  <!-- AVATAR: original design retained -->
+  <symbol id="avatar" viewBox="0 0 32 48">
+    <ellipse fill="#000" opacity=".22" cx="16" cy="45" rx="7" ry="2"/>
+    <rect fill="#2e3228" x="12.5" y="34" width="3" height="10" rx="1"/>
+    <rect fill="#2e3228" x="16.5" y="34" width="3" height="10" rx="1"/>
+    <rect fill="#5d6a3b" x="11" y="22" width="10" height="14" rx="2"/>
+    <rect fill="#4a5530" x="8.5" y="23" width="3" height="10" rx="1.5"/>
+    <rect fill="#4a5530" x="20.5" y="23" width="3" height="10" rx="1.5"/>
+    <rect fill="#3a3a2c" x="11" y="31" width="10" height="2"/>
+    <circle fill="#d9b48f" cx="16" cy="17.5" r="4.5"/>
+    <path fill="#4a5530" d="M10.5 16.5a5.5 5.5 0 0 1 11 0z"/>
+    <rect fill="#3f4526" x="9.5" y="15.5" width="13" height="2" rx="1"/>
+  </symbol>
+</defs>
 </svg>

@@ -188,12 +188,11 @@ class DeployLocationViewTests(CommonTestCase):
         self.assertTrue(response.context["off_limits"])
         self.assertEqual(list(response.context["missions"]), [])
 
-    def test_low_stock_puts_supply_in_action_required(self):
+    def test_low_stock_flags_supply_on_the_map(self):
         pantry = self.user.personal_unit.tasks.get(type=TaskType.PANTRY)
         PantryItem.objects.create(task=pantry, name="milk", quantity=0, threshold=1)
-        response = self.client.get(reverse("deploy-location", args=["supply"]))
-        keys = [key for key, _label, _missions in response.context["groups"]]
-        self.assertEqual(keys[0], "overdue")
+        response = self.client.get(reverse("deploy"))
+        self.assertTrue(self.building(response, "supply")["overdue"])
 
 
 class DebriefViewTests(CommonTestCase):
@@ -287,7 +286,7 @@ class GridMapShapeTests(SimpleTestCase):
         self.assertEqual(tiny().position_of("@"), (1, 3))
 
     def test_places_without_terrain_use_the_default(self):
-        kinds = {(t["x"], t["y"]): t["kind"] for t in tiny().BASE.tiles()}
+        kinds = {(t["x"], t["y"]): t["kind"] for t in tiny().tiles()}
         self.assertEqual(kinds[(32, 32)], "floor")
         self.assertEqual(kinds[(0, 0)], "wall")
 

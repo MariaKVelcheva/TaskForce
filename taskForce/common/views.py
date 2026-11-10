@@ -11,7 +11,6 @@ from django.utils.translation import gettext_lazy as _
 from django.views.generic import ListView, TemplateView
 
 from taskForce.common.deploy_map import BASE
-from taskForce.redirects import with_next
 from taskForce.comms.models import Conversation, ConversationRead, Message
 from taskForce.redirects import with_next
 from taskForce.tasks.forms import LocationQuickAddForm, QuickCreateTaskForm

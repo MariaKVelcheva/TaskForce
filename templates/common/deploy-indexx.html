@@ -78,149 +78,6 @@
 .deploy-map-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .deploy-map        { min-width: 640px; }
 
-
-/* The wrapper itself can be shared by both layouts. */
-.deploy-page {
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-}
-
-.deploy-header,
-.objective {
-    flex: 0 0 auto;
-}
-
-@media (min-width: 701px) and (min-height: 601px) {
-
-    body:has(.deploy-page) {
-        height: 100dvh;
-        min-height: 0;
-        overflow: hidden;
-    }
-
-    body:has(.deploy-page) nav {
-        flex: 0 0 56px;
-    }
-
-    body:has(.deploy-page) main {
-        flex: 1 1 0;
-        min-height: 0;
-        width: 100%;
-        max-width: none;
-        margin: 0;
-        padding: 1rem 1.5rem;
-        display: flex;
-        flex-direction: column;
-    }
-
-    body:has(.deploy-page) footer {
-        flex: 0 0 auto;
-    }
-
-    .deploy-page {
-        flex: 1 1 0;
-        min-height: 0;
-    }
-
-    .deploy-map-scroll {
-        flex: 1 1 0;
-        min-height: 0;
-        min-width: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        overflow: auto;
-    }
-
-    .deploy-map {
-        position: relative;
-        flex: 0 0 auto;
-        height: 100%;
-        width: auto;
-        max-width: 100%;
-        max-height: 100%;
-        aspect-ratio: var(--map-ratio);
-        margin: auto;
-    }
-
-    .deploy-map svg {
-        display: block;
-        width: 100%;
-        height: 100%;
-    }
-}
-
-@media (max-width: 700px), (max-height: 600px) {
-
-    body:has(.deploy-page) {
-        height: auto;
-        min-height: 100dvh;
-        overflow-x: hidden;
-        overflow-y: auto;
-    }
-
-    body:has(.deploy-page) main {
-        flex: 1 0 auto;
-        min-height: 0;
-        width: 100%;
-        max-width: none;
-        margin: 0;
-        padding: .75rem;
-        display: block;
-    }
-
-    .deploy-page {
-        flex: 0 0 auto;
-    }
-
-    .deploy-map-scroll {
-        display: block;
-        flex: 0 0 auto;
-        overflow-x: auto;
-        overflow-y: hidden;
-        -webkit-overflow-scrolling: touch;
-    }
-
-    .deploy-map {
-        position: relative;
-        width: max(640px, min(100%, 960px));
-        height: auto;
-        max-width: none;
-        max-height: none;
-        aspect-ratio: var(--map-ratio);
-        margin: 0;
-    }
-
-    .deploy-map svg {
-        display: block;
-        width: 100%;
-        height: auto;
-    }
-}
-
-body:has(.deploy-page) {
-    height: 100dvh;
-    min-height: 0;
-    overflow: hidden;
-}
-
-main:has(.deploy-page) {
-    width: 100%;
-    max-width: none;
-    min-height: 0;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    margin: 0;
-    padding: 1rem 1.5rem;
-}
-
-body:has(.deploy-page) footer {
-    flex: 0 0 auto;
-}
-
-
 @media (prefers-reduced-motion: reduce) {
   .is-overdue .building-art { animation: none; filter: drop-shadow(0 0 4px var(--rust-light)); }
   .route { animation: none; }
@@ -229,7 +86,6 @@ body:has(.deploy-page) footer {
 {% endblock %}
 
 {% block content %}
-<div class="deploy-page">
 <div class="deploy-header">
     <h1 class="deploy-base">{% if unit.personal_for_id %}Personal base{% else %}{{ unit.name }}{% endif %}</h1>
     <span class="deploy-base-tag">{% if unit.personal_for_id %}Lone wolf{% else %}Unit base{% endif %}</span>
@@ -247,7 +103,7 @@ body:has(.deploy-page) footer {
 
 
 <div class="deploy-map-scroll">
-<div class="deploy-map" style="--map-ratio: {{ map_width }} / {{ map_height }};">
+<div class="deploy-map" style="width: min(100%, calc((100dvh - var(--deploy-chrome)) * {{ map_width }} / {{ map_height }}));">
   {% include "tasks/partials/_deploy_sprites.html" %}
   <svg viewBox="0 0 {{ map_width }} {{ map_height }}" aria-label="Base map">
     <g aria-hidden="true">
@@ -262,10 +118,10 @@ body:has(.deploy-page) footer {
 
     {% for b in buildings %}
     {% if b.off_limits %}
-    <g id="bld-{{ b.key }}" aria-describedby="preview-{{ b.key }}" tabindex="0" aria-disabled="true"
+    <g id="bld-{{ b.key }}" aria-describedby="preview-{{ b.key }}" tabindex="0"
        class="building is-off-limits" transform="translate({{ b.x }},{{ b.y }})">
       <title>{{ b.label }}: off limits on a unit base</title>
-      <use class="building-art" href="#building-{{ b.key }}" y="-16" width="32" height="48"/>
+      <use class="building-art" href="#building-{{ b.key }}" x="-16" y="-32" width="64" height="64"/>
       <text class="building-label label-halo" x="16" y="42">{{ b.label }}</text>
       <text class="building-label" x="16" y="42">{{ b.label }}</text>
     </g>
@@ -274,16 +130,12 @@ body:has(.deploy-page) footer {
        class="building{% if not b.count %} is-empty{% endif %}{% if b.overdue %} is-overdue{% endif %}{% if b.critical %} is-critical{% endif %}{% if b.due_today %} is-due-today{% endif %}"
        transform="translate({{ b.x }},{{ b.y }})">
       <title>{{ b.label }}: {{ b.count }} mission{{ b.count|pluralize }}{% if b.overdue %}, action required{% endif %}{% if b.critical %}, critical{% endif %}{% if b.due_today %}, due today{% endif %}</title>
-      <use class="building-art" href="#building-{{ b.key }}" y="-16" width="32" height="48"/>
+      <use class="building-art" href="#building-{{ b.key }}" x="-16" y="-32" width="64" height="64"/>
       {% if b.critical %}
       <g class="pennant" aria-hidden="true">
         <rect x="1" y="-14" width="1.2" height="14"/>
         <path d="M2.2 -14h7l-2 2.5 2 2.5h-7z"/>
       </g>
-      {% endif %}
-      {% if b.count %}
-      <circle class="badge" cx="28" cy="-12" r="7"/>
-      <text class="badge-num" x="28" y="-12">{{ b.count }}</text>
       {% endif %}
       <text class="building-label label-halo" x="16" y="42">{{ b.label }}</text>
       <text class="building-label" x="16" y="42">{{ b.label }}</text>
@@ -318,7 +170,6 @@ body:has(.deploy-page) footer {
     .deploy-map:has(#bld-{{ b.key }}:is(:hover, :focus-visible)) #preview-{{ b.key }} { display: block; }
     {% endfor %}
   </style>
-</div>
 </div>
 </div>
 {% endblock %}
