@@ -2,22 +2,18 @@ from taskForce.common.grid_map import GridMap
 
 
 MAP = """
-TTTTTTTTTTTTTTTTTTTTTTTT
-TT....TTT...~~~...TTT.TT
-T.........~~~~~~.......T
-T...t.....~~~~~.....s..T
-T...=.......=.......=..T
-TT..=..T....=....T..=..T
-T...=.......=.......=.TT
-T...=.......=.......=..T
-T...=================..T
-T...=.......=.......=..T
-TT..=..T....=....T..=.TT
-T...b.......=.......r..T
-T...........=..........T
-TT..........H.........TT
-TTT.........=........TTT
-TTTTTTTTTTTT=TTTTTTTTTTT
+TTTTTTTTTTTTTTTTTT
+TT.....~~~~~...TTT
+T.......~~~.....TT
+T..t.....=....s..T
+T..=.....=....=..T
+TT.=..T..=..T.=.TT
+T..============..T
+T..=.....=....=..T
+TT.b.....=....r.TT
+T........H.......T
+TTT......=.....TTT
+TTTTTTTTT=TTTTTTTT
 """
 
 TERRAIN = {

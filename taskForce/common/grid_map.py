@@ -35,7 +35,6 @@ class GridMap:
         if unknown:
             raise ValueError(f"Characters missing from terrain/places: {sorted(unknown)}")
 
-
     @cached_property
     def rows(self):
         return self.grid.strip().splitlines()
@@ -60,7 +59,6 @@ class GridMap:
         return None
 
     def position_of(self, char):
-        """Where a one-off character (like the entrance) sits."""
         for pos, c in self.cells():
             if c == char:
                 return pos

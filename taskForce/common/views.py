@@ -11,6 +11,7 @@ from django.utils.translation import gettext_lazy as _
 from django.views.generic import ListView, TemplateView
 
 from taskForce.common.deploy_map import BASE
+from taskForce.common.map_context import map_context
 from taskForce.comms.models import Conversation, ConversationRead, Message
 from taskForce.redirects import with_next
 from taskForce.tasks.forms import LocationQuickAddForm, QuickCreateTaskForm
@@ -178,6 +179,7 @@ class DeployIndexView(LoginRequiredMixin, TemplateView):
         buildings = []
         for key, loc in LOCATIONS.items():
             col, row = positions[key]
+            below = row < 5  # near the top edge: show the preview under the building
             buildings.append({
                 "key": key,
                 "label": loc["label"],
@@ -186,33 +188,21 @@ class DeployIndexView(LoginRequiredMixin, TemplateView):
                 "preview": previews[key],
                 "more": summary[key]["count"] - len(previews[key]),
                 "px": (col * tile + tile / 2) / width * 100,
-                "py": (row * tile - 16) / height * 100,
-                "below": row < 5,  # near the top edge: show the preview under the building
+                "py": ((row * tile + 48) if below else (row * tile - 40)) / height * 100,
+                "below": below,
                 "off_limits": _off_limits(key, unit),
                 **summary[key],
             })
 
         hq_col, hq_row = positions["hq"]
-        avatar_tile = (hq_col + 1, hq_row)
-        route = ""
-        if objective and objective != "hq":
-            path = BASE.find_path(positions["hq"], positions[objective])
-            if len(path) > 2:
-                walk = path[1:-1]
-                route = " ".join(
-                    f"{c * tile + tile // 2},{r * tile + tile // 2}" for c, r in walk
-                )
-                avatar_tile = walk[-1]
+        goal = positions[objective] if objective else None
 
         return {
+            **map_context(
+                BASE, positions["hq"], goal, idle=(hq_col + 2, hq_row), stop_short=1,
+            ),
             "unit": unit,
-            "tiles": list(BASE.tiles()),
             "buildings": buildings,
-            "map_width": width,
-            "map_height": height,
-            "route": route,
-            "avatar_x": avatar_tile[0] * tile,
-            "avatar_y": avatar_tile[1] * tile - 16,
             "objective": objective and {
                 "label": LOCATIONS[objective]["label"],
                 "mission": previews[objective][0],

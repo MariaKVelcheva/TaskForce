@@ -7,6 +7,7 @@ from django.utils import timezone
 
 from taskForce.common.grid_map import GridMap
 from taskForce.common.house_map import BARRACKS, ENTRANCE
+from taskForce.common.map_context import map_context
 from taskForce.tasks.locations import LOCATIONS
 from taskForce.tasks.models import ChoreItem, PantryItem, Task, TaskType
 from taskForce.units.models import Membership
@@ -326,4 +327,41 @@ class BarracksMapTests(SimpleTestCase):
     def test_every_room_appears_once(self):
         expected = {"kitchen", "bathroom", "bedroom", "living", "outdoor", "general"}
         self.assertEqual(set(BARRACKS.place_positions()), expected)
+
+
+class MapContextTests(SimpleTestCase):
+    START = (1, 3)
+
+    def test_without_goal_the_avatar_waits_at_the_start(self):
+        ctx = map_context(tiny(), self.START)
+        self.assertEqual((ctx["avatar_x"], ctx["avatar_y"]), (32, 3 * 32 - 16))
+        self.assertEqual(ctx["route"], "")
+
+    def test_idle_tile_overrides_the_start(self):
+        ctx = map_context(tiny(), self.START, idle=(2, 3))
+        self.assertEqual(ctx["avatar_x"], 64)
+
+    def test_walks_to_the_tile_before_the_goal(self):
+        ctx = map_context(tiny(), self.START, goal=(3, 1))
+        self.assertEqual(ctx["route"], "80,112 112,112 112,80")
+        self.assertEqual((ctx["avatar_x"], ctx["avatar_y"]), (96, 2 * 32 - 16))
+
+    def test_goal_next_to_the_start_needs_no_walk(self):
+        ctx = map_context(tiny(), self.START, goal=(1, 2))
+        self.assertEqual(ctx["route"], "")
+        self.assertEqual(ctx["avatar_x"], 32)
+
+    def test_goal_equal_to_start_needs_no_walk(self):
+        ctx = map_context(tiny(), self.START, goal=self.START)
+        self.assertEqual(ctx["route"], "")
+
+    def test_unreachable_goal_leaves_the_avatar_idle(self):
+        ctx = map_context(tiny(walkable=frozenset("@")), self.START, goal=(3, 1))
+        self.assertEqual(ctx["route"], "")
+        self.assertEqual(ctx["avatar_x"], 32)
+
+    def test_map_size_and_tiles(self):
+        ctx = map_context(tiny(), self.START)
+        self.assertEqual((ctx["map_width"], ctx["map_height"]), (160, 160))
+        self.assertEqual(len(ctx["tiles"]), 25)
 
