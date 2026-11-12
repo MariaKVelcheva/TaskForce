@@ -131,11 +131,6 @@ class DeployLocationViewTests(CommonTestCase):
         data.setdefault("when", "")
         return self.client.post(reverse("deploy-location", args=[key]), data)
 
-    def test_barracks_opens_the_chore_rota(self):
-        chores = self.user.personal_unit.tasks.get(type=TaskType.CHORES)
-        response = self.client.get(reverse("deploy-location", args=["barracks"]))
-        self.assertTrue(response.url.startswith(reverse("details-task", args=[chores.pk])))
-
     def test_nav_groceries_opens_the_active_units_list(self):
         self.switch_to(self.family)
         grocery = self.family.tasks.get(type=TaskType.GROCERIES)
@@ -194,6 +189,87 @@ class DeployLocationViewTests(CommonTestCase):
         PantryItem.objects.create(task=pantry, name="milk", quantity=0, threshold=1)
         response = self.client.get(reverse("deploy"))
         self.assertTrue(self.building(response, "supply")["overdue"])
+
+
+class BarracksInteriorTests(CommonTestCase):
+    def setUp(self):
+        super().setUp()
+        self.chores = self.user.personal_unit.tasks.get(type=TaskType.CHORES)
+
+    def chore(self, room, *, due=True, name=None):
+        now = timezone.now()
+        return ChoreItem.objects.create(
+            task=self.chores, name=name or f"{room or 'general'} chore", room=room,
+            frequency_days=1,
+            last_done_at=now - timedelta(days=3) if due else now,
+        )
+
+    def get(self, **params):
+        return self.client.get(reverse("deploy-location", args=["barracks"]), params)
+
+    def test_opens_the_floor_plan(self):
+        response = self.get()
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "common/interiors/barracks.html")
+
+    def test_every_room_is_on_the_plan(self):
+        keys = {room["key"] for room in self.get().context["rooms"]}
+        self.assertEqual(keys, {"kitchen", "bathroom", "bedroom", "living", "outdoor", "general"})
+
+    def test_nothing_due_shows_general_and_avatar_stays_at_the_door(self):
+        response = self.get()
+        self.assertEqual(response.context["selected_room"]["key"], "general")
+        self.assertEqual(response.context["route"], "")
+
+    def test_defaults_to_the_most_urgent_room_and_walks_there(self):
+        self.chore("bathroom")
+        self.chore("kitchen")
+        self.chore("kitchen", name="mop")
+        response = self.get()
+        self.assertEqual(response.context["selected_room"]["key"], "kitchen")
+        self.assertNotEqual(response.context["route"], "")
+
+    def test_room_parameter_selects_that_room(self):
+        self.chore("kitchen")
+        self.chore("bathroom")
+        response = self.get(room="bathroom")
+        self.assertEqual(response.context["selected_room"]["key"], "bathroom")
+        self.assertEqual([i.name for i in response.context["panel"]["items"]], ["bathroom chore"])
+
+    def test_unknown_room_parameter_falls_back(self):
+        response = self.get(room="dungeon")
+        self.assertEqual(response.context["selected_room"]["key"], "general")
+
+    def test_general_chores_appear_under_general(self):
+        self.chore("")
+        response = self.get(room="general")
+        self.assertEqual([i.name for i in response.context["panel"]["items"]], ["general chore"])
+
+    def test_badges_count_due_chores_only(self):
+        self.chore("kitchen")
+        self.chore("kitchen", due=False)
+        rooms = {r["key"]: r for r in self.get().context["rooms"]}
+        self.assertEqual((rooms["kitchen"]["due"], rooms["kitchen"]["total"]), (1, 2))
+        self.assertEqual(rooms["bedroom"]["total"], 0)
+
+    def test_add_form_defaults_to_the_selected_room(self):
+        response = self.get(room="kitchen")
+        self.assertEqual(response.context["panel"]["item_form"]["room"].value(), "kitchen")
+
+    def test_ticking_returns_to_the_same_room(self):
+        response = self.get(room="kitchen")
+        self.assertIn("room=kitchen", response.context["panel"]["next_url"])
+
+    def test_shows_only_the_active_units_chores(self):
+        family_chores = self.family.tasks.get(type=TaskType.CHORES)
+        ChoreItem.objects.create(task=family_chores, name="family sweep", room="kitchen")
+        response = self.get(room="kitchen")
+        self.assertEqual(response.context["panel"]["items"], [])
+
+    def test_training_still_opens_the_workout(self):
+        workout = self.user.personal_unit.tasks.get(type=TaskType.WORKOUT)
+        response = self.client.get(reverse("deploy-location", args=["training"]))
+        self.assertTrue(response.url.startswith(reverse("details-task", args=[workout.pk])))
 
 
 class DebriefViewTests(CommonTestCase):

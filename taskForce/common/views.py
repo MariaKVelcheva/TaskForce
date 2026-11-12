@@ -19,6 +19,7 @@ from taskForce.tasks.items import ITEM_MODELS, item_progress, get_item_context, 
 from taskForce.tasks.locations import (
     LOCATIONS, location_previews, location_summary, missions_at, next_objective,
 )
+from taskForce.common.barracks import barracks_context
 from taskForce.tasks.models import SINGLETON_TYPES, Task, TaskType
 from taskForce.tasks.urgency import group_by_urgency, with_urgency
 from taskForce.units.models import Membership, Unit
@@ -179,7 +180,7 @@ class DeployIndexView(LoginRequiredMixin, TemplateView):
         buildings = []
         for key, loc in LOCATIONS.items():
             col, row = positions[key]
-            below = row < 5  # near the top edge: show the preview under the building
+            below = row < 5
             buildings.append({
                 "key": key,
                 "label": loc["label"],
@@ -225,6 +226,15 @@ class DeployLocationView(LoginRequiredMixin, ListView):
         unit = active_unit_for(request.user)
         off_limits = _off_limits(self.location_key, unit)
 
+        interior = self.location.get("interior")
+        if interior and not off_limits:
+            return render(request, interior, {
+                "unit": unit,
+                "location_key": self.location_key,
+                "location_label": self.location["label"],
+                **self.get_interior_context(request, unit),
+            })
+
         singleton_type = _single_singleton_type(self.location)
         if singleton_type and not off_limits:
             task = unit.tasks.filter(type=singleton_type).first()
@@ -233,23 +243,26 @@ class DeployLocationView(LoginRequiredMixin, ListView):
                     reverse("details-task", args=[task.pk]), reverse("deploy"),
                 ))
 
-        interior = self.location.get("interior")
-        if interior and not off_limits:
-            tasks = {t.type: t for t in unit.tasks.filter(type__in=self.location["types"])}
-            panels = []
-            for task_type in self.location["types"]:
-                if task_type in tasks:
-                    panel = get_item_context(tasks[task_type])
-                    panel["next_url"] = request.get_full_path()
-                    panels.append(panel)
-            return render(request, interior, {
-                "unit": unit,
-                "location_key": self.location_key,
-                "location_label": self.location["label"],
-                "panels": panels,
-            })
-
         return super().get(request, *args, **kwargs)
+
+    def get_interior_context(self, request, unit):
+        tasks = {t.type: t for t in unit.tasks.filter(type__in=self.location["types"])}
+        next_url = request.get_full_path()
+
+        if self.location_key == "barracks":
+            context = barracks_context(
+                tasks[TaskType.CHORES], timezone.now(), request.GET.get("room"),
+            )
+            context["panel"]["next_url"] = next_url
+            return context
+
+        panels = []
+        for task_type in self.location["types"]:
+            if task_type in tasks:
+                panel = get_item_context(tasks[task_type])
+                panel["next_url"] = next_url
+                panels.append(panel)
+        return {"panels": panels}
 
     def get_queryset(self):
         self.now = timezone.now()

@@ -1,0 +1,146 @@
+{% extends "common/base.html" %}
+
+{% block title %}{{ location_label }} — Task: Force!{% endblock %}
+
+{% block extra_css %}
+{% include "tasks/partials/_items_css.html" %}
+<style>
+    .interior-header {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .interior-title {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 1.8rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--khaki);
+    }
+
+    .interior-unit {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.65rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-left: auto;
+    }
+
+    /* Plan on the left (wider), duties on the right; stacked on phones. */
+    .barracks {
+        display: grid;
+        grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+        gap: 1.5rem;
+        align-items: start;
+    }
+
+    .barracks-plan svg { display: block; width: 100%; height: auto; border-radius: var(--radius); }
+
+    .room-label { font: 600 8px "Barlow Condensed", sans-serif; text-anchor: middle; fill: #f2ead0; }
+    .label-halo { stroke: #2b2d1c; stroke-width: 2.5px; stroke-linejoin: round; }
+    .badge      { fill: var(--rust-light); }
+    .badge-num  { font: 8px "Share Tech Mono", monospace; fill: #fff;
+                  text-anchor: middle; dominant-baseline: central; }
+
+    .room:hover .room-art,
+    .room:focus-visible .room-art { filter: brightness(1.15) drop-shadow(0 0 2px #fff); }
+    .room:focus-visible { outline: none; }
+
+    /* No duties set up in this room yet: greyed out, not "clean and done". */
+    .room.is-empty .room-art   { filter: grayscale(1) brightness(.8); opacity: .55; }
+    .room.is-empty .room-label { opacity: .6; }
+
+    .room-selected { fill: none; stroke: #f2ead0; stroke-width: 1.5; stroke-dasharray: 3 2; }
+
+    .route { fill: none; stroke: #f2ead0; stroke-width: 2.5; stroke-dasharray: 2 6;
+             stroke-linecap: round; opacity: .85; animation: march 1s linear infinite; }
+    @keyframes march { to { stroke-dashoffset: -8; } }
+
+    .interior-panel {
+        background: var(--olive-mid);
+        border: 1px solid var(--khaki-dark);
+        border-radius: var(--radius);
+        padding: 0 1.1rem;
+        scroll-margin-top: 1rem;
+    }
+
+    .interior-panel .items-block {
+        margin: 0;
+        border-top: none;
+        padding: 1rem 0 1.1rem;
+    }
+
+    .panel-room {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 1.35rem;
+        color: var(--cream);
+        padding-top: 1rem;
+    }
+
+    @media (max-width: 720px) {
+        .barracks { grid-template-columns: 1fr; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .route { animation: none; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="interior-header">
+    <a href="{% url 'deploy' %}" class="btn btn-ghost" style="font-size: 0.82rem;">← Map</a>
+    <h1 class="interior-title">{{ location_label }}</h1>
+    <a href="{% url 'details-task' panel.task.pk %}?next={{ request.get_full_path|urlencode }}"
+       class="btn btn-ghost" style="font-size: 0.82rem;">List view</a>
+    <span class="interior-unit">{% if unit.personal_for_id %}Personal base{% else %}{{ unit.name }}{% endif %}</span>
+</div>
+
+<div class="barracks">
+    <div class="barracks-plan">
+        {% include "tasks/partials/_barracks_sprites.html" %}
+        <svg viewBox="0 0 {{ map_width }} {{ map_height }}" aria-label="Barracks floor plan">
+            <g aria-hidden="true">
+                {% for t in tiles %}<use href="#tile-{{ t.kind }}" x="{{ t.x }}" y="{{ t.y }}" width="32" height="32"/>{% endfor %}
+            </g>
+
+            {% if route %}
+            <polyline class="route" points="{{ route }}" aria-hidden="true"/>
+            {% endif %}
+
+            <use class="avatar" href="#avatar" x="{{ avatar_x }}" y="{{ avatar_y }}" width="32" height="48" aria-hidden="true"/>
+
+            {% for r in rooms %}
+            <a href="{{ r.url }}" class="room{% if not r.total %} is-empty{% endif %}"
+               {% if r.selected %}aria-current="true"{% endif %}
+               transform="translate({{ r.x }},{{ r.y }})">
+                <title>{{ r.label }}: {% if r.total %}{{ r.due }} of {{ r.total }} dut{{ r.total|pluralize:"y,ies" }} due{% else %}no duties set up{% endif %}</title>
+                {% if r.selected %}<rect class="room-selected" x="-4" y="-20" width="40" height="66" rx="4" aria-hidden="true"/>{% endif %}
+                <use class="room-art" href="#room-{{ r.key }}" y="-16" width="32" height="48"/>
+                {% if r.due %}
+                <circle class="badge" cx="28" cy="-12" r="7"/>
+                <text class="badge-num" x="28" y="-12">{{ r.due }}</text>
+                {% endif %}
+                <text class="room-label label-halo" x="16" y="42">{{ r.label }}</text>
+                <text class="room-label" x="16" y="42">{{ r.label }}</text>
+            </a>
+            {% endfor %}
+        </svg>
+    </div>
+
+    <section class="interior-panel" id="duties" data-refresh="page">
+        <h2 class="panel-room">{{ selected_room.label }}</h2>
+        {% include panel.item_partial with task=panel.task items=panel.items item_form=panel.item_form items_done=panel.items_done items_total=panel.items_total next_url=panel.next_url %}
+    </section>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% include "tasks/partials/_items_js.html" %}
+{% endblock %}
+

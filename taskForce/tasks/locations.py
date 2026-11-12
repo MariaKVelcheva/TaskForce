@@ -16,7 +16,11 @@ LOCATIONS = {
         "creates": None,
         "interior": "common/interiors/supply.html",
     },
-    "barracks": {"label": _("Barracks"), "types": (TaskType.CHORES,), "creates": None},
+    "barracks": {
+        "label": _("Barracks"),
+        "types": (TaskType.CHORES,),
+        "creates": None,
+        "interior": "common/interiors/barracks.html",},
     "rec_room": {"label": _("Rec Room"), "types": (TaskType.LIST,), "creates": TaskType.LIST},
 }
 
