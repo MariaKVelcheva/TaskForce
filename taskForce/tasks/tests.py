@@ -679,6 +679,12 @@ class RoomSummaryTests(TestCase):
         self.assertEqual(summary["kitchen"], {"total": 2, "due": 1})
         self.assertEqual(summary["bathroom"], {"total": 1, "due": 1})
 
+    def test_unticked_one_off_chores_count_as_due(self):
+        ChoreItem.objects.create(task=self.chores, name="fix shelf", room="kitchen")
+        ChoreItem.objects.create(task=self.chores, name="hang photo", room="kitchen", is_checked=True)
+        summary = room_summary(self.chores, timezone.now())
+        self.assertEqual(summary["kitchen"], {"total": 2, "due": 1})
+        
     def test_general_chores_are_keyed_general(self):
         self.chore("", due=True)
         summary = room_summary(self.chores, timezone.now())

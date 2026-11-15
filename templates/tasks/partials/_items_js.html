@@ -7,8 +7,8 @@
         const response = await fetch(window.location.href);
         if (!response.ok) { window.location.reload(); return; }
         const page = new DOMParser().parseFromString(await response.text(), "text/html");
-        page.querySelectorAll(".items-block[data-block]").forEach((fresh) => {
-            const current = document.querySelector(`.items-block[data-block="${fresh.dataset.block}"]`);
+                page.querySelectorAll("[data-block]").forEach((fresh) => {
+            const current = document.querySelector(`[data-block="${fresh.dataset.block}"]`);
             if (current) current.replaceWith(document.adoptNode(fresh));
         });
     }

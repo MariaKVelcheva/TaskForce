@@ -32,7 +32,7 @@ def _count_by_room(queryset):
 def room_summary(chores, now):
     items = ChoreItem.objects.filter(task=chores)
     totals = _count_by_room(items)
-    due = _count_by_room(ChoreItem.objects.due(now).filter(task=chores))
+    due = _count_by_room(ChoreItem.objects.pending(now).filter(task=chores))
     return {
         key: {"total": totals.get(key, 0), "due": due.get(key, 0)}
         for key in room_keys()

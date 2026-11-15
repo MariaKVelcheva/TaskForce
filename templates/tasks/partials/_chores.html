@@ -1,4 +1,4 @@
-<div class="items-block">
+<div class="items-block" data-block="chores"{% if refresh_page %} data-refresh="page"{% endif %}>
     <style>
         .items-resting { margin-top: 0.9rem; }
         .items-resting:not(:has(li)) { display: none; }
@@ -111,7 +111,7 @@
         <div class="item-add-line">
             <span class="item-add-box"></span>
             <input type="text" name="name" class="item-add-name"
-                   placeholder="Add duty..." maxlength="50" required autofocus>
+                                      placeholder="Add duty..." maxlength="50" required{% if not no_autofocus %} autofocus{% endif %}>
             <button type="submit">Add</button>
         </div>
         <div class="item-add-line secondary">

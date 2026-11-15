@@ -102,7 +102,7 @@
 </div>
 
 <div class="barracks">
-    <div class="barracks-plan">
+    <div class="barracks-plan" data-block="plan">
         {% include "tasks/partials/_barracks_sprites.html" %}
         <svg viewBox="0 0 {{ map_width }} {{ map_height }}" aria-label="Barracks floor plan">
             <g aria-hidden="true">
@@ -133,9 +133,9 @@
         </svg>
     </div>
 
-    <section class="interior-panel" id="duties" data-refresh="page">
+    <section class="interior-panel" id="duties">
         <h2 class="panel-room">{{ selected_room.label }}</h2>
-        {% include panel.item_partial with task=panel.task items=panel.items item_form=panel.item_form items_done=panel.items_done items_total=panel.items_total next_url=panel.next_url %}
+        {% include panel.item_partial with task=panel.task items=panel.items item_form=panel.item_form items_done=panel.items_done items_total=panel.items_total next_url=panel.next_url refresh_page=True no_autofocus=True %}
     </section>
 </div>
 {% endblock %}
