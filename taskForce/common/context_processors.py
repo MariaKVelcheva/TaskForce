@@ -46,7 +46,7 @@ def task_type_counts(request):
     )
 
     flagged = set(
-        ChoreItem.objects.due()
+        ChoreItem.objects.pending()
         .filter(task__in=active_tasks)
         .order_by()
         .values_list("task_id", "task__type")

@@ -23,7 +23,7 @@ ACTIONABLE = {"overdue", "today", "soon"}
 
 
 def has_due_chores(now=None):
-    return Exists(ChoreItem.objects.due(now).filter(task=OuterRef("pk")))
+    return Exists(ChoreItem.objects.pending(now).filter(task=OuterRef("pk")))
 
 
 def has_low_stock():

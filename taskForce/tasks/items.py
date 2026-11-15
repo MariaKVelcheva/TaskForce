@@ -73,7 +73,7 @@ def item_progress(now=None):
     return {
         "items_total": total,
         "items_done": done,
-        "duties_due": _count_items(ChoreItem.objects.due(now)),
+        "duties_due": _count_items(ChoreItem.objects.pending(now)),
         "stock_low": _count_items(PantryItem.objects.low()),
     }
 

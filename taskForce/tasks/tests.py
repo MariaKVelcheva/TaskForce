@@ -17,7 +17,7 @@ from taskForce.tasks.models import (
     ChoreItem, GroceryItem, ListItem, PantryItem, Task, TaskType, WorkoutItem,
 )
 from taskForce.tasks.rooms import room_summary, most_urgent_room, room_value, GENERAL, room_keys
-from taskForce.tasks.urgency import bucket_for, group_by_urgency, urgency_key
+from taskForce.tasks.urgency import bucket_for, group_by_urgency, urgency_key, with_urgency
 from taskForce.units.models import Membership
 from taskForce.units.services import create_personal_unit, create_unit
 
@@ -727,3 +727,21 @@ class RoomKeyTests(SimpleTestCase):
     def test_floor_plan_has_exactly_the_rooms_the_model_knows(self):
         self.assertEqual(set(BARRACKS.places.values()), set(room_keys()))
 
+
+class ChoreUrgencyTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        user = get_user_model().objects.create_user("sergeant", password="x")
+        cls.unit = create_personal_unit(user)
+        cls.chores = cls.unit.tasks.get(type=TaskType.CHORES)
+
+    def has_due_chores(self):
+        return with_urgency(Task.objects.filter(pk=self.chores.pk), timezone.now()).get().has_due_chores
+
+    def test_unticked_one_off_chore_is_waiting(self):
+        ChoreItem.objects.create(task=self.chores, name="fix shelf", room="kitchen")
+        self.assertTrue(self.has_due_chores())
+
+    def test_ticked_one_off_chore_is_not_waiting(self):
+        ChoreItem.objects.create(task=self.chores, name="fix shelf", is_checked=True)
+        self.assertFalse(self.has_due_chores())

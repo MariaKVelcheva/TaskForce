@@ -229,6 +229,15 @@ class BarracksInteriorTests(CommonTestCase):
         self.assertEqual(response.context["selected_room"]["key"], "kitchen")
         self.assertNotEqual(response.context["route"], "")
 
+    def test_building_and_rooms_agree_on_one_off_chores(self):
+        ChoreItem.objects.create(task=self.chores, name="fix shelf", room="kitchen")
+
+        map_response = self.client.get(reverse("deploy"))
+        self.assertTrue(self.building(map_response, "barracks")["overdue"])
+
+        rooms = {r["key"]: r for r in self.get().context["rooms"]}
+        self.assertEqual(rooms["kitchen"]["due"], 1)
+
     def test_room_parameter_selects_that_room(self):
         self.chore("kitchen")
         self.chore("bathroom")
