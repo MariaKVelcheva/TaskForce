@@ -175,3 +175,114 @@ def recurring_checkable_constraints(model_name):
             name=f"{model_name}_checked_by_needs_checked",
         ),
     ]
+
+
+# --- Add to taskForce/tasks/mixins.py, after RecurringItem ------------------
+
+
+def week_date(weekday, today):
+    """The date of `weekday` (0 = Monday) in the week that contains `today`."""
+    return today - timedelta(days=today.weekday()) + timedelta(days=weekday)
+
+
+class WeeklyItem(models.Model):
+    class Weekday(models.IntegerChoices):
+        MONDAY = 0, _("Monday")
+        TUESDAY = 1, _("Tuesday")
+        WEDNESDAY = 2, _("Wednesday")
+        THURSDAY = 3, _("Thursday")
+        FRIDAY = 4, _("Friday")
+        SATURDAY = 5, _("Saturday")
+        SUNDAY = 6, _("Sunday")
+
+    weekday = models.PositiveSmallIntegerField(
+        choices=Weekday.choices,
+        null=True,
+        blank=True,
+        verbose_name=_("weekday"),
+    )
+    last_done_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name=_("last done at"),
+    )
+    previous_done_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name=_("previously done at"),
+    )
+
+    @property
+    def is_planned(self):
+        return self.weekday is not None
+
+    def scheduled_date(self):
+        if self.weekday is None:
+            return None
+        return week_date(self.weekday, timezone.localdate())
+
+    @property
+    def is_done(self):
+        day = self.scheduled_date()
+        return (
+            day is not None
+            and self.last_done_at is not None
+            and timezone.localdate(self.last_done_at) >= day
+        )
+
+    @property
+    def is_open(self):
+        day = self.scheduled_date()
+        return day is not None and day <= timezone.localdate() and not self.is_done
+
+    @property
+    def is_missed(self):
+        day = self.scheduled_date()
+        return day is not None and day < timezone.localdate() and not self.is_done
+
+    @property
+    def is_upcoming(self):
+        day = self.scheduled_date()
+        return day is not None and day > timezone.localdate()
+
+    def tick(self, user):
+        with transaction.atomic():
+            item = type(self).objects.select_for_update().get(pk=self.pk)
+            if not item.is_open:
+                return False
+            type(self).objects.filter(pk=self.pk).update(
+                previous_done_at=item.last_done_at,
+                last_done_at=timezone.now(),
+                checked_by=user,
+            )
+            _add_points(user.pk, 1)
+        return True
+
+    def untick(self):
+        with transaction.atomic():
+            item = type(self).objects.select_for_update().get(pk=self.pk)
+            if not item.is_done or item.checked_by_id is None:
+                return False
+            type(self).objects.filter(pk=self.pk).update(
+                last_done_at=item.previous_done_at,
+                previous_done_at=None,
+                checked_by=None,
+            )
+            _add_points(item.checked_by_id, -1)
+        return True
+
+    class Meta:
+        abstract = True
+
+
+def weekly_checkable_constraints(model_name):
+    return [
+        CheckConstraint(
+            condition=Q(is_checked=False),
+            name=f"{model_name}_weekly_never_checked",
+        ),
+        CheckConstraint(
+            condition=Q(weekday__isnull=True) | Q(weekday__lte=6),
+            name=f"{model_name}_weekday_range",
+        ),
+    ]

@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from unittest.mock import patch
 from zoneinfo import ZoneInfo
 
 from django.contrib.auth import get_user_model
@@ -14,7 +15,7 @@ from taskForce.tasks.locations import (
     LOCATIONS, location_previews, location_summary, missions_at, next_objective,
 )
 from taskForce.tasks.models import (
-    ChoreItem, GroceryItem, ListItem, PantryItem, Task, TaskType, WorkoutItem,
+    ChoreItem, GroceryItem, ListItem, PantryItem, Task, TaskType, WorkoutItem, Exercise,
 )
 from taskForce.tasks.rooms import room_summary, most_urgent_room, room_value, GENERAL, room_keys
 from taskForce.tasks.urgency import bucket_for, group_by_urgency, urgency_key, with_urgency
@@ -745,3 +746,99 @@ class ChoreUrgencyTests(TestCase):
     def test_ticked_one_off_chore_is_not_waiting(self):
         ChoreItem.objects.create(task=self.chores, name="fix shelf", is_checked=True)
         self.assertFalse(self.has_due_chores())
+
+
+MONDAY = 0
+WEDNESDAY = 2
+
+
+def at(day, hour=10):
+    return timezone.make_aware(datetime(2026, 11, day, hour))
+
+
+class WeeklyItemTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = get_user_model().objects.create_user("athlete", password="x")
+        unit = create_personal_unit(cls.user)
+        cls.workout = unit.tasks.get(type=TaskType.WORKOUT)
+        cls.squats = Exercise.objects.create(name="Test squats", owner=cls.user)
+
+    def item(self, weekday=MONDAY):
+        return WorkoutItem.objects.create(
+            task=self.workout, exercise=self.squats, name="Test squats", weekday=weekday,
+        )
+
+    def on(self, when):
+        return patch("django.utils.timezone.now", return_value=when)
+
+    def points(self):
+        self.user.avatar.refresh_from_db()
+        return self.user.avatar.points
+
+    def fresh(self, item):
+        return WorkoutItem.objects.get(pk=item.pk)
+
+    def test_tick_on_its_day_marks_done_and_scores(self):
+        item = self.item()
+        with self.on(at(16)):
+            self.assertTrue(item.tick(self.user))
+            self.assertTrue(self.fresh(item).is_done)
+        self.assertEqual(self.points(), 1)
+
+    def test_cannot_tick_twice_in_one_week(self):
+        item = self.item()
+        with self.on(at(16)):
+            item.tick(self.user)
+            self.assertFalse(self.fresh(item).tick(self.user))
+        self.assertEqual(self.points(), 1)
+
+    def test_stays_done_for_the_rest_of_the_week(self):
+        item = self.item()
+        with self.on(at(16)):
+            item.tick(self.user)
+        with self.on(at(22, hour=23)):  # Sunday night
+            self.assertTrue(self.fresh(item).is_done)
+
+    def test_resets_the_next_week(self):
+        item = self.item()
+        with self.on(at(16)):
+            item.tick(self.user)
+        with self.on(at(23)):  # next Monday
+            self.assertFalse(self.fresh(item).is_done)
+            self.assertTrue(self.fresh(item).is_open)
+
+    def test_late_tick_still_counts(self):
+        item = self.item(MONDAY)
+        with self.on(at(17)):  # Tuesday
+            self.assertTrue(item.tick(self.user))
+            self.assertTrue(self.fresh(item).is_done)
+
+    def test_future_day_is_locked(self):
+        item = self.item(WEDNESDAY)
+        with self.on(at(16)):
+            self.assertTrue(item.is_upcoming)
+            self.assertFalse(item.tick(self.user))
+        self.assertEqual(self.points(), 0)
+
+    def test_past_unticked_day_is_missed(self):
+        item = self.item(MONDAY)
+        with self.on(at(18)):  # Wednesday
+            self.assertTrue(item.is_missed)
+
+    def test_untick_restores_last_week_and_takes_the_point_back(self):
+        item = self.item()
+        with self.on(at(9)):  # the Monday before
+            item.tick(self.user)
+        with self.on(at(16)):
+            self.fresh(item).tick(self.user)
+            self.assertTrue(self.fresh(item).untick())
+            item = self.fresh(item)
+            self.assertFalse(item.is_done)
+            self.assertEqual(item.last_done_at, at(9))
+        self.assertEqual(self.points(), 1)  # last week's point stays
+
+    def test_unplanned_item_cannot_be_ticked(self):
+        item = self.item(weekday=None)
+        with self.on(at(16)):
+            self.assertFalse(item.tick(self.user))
