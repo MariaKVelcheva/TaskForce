@@ -31,7 +31,7 @@ class CheckableItemManager(TaskItemManager):
 
 class PantryItemManager(TaskItemManager):
     def low(self):
-        return self.filter(quantity__lte=F("threshold"))
+        return self.filter(threshold__isnull=False, quantity__lte=F("threshold"))
 
 
 class RecurringItemManager(TaskItemManager):

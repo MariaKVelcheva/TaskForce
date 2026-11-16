@@ -14,13 +14,15 @@ class PantryItem(TaskItem):
     threshold = models.PositiveSmallIntegerField(
         default=0,
         verbose_name=_("low at"),
+        null=True,
+        blank=True,
     )
 
     objects = PantryItemManager()
 
     @property
     def is_low(self):
-        return self.quantity <= self.threshold
+        return self.threshold is not None and self.quantity <= self.threshold
 
     @property
     def restock_amount(self):
