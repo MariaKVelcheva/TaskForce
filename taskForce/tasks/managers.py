@@ -1,8 +1,15 @@
-from datetime import timedelta
+import operator
+from datetime import timedelta, datetime, time
+from functools import reduce
 
 from django.db import models
 from django.db.models import DateTimeField, Exists, ExpressionWrapper, F, OuterRef, Q
 from django.db.models.functions import Now
+from django.utils import timezone
+
+
+def week_date(weekday, today):
+    return today - timedelta(days=today.weekday()) + timedelta(days=weekday)
 
 
 class TaskManager(models.Manager):
@@ -74,4 +81,16 @@ class RecurringItemManager(TaskItemManager):
         return self.annotate(due_at=self.DUE_AT).filter(self.pending_q(now))
 
 
+class WeeklyItemManager(CheckableItemManager):
+    @staticmethod
+    def done_q(now=None):
+        today = timezone.localdate(now)
+        return reduce(operator.or_, (
+            Q(weekday=day, last_done_at__gte=timezone.make_aware(
+                datetime.combine(week_date(day, today), time.min)
+            ))
+            for day in range(7)
+        ))
 
+    def done(self, now=None):
+        return self.filter(self.done_q(now))

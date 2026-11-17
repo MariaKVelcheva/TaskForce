@@ -208,7 +208,7 @@ class PantryItemForm(forms.ModelForm):
 class WorkoutItemForm(forms.ModelForm):
     class Meta:
         model = WorkoutItem
-        fields = ("name", "reps", "duration", "weight")
+        fields = ("name", "reps", "duration", "weight", "weekday")
         labels = {
             "name": _("Workout name"),
             "reps": _("Reps"),

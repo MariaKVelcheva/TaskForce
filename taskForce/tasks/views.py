@@ -14,7 +14,7 @@ from taskForce.redirects import NextMixin, get_next, with_next
 from taskForce.tasks.forms import CreateTaskForm, UpdateTaskForm
 from taskForce.tasks.items import ITEM_FORMS, ITEM_MODELS, get_item_context
 from taskForce.tasks.mixins import CheckableItem, RecurringItem
-from taskForce.tasks.models import SINGLETON_TYPES, Task, TaskType, GroceryItem, PantryItem
+from taskForce.tasks.models import SINGLETON_TYPES, Task, TaskType, GroceryItem, PantryItem, WorkoutItem
 from taskForce.tasks.urgency import with_urgency
 from taskForce.units.models import Membership
 from taskForce.units.services import active_unit_for
@@ -227,6 +227,9 @@ def add_item(request, task_pk):
     if form.is_valid():
         item = form.save(commit=False)
         item.task = task
+        if task.type == TaskType.WORKOUT:
+            item.exercise = find_or_create_exercise(request.user, item.name)
+            item.name = item.exercise.name
         item.save()
     else:
         for errors in form.errors.values():
@@ -260,6 +263,25 @@ def need_item_now(request, task_pk, item_pk):
 
     item = get_object_or_404(item_model, pk=item_pk, task=task)
     item.need_now()
+    return _item_response(request, task)
+
+
+@login_required
+@require_POST
+def plan_item(request, task_pk, item_pk):
+    task, item_model = get_task_and_item_model(request.user, task_pk)
+    if item_model is not WorkoutItem:
+        raise Http404
+
+    item = get_object_or_404(WorkoutItem, pk=item_pk, task=task)
+    try:
+        weekday = int(request.POST.get("weekday", ""))
+    except ValueError:
+        return HttpResponseBadRequest()
+    if weekday not in WorkoutItem.Weekday.values:
+        return HttpResponseBadRequest()
+
+    WorkoutItem.objects.filter(pk=item.pk).update(weekday=weekday)
     return _item_response(request, task)
 
 

@@ -9,7 +9,7 @@ from taskForce.common.grid_map import GridMap
 from taskForce.common.house_map import BARRACKS, ENTRANCE
 from taskForce.common.map_context import map_context
 from taskForce.tasks.locations import LOCATIONS
-from taskForce.tasks.models import ChoreItem, PantryItem, Task, TaskType
+from taskForce.tasks.models import ChoreItem, PantryItem, Task, TaskType, Exercise, WorkoutItem
 from taskForce.units.models import Membership
 from taskForce.common.deploy_map import BASE
 from taskForce.units.services import create_personal_unit, create_unit
@@ -275,10 +275,74 @@ class BarracksInteriorTests(CommonTestCase):
         response = self.get(room="kitchen")
         self.assertEqual(response.context["panel"]["items"], [])
 
-    def test_training_still_opens_the_workout(self):
-        workout = self.user.personal_unit.tasks.get(type=TaskType.WORKOUT)
-        response = self.client.get(reverse("deploy-location", args=["training"]))
-        self.assertTrue(response.url.startswith(reverse("details-task", args=[workout.pk])))
+
+class TrainingPlannerTests(CommonTestCase):
+    def setUp(self):
+        super().setUp()
+        self.workout = self.user.personal_unit.tasks.get(type=TaskType.WORKOUT)
+
+    def get(self):
+        return self.client.get(reverse("deploy-location", args=["training"]))
+
+    def add(self, name, weekday=0, **extra):
+        return self.client.post(
+            reverse("add-item", args=[self.workout.pk]),
+            {"name": name, "weekday": weekday, **extra},
+        )
+
+    def test_opens_the_planner(self):
+        response = self.get()
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "common/interiors/training.html")
+
+    def test_week_has_seven_days_and_one_today(self):
+        days = self.get().context["days"]
+        self.assertEqual([d["weekday"] for d in days], list(range(7)))
+        self.assertEqual(sum(d["is_today"] for d in days), 1)
+
+    def test_adding_a_library_name_links_the_shared_exercise(self):
+        self.add("  squats ")
+        item = WorkoutItem.objects.get(task=self.workout)
+        self.assertIsNone(item.exercise.owner)  # the seeded library entry
+        self.assertEqual(item.name, "Squats")
+        self.assertEqual(item.weekday, 0)
+
+    def test_adding_a_new_name_creates_a_custom_exercise_once(self):
+        self.add("Kettlebell swing", weekday=1)
+        self.add("kettlebell SWING", weekday=3)
+        custom = Exercise.objects.filter(owner=self.user, name__iexact="kettlebell swing")
+        self.assertEqual(custom.count(), 1)
+        self.assertEqual(WorkoutItem.objects.filter(exercise=custom.get()).count(), 2)
+
+    def test_items_appear_on_their_day(self):
+        self.add("Plank", weekday=4)
+        friday = self.get().context["days"][4]
+        self.assertEqual([i.name for i in friday["items"]], ["Plank"])
+
+    def test_plan_moves_an_unplanned_item_into_the_week(self):
+        exercise = Exercise.objects.create(name="Old drill", owner=self.user)
+        item = WorkoutItem.objects.create(task=self.workout, exercise=exercise, name="Old drill")
+        self.assertIn(item, self.get().context["unplanned"])
+
+        self.client.post(reverse("plan-item", args=[self.workout.pk, item.pk]), {"weekday": 2})
+        item.refresh_from_db()
+        self.assertEqual(item.weekday, 2)
+
+    def test_plan_rejects_an_impossible_day(self):
+        exercise = Exercise.objects.create(name="Old drill", owner=self.user)
+        item = WorkoutItem.objects.create(task=self.workout, exercise=exercise, name="Old drill")
+        response = self.client.post(
+            reverse("plan-item", args=[self.workout.pk, item.pk]), {"weekday": 9},
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_suggestions_include_library_and_own_but_not_others(self):
+        Exercise.objects.create(name="Mine only", owner=self.user)
+        Exercise.objects.create(name="Not mine", owner=self.mate)
+        suggestions = self.get().context["suggestions"]
+        self.assertIn("Squats", suggestions)
+        self.assertIn("Mine only", suggestions)
+        self.assertNotIn("Not mine", suggestions)
 
 
 class DebriefViewTests(CommonTestCase):

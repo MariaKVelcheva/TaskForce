@@ -842,3 +842,18 @@ class WeeklyItemTests(TestCase):
         item = self.item(weekday=None)
         with self.on(at(16)):
             self.assertFalse(item.tick(self.user))
+
+    def test_manager_done_matches_is_done(self):
+        monday = self.item(MONDAY)
+        wednesday = self.item(WEDNESDAY)
+        unplanned = self.item(weekday=None)
+        with self.on(at(16)):
+            monday.tick(self.user)
+        with self.on(at(18)):
+            done = set(WorkoutItem.objects.done().filter(task=self.workout).values_list("pk", flat=True))
+            self.assertEqual(done, {monday.pk})
+            for item in (monday, wednesday, unplanned):
+                self.assertEqual(self.fresh(item).is_done, item.pk in done)
+
+
+

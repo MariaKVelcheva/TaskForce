@@ -1,0 +1,265 @@
+{% extends "common/base.html" %}
+
+{% block title %}{{ location_label }} — Task: Force!{% endblock %}
+
+{% block extra_css %}
+{% include "tasks/partials/_items_css.html" %}
+<style>
+    .interior-header {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .interior-title {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 1.8rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--khaki);
+    }
+
+    .interior-unit {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.65rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-left: auto;
+    }
+
+    /* ---- The week: seven columns like a school planner ---- */
+    .planner {
+        display: grid;
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+        gap: 0.6rem;
+        align-items: stretch;
+    }
+
+    .planner .items-block.day {
+        margin: 0;
+        border-top: none;
+        padding: 0.75rem 0.6rem 0.9rem;
+        background: var(--olive-mid);
+        border: 1px solid var(--olive);
+        border-radius: var(--radius);
+        display: flex;
+        flex-direction: column;
+        min-height: 12rem;
+    }
+
+    .day.is-today {
+        border-color: var(--khaki);
+        box-shadow: 0 0 0 1px var(--khaki), 0 6px 18px rgba(0, 0, 0, 0.3);
+    }
+
+    .day.is-past { opacity: 0.85; }
+
+    .day-head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 0.4rem;
+        border-bottom: 1px solid var(--olive);
+        padding-bottom: 0.45rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .day-name {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 1.15rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--cream);
+    }
+
+    .day.is-today .day-name { color: var(--khaki); }
+
+    .day-date, .day-count {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.65rem;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+    }
+
+    .day-rest {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.68rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--muted);
+        padding: 0.4rem 0;
+    }
+
+    .planner .item-row { flex-wrap: wrap; row-gap: 0.15rem; }
+    .planner .item-name { flex: 1 1 100%; order: 0; }
+    .planner .item-meta {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.65rem;
+        color: var(--khaki-muted);
+    }
+
+    /* Missed: quiet, not alarming. Upcoming: locked until its day. */
+    .item-row.is-missed .item-name { color: var(--muted); }
+    .item-row.is-missed .item-meta::after { content: " · missed"; color: var(--muted); }
+    .item-toggle:disabled { cursor: not-allowed; opacity: 0.4; }
+
+    .day-add { margin-top: auto; padding-top: 0.5rem; }
+    .day-add summary {
+        cursor: pointer;
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.65rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--muted);
+        list-style: none;
+    }
+    .day-add summary::-webkit-details-marker { display: none; }
+    .day-add summary:hover { color: var(--khaki); }
+
+    .planner .item-add { flex-wrap: wrap; gap: 0.35rem; }
+    .planner .item-add input[type="text"] { min-width: 0; flex: 1 1 100%; }
+    .planner .item-add .item-add-reps,
+    .planner .item-add .item-add-weight { flex: 1 1 40%; }
+
+    /* ---- Unplanned tray ---- */
+    .tray {
+        margin-top: 1.5rem;
+        background: var(--olive-mid);
+        border: 1px dashed var(--khaki-dark);
+        border-radius: var(--radius);
+        padding: 0 1rem;
+    }
+    .tray .items-block { margin: 0; border-top: none; padding: 0.9rem 0 1rem; }
+    .plan-form { display: flex; gap: 0.35rem; align-items: center; }
+    .plan-form select {
+        background: var(--olive-dark);
+        color: var(--cream);
+        border: 1px solid var(--khaki-dark);
+        border-radius: var(--radius-sm);
+        padding: 0.15rem 0.35rem;
+        font-size: 0.8rem;
+    }
+
+    /* ---- Narrow screens: days stack, today first ---- */
+    @media (max-width: 900px) {
+        .planner { grid-template-columns: 1fr; }
+        .day.is-today { order: -1; }
+        .planner .items-block.day { min-height: 0; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="interior-header">
+    <a href="{% url 'deploy' %}" class="btn btn-ghost" style="font-size: 0.82rem;">← Map</a>
+    <h1 class="interior-title">{{ location_label }}</h1>
+    <a href="{% url 'details-task' workout.pk %}?next={{ request.get_full_path|urlencode }}"
+       class="btn btn-ghost" style="font-size: 0.82rem;">List view</a>
+    <span class="interior-unit">Personal base</span>
+</div>
+
+<datalist id="exercise-library">
+    {% for name in suggestions %}<option value="{{ name }}">{% endfor %}
+</datalist>
+
+<div class="planner">
+    {% for d in days %}
+    <section class="items-block day{% if d.is_today %} is-today{% endif %}{% if d.is_past %} is-past{% endif %}"
+             data-block="day-{{ d.weekday }}"
+             {% if d.is_today %}aria-current="date"{% endif %}>
+        <div class="day-head">
+            <span class="day-name">{{ d.label|slice:":3" }}</span>
+            <span class="day-date">{{ d.date|date:"j M" }}</span>
+            {% if d.total %}<span class="day-count">{{ d.done }}/{{ d.total }}</span>{% endif %}
+        </div>
+
+        {% if d.items %}
+        <ul class="item-list">
+            {% for item in d.items %}
+            <li class="item-row{% if item.is_done %} done{% endif %}{% if item.is_missed %} is-missed{% endif %}">
+                <form method="post" action="{% url 'toggle-item' workout.pk item.pk %}" class="item-toggle-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ next_url }}">
+                    <button type="submit" class="item-toggle"
+                            {% if item.is_upcoming %}disabled title="Opens on {{ d.label }}"{% else %}title="{% if item.is_done %}Undo{% else %}Done{% endif %}"{% endif %}>
+                        <span class="item-box{% if item.is_done %} checked{% endif %}"></span>
+                    </button>
+                </form>
+
+                <span class="item-name">{{ item.name }}</span>
+
+                <form method="post" action="{% url 'delete-item' workout.pk item.pk %}" class="item-delete-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ next_url }}">
+                    <button type="submit" class="item-delete" title="Remove">&times;</button>
+                </form>
+
+                {% if item.reps or item.weight %}
+                <span class="item-meta">{{ item.reps }}{% if item.reps and item.weight %} · {% endif %}{{ item.weight }}</span>
+                {% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="day-rest">Rest day</p>
+        {% endif %}
+
+        <details class="day-add"{% if d.is_today %} open{% endif %}>
+            <summary>+ Add drill</summary>
+            <form method="post" action="{% url 'add-item' workout.pk %}" class="item-add">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ next_url }}">
+                <input type="hidden" name="weekday" value="{{ d.weekday }}">
+                <input type="text" name="name" class="item-add-name" list="exercise-library"
+                       placeholder="Exercise..." maxlength="50" required
+                       aria-label="Exercise for {{ d.label }}">
+                <input type="text" name="reps" class="item-add-reps" placeholder="Reps" maxlength="50">
+                <input type="text" name="weight" class="item-add-weight" placeholder="Weight" maxlength="50">
+                <button type="submit">Add</button>
+            </form>
+        </details>
+    </section>
+    {% endfor %}
+</div>
+
+{% if unplanned %}
+<div class="tray">
+    <div class="items-block" data-block="unplanned">
+        <div class="items-header">
+            <span class="items-title">// Unplanned</span>
+            <span class="items-progress">{{ unplanned|length }}</span>
+        </div>
+        <ul class="item-list">
+            {% for item in unplanned %}
+            <li class="item-row">
+                <span class="item-name">{{ item.name }}</span>
+                <form method="post" action="{% url 'plan-item' workout.pk item.pk %}" class="plan-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ next_url }}">
+                    <select name="weekday" aria-label="Day for {{ item.name }}">
+                        {% for value, label in weekdays %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+                    </select>
+                    <button type="submit" class="item-need-now">Plan</button>
+                </form>
+                <form method="post" action="{% url 'delete-item' workout.pk item.pk %}" class="item-delete-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ next_url }}">
+                    <button type="submit" class="item-delete" title="Remove">&times;</button>
+                </form>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{% include "tasks/partials/_items_js.html" %}
+{% endblock %}
+

@@ -21,6 +21,7 @@ from taskForce.tasks.locations import (
 )
 from taskForce.common.barracks import barracks_context
 from taskForce.tasks.models import SINGLETON_TYPES, Task, TaskType
+from taskForce.tasks.training import planner_context
 from taskForce.tasks.urgency import group_by_urgency, with_urgency
 from taskForce.units.models import Membership, Unit
 from taskForce.units.services import active_unit_for
@@ -254,6 +255,11 @@ class DeployLocationView(LoginRequiredMixin, ListView):
                 tasks[TaskType.CHORES], timezone.now(), request.GET.get("room"),
             )
             context["panel"]["next_url"] = next_url
+            return context
+
+        if self.location_key == "training":
+            context = planner_context(tasks[TaskType.WORKOUT], request.user)
+            context["next_url"] = next_url
             return context
 
         panels = []

@@ -7,8 +7,7 @@ from django.db.models import CheckConstraint, F, Q
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-from taskForce.tasks.managers import RecurringItemManager, CheckableItemManager
-
+from taskForce.tasks.managers import RecurringItemManager, CheckableItemManager, week_date, WeeklyItemManager
 
 User = get_user_model()
 
@@ -177,14 +176,6 @@ def recurring_checkable_constraints(model_name):
     ]
 
 
-# --- Add to taskForce/tasks/mixins.py, after RecurringItem ------------------
-
-
-def week_date(weekday, today):
-    """The date of `weekday` (0 = Monday) in the week that contains `today`."""
-    return today - timedelta(days=today.weekday()) + timedelta(days=weekday)
-
-
 class WeeklyItem(models.Model):
     class Weekday(models.IntegerChoices):
         MONDAY = 0, _("Monday")
@@ -211,6 +202,8 @@ class WeeklyItem(models.Model):
         blank=True,
         verbose_name=_("previously done at"),
     )
+
+    objects = WeeklyItemManager()
 
     @property
     def is_planned(self):

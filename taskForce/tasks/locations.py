@@ -9,12 +9,11 @@ from taskForce.tasks.urgency import (
 
 LOCATIONS = {
     "hq": {"label": _("HQ"), "types": (TaskType.ONEOFF,), "creates": TaskType.ONEOFF},
-    "training": {"label": _("Training Ground"), "types": (TaskType.WORKOUT,), "creates": None},
-        "supply": {
-        "label": _("Supply"),
-        "types": (TaskType.PANTRY, TaskType.GROCERIES),
+    "training": {
+        "label": _("Training Ground"),
+        "types": (TaskType.WORKOUT,),
         "creates": None,
-        "interior": "common/interiors/supply.html",
+        "interior": "common/interiors/training.html",
     },
     "barracks": {
         "label": _("Barracks"),
@@ -22,6 +21,7 @@ LOCATIONS = {
         "creates": None,
         "interior": "common/interiors/barracks.html",},
     "rec_room": {"label": _("Rec Room"), "types": (TaskType.LIST,), "creates": TaskType.LIST},
+
 }
 
 
