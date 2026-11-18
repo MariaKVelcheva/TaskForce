@@ -305,6 +305,8 @@
                 <span class="task-seal">Duties due</span>
                 {% elif task.is_active and task.has_low_stock %}
                 <span class="task-seal">Stock low</span>
+                    {% elif task.is_active and task.has_open_workout %}
+                    <span class="task-seal">Drills today</span>
                 {% endif %}
                 {% if task.priority < 3 %}
                 <span class="task-tag priority-{{ task.priority }}">{{ task.get_priority_display }}</span>

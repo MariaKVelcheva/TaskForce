@@ -129,6 +129,7 @@
                 {% if key == "overdue" %}
                     {% if m.has_due_chores %}Duties waiting
                     {% elif m.has_low_stock %}Stock low
+                        {% elif m.has_open_workout %}Drills today
                     {% elif m.due_date %}{{ m.due_date|late_by }} late
                     {% endif %}
                 {% elif key == "today" %}{{ m.due_date|date:"H:i" }}

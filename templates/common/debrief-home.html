@@ -502,6 +502,8 @@
             <span class="flag-reason">duties due</span>
             {% elif task.has_low_stock %}
             <span class="flag-reason">stock low</span>
+                {% elif task.has_open_workout %}
+                <span class="flag-reason">drills today low</span>
             {% elif task.due_date %}
             <span class="flag-reason">{{ task.due_date|timesince }} late</span>
             {% endif %}
