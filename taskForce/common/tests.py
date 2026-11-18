@@ -300,6 +300,11 @@ class TrainingPlannerTests(CommonTestCase):
         self.assertEqual([d["weekday"] for d in days], list(range(7)))
         self.assertEqual(sum(d["is_today"] for d in days), 1)
 
+    def test_open_exercise_today_flags_training_on_the_map(self):
+        self.add("Plank", weekday=timezone.localdate().weekday())
+        response = self.client.get(reverse("deploy"))
+        self.assertTrue(self.building(response, "training")["overdue"])
+
     def test_adding_a_library_name_links_the_shared_exercise(self):
         self.add("  squats ")
         item = WorkoutItem.objects.get(task=self.workout)

@@ -11,6 +11,7 @@ from django.views.decorators.http import require_POST
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 
 from taskForce.redirects import NextMixin, get_next, with_next
+from taskForce.tasks.exercises import find_or_create_exercise
 from taskForce.tasks.forms import CreateTaskForm, UpdateTaskForm
 from taskForce.tasks.items import ITEM_FORMS, ITEM_MODELS, get_item_context
 from taskForce.tasks.mixins import CheckableItem, RecurringItem

@@ -7,6 +7,7 @@ from taskForce.tasks.urgency import (
     CRITICAL, bucket_for, is_actionable, urgency_key, with_urgency,
 )
 
+
 LOCATIONS = {
     "hq": {"label": _("HQ"), "types": (TaskType.ONEOFF,), "creates": TaskType.ONEOFF},
     "training": {
@@ -15,13 +16,19 @@ LOCATIONS = {
         "creates": None,
         "interior": "common/interiors/training.html",
     },
+    "supply": {
+        "label": _("Supply"),
+        "types": (TaskType.PANTRY, TaskType.GROCERIES),
+        "creates": None,
+        "interior": "common/interiors/supply.html",
+    },
     "barracks": {
         "label": _("Barracks"),
         "types": (TaskType.CHORES,),
         "creates": None,
-        "interior": "common/interiors/barracks.html",},
+        "interior": "common/interiors/barracks.html",
+    },
     "rec_room": {"label": _("Rec Room"), "types": (TaskType.LIST,), "creates": TaskType.LIST},
-
 }
 
 
@@ -42,7 +49,10 @@ def location_summary(unit, now=None):
     today = timezone.localdate(now)
 
     states = {
-        "overdue": Q(has_due_chores=True) | Q(has_low_stock=True) | Q(due_date__lt=now),
+        "overdue": (
+            Q(has_due_chores=True) | Q(has_low_stock=True)
+            | Q(has_open_workout=True) | Q(due_date__lt=now)
+        ),
         "critical": Q(priority=CRITICAL),
         "due_today": Q(due_date__gte=now, due_date__date=today),
     }

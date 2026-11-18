@@ -389,7 +389,7 @@ class ItemProgressTests(TaskTestCase):
         return Task.objects.annotate(**item_progress(now=NOW)).get(pk=task.pk)
 
     def test_counts_checked_items(self):
-        task = self.singleton(TaskType.WORKOUT)
+        task = self.singleton(TaskType.LIST)
         WorkoutItem.objects.create(task=task, name="a", is_checked=True, checked_by=self.user)
         WorkoutItem.objects.create(task=task, name="b")
         WorkoutItem.objects.create(task=task, name="c")
@@ -855,5 +855,41 @@ class WeeklyItemTests(TestCase):
             for item in (monday, wednesday, unplanned):
                 self.assertEqual(self.fresh(item).is_done, item.pk in done)
 
+
+class WorkoutUrgencyTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        user = get_user_model().objects.create_user("recruit", password="x")
+        cls.workout = create_personal_unit(user).tasks.get(type=TaskType.WORKOUT)
+        cls.exercise = Exercise.objects.create(name="Test plank", owner=user)
+
+    def plan(self, weekday, **fields):
+        return WorkoutItem.objects.create(
+            task=self.workout, exercise=self.exercise, name="Test plank",
+            weekday=weekday, **fields,
+        )
+
+    def is_open(self):
+        return with_urgency(Task.objects.filter(pk=self.workout.pk)).get().has_open_workout
+
+    def today(self):
+        return timezone.localdate().weekday()
+
+    def test_unticked_exercise_today_needs_action(self):
+        self.plan(self.today())
+        self.assertTrue(self.is_open())
+
+    def test_ticked_today_is_calm(self):
+        self.plan(self.today(), last_done_at=timezone.now())
+        self.assertFalse(self.is_open())
+
+    def test_other_days_are_calm(self):
+        self.plan((self.today() + 1) % 7)
+        self.plan((self.today() - 1) % 7)
+        self.assertFalse(self.is_open())
+
+    def test_ticked_last_week_needs_action_again(self):
+        self.plan(self.today(), last_done_at=timezone.now() - timedelta(days=7))
+        self.assertTrue(self.is_open())
 
 

@@ -1,10 +1,10 @@
-from datetime import timedelta
+from datetime import timedelta, datetime, time
 
-from django.db.models import Exists, OuterRef
+from django.db.models import Exists, OuterRef, Q
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-from taskForce.tasks.models import ChoreItem, PantryItem
+from taskForce.tasks.models import ChoreItem, PantryItem, WorkoutItem
 
 SOON = timedelta(days=2)
 CRITICAL = 1
@@ -30,15 +30,29 @@ def has_low_stock():
     return Exists(PantryItem.objects.low().filter(task=OuterRef("pk")))
 
 
+def has_open_workout(now=None):
+    now = now or timezone.now()
+    today = timezone.localdate(now)
+    start_of_today = timezone.make_aware(datetime.combine(today, time.min))
+    return Exists(
+        WorkoutItem.objects
+        .filter(task=OuterRef("pk"), weekday=today.weekday())
+        .filter(Q(last_done_at__isnull=True) | Q(last_done_at__lt=start_of_today))
+    )
+
+
 def with_urgency(queryset, now=None):
     return queryset.annotate(
         has_due_chores=has_due_chores(now),
         has_low_stock=has_low_stock(),
+        has_open_workout=has_open_workout(now),
     )
 
 
 def bucket_for(task, now):
-    if getattr(task, "has_due_chores", False) or getattr(task, "has_low_stock", False):
+    if (getattr(task, "has_due_chores", False)
+            or getattr(task, "has_low_stock", False)
+            or getattr(task, "has_open_workout", False)):
         return "overdue"
     if task.due_date is None:
         return "unscheduled"

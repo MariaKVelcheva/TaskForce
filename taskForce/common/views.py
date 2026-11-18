@@ -130,7 +130,8 @@ class DebriefHomeView(LoginRequiredMixin, TemplateView):
         return {
             "overdue_tasks": (
                 missions.filter(
-                    Q(has_due_chores=True) | Q(has_low_stock=True) | Q(due_date__lt=now)
+                    Q(has_due_chores=True) | Q(has_low_stock=True)
+                    | Q(has_open_workout=True) | Q(due_date__lt=now)
                 )
                 .order_by("priority", F("due_date").asc(nulls_last=True))
                 [:self.VISIBLE_OVERDUE]
