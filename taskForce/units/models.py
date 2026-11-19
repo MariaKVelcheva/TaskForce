@@ -63,10 +63,9 @@ class Unit(models.Model):
 
 
 class Membership(models.Model):
-    ROLES = (
-        ("commander", _("Commander")),
-        ("operative", _("Operative")),
-    )
+    class Role(models.TextChoices):
+        COMMANDER = "commander", _("Commander")
+        OPERATIVE = "operative", _("Operative")
 
     user = models.ForeignKey(
         to=User,
@@ -77,9 +76,9 @@ class Membership(models.Model):
 
     role = models.CharField(
         verbose_name=_("role"),
-        choices=ROLES,
+        choices=Role.choices,
         max_length=55,
-        default="operative",
+        default=Role.OPERATIVE,
     )
 
     unit = models.ForeignKey(
@@ -91,6 +90,10 @@ class Membership(models.Model):
 
     def __str__(self):
         return f'{self.user}: {self.role} of {self.unit}'
+
+    @property
+    def is_commander(self):
+        return self.role == self.Role.COMMANDER
 
     class Meta:
         verbose_name = _('membership')
@@ -106,3 +109,5 @@ class Membership(models.Model):
                 name="unique_commander_per_unit",
             ),
         ]
+
+

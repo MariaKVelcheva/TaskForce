@@ -17,17 +17,17 @@ class UnitCommandTests(TestCase):
 
         self.unit = Unit.objects.create(name="Alpha")
         self.cmd_membership = Membership.objects.create(
-            user=self.commander, unit=self.unit, role="commander"
+            user=self.commander, unit=self.unit, role=Membership.Role.COMMANDER
         )
         self.op_membership = Membership.objects.create(
-            user=self.operative, unit=self.unit, role="operative"
+            user=self.operative, unit=self.unit, role=Membership.Role.OPERATIVE
         )
 
     def test_unit_cannot_have_two_commanders(self):
         with self.assertRaises(IntegrityError):
             with transaction.atomic():
                 Membership.objects.filter(pk=self.op_membership.pk).update(
-                    role="commander"
+                    role=Membership.Role.COMMANDER,
                 )
 
     def test_transfer_command_swaps_roles(self):
@@ -108,7 +108,7 @@ class CreateUnitViewTests(TestCase):
 
         unit = Unit.objects.get(name="Family")
         self.assertIsNone(unit.personal_for)
-        self.assertTrue(unit.memberships.filter(user=user, role="commander").exists())
+        self.assertTrue(unit.memberships.filter(user=user, role=Membership.Role.COMMANDER).exists())
         self.assertEqual(
             set(unit.tasks.values_list("type", flat=True)),
             {TaskType.GROCERIES, TaskType.PANTRY, TaskType.CHORES},

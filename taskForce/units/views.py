@@ -25,7 +25,7 @@ TaskUser = get_user_model()
 def _commanded_by(user):
     return Unit.objects.filter(
         memberships__user=user,
-        memberships__role="commander",
+        memberships__role=Membership.Role.COMMANDER,
     )
 
 
@@ -82,7 +82,7 @@ class DetailUnitView(LoginRequiredMixin, DetailView):
         memberships = unit.memberships.select_related("user").order_by("role", "user__username")
 
         is_commander = any(
-            m.role == "commander" and m.user_id == self.request.user.id for m in memberships
+            m.is_commander and m.user_id == self.request.user.id for m in memberships
         )
 
         context.update({
@@ -135,7 +135,7 @@ class JoinUnitView(LoginRequiredMixin, FormView):
         _membership, created = Membership.objects.get_or_create(
             user=self.request.user,
             unit=unit,
-            defaults={"role": "operative"},
+            defaults={"role": Membership.Role.OPERATIVE},
         )
 
         if created:
@@ -178,8 +178,8 @@ def transfer_command(request, pk, membership_pk):
     membership = get_object_or_404(unit.memberships, pk=membership_pk)
 
     with transaction.atomic():
-        unit.memberships.filter(role="commander").update(role="operative")
-        membership.role = "commander"
+        unit.memberships.filter(role=Membership.Role.COMMANDER).update(role=Membership.Role.OPERATIVE)
+        membership.role = Membership.Role.COMMANDER
         membership.save(update_fields=["role"])
 
     return redirect("details-unit", pk=unit.pk)
@@ -192,7 +192,7 @@ def leave_unit(request, pk):
         Unit.objects.filter(memberships__user=request.user), pk=pk,
     )
 
-    if unit.memberships.filter(user=request.user, role="commander").exists():
+    if unit.memberships.filter(user=request.user, role=Membership.Role.COMMANDER).exists():
         raise PermissionDenied
 
     with transaction.atomic():

@@ -59,7 +59,7 @@ class DeleteAccountTests(TestCase):
         create_personal_unit(self.cmd)
         create_personal_unit(self.op)
         self.family = create_unit(name="Family", commander=self.cmd)
-        Membership.objects.create(user=self.op, unit=self.family, role="operative")
+        Membership.objects.create(user=self.op, unit=self.family, role=Membership.Role.OPERATIVE)
 
     def delete_account(self, user):
         self.client.force_login(user)
@@ -78,8 +78,8 @@ class DeleteAccountTests(TestCase):
         self.assertFalse(Unit.objects.filter(pk=unit_pk).exists())
 
     def test_family_unit_survives_its_creators_deletion(self):
-        Membership.objects.filter(unit=self.family).update(role="operative")
-        Membership.objects.filter(unit=self.family, user=self.op).update(role="commander")
+        Membership.objects.filter(unit=self.family).update(role=Membership.Role.OPERATIVE)
+        Membership.objects.filter(unit=self.family, user=self.op).update(role=Membership.Role.COMMANDER)
 
         self.delete_account(self.cmd)
 

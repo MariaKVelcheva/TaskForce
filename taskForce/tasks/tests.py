@@ -167,7 +167,7 @@ class LocationSummaryTests(LocationTestCase):
     def test_counts_not_inflated_by_unit_members(self):
         mate = User.objects.create_user("mate", password="x")
         family = create_unit(name="Family", commander=self.user)
-        Membership.objects.create(unit=family, user=mate, role="operative")
+        Membership.objects.create(unit=family, user=mate, role=Membership.Role.OPERATIVE)
         self.make(unit=family)
         self.assertEqual(self.summary(family)["hq"]["count"], 1)
 
@@ -252,7 +252,7 @@ class VisibilityTests(TaskTestCase):
         mate = User.objects.create_user("mate", password="x")
         outsider = User.objects.create_user("outsider", password="x")
         family = create_unit(name="Family", commander=self.user)
-        Membership.objects.create(unit=family, user=mate, role="operative")
+        Membership.objects.create(unit=family, user=mate, role=Membership.Role.OPERATIVE)
         task = self.make(unit=family)
 
         self.assertIn(task, Task.objects.visible_to(mate))
@@ -289,7 +289,7 @@ class ItemCheckTests(TaskTestCase):
     def setUp(self):
         self.mate = User.objects.create_user("mate", password="x")
         self.family = create_unit(name="Family", commander=self.user)
-        Membership.objects.create(unit=self.family, user=self.mate, role="operative")
+        Membership.objects.create(unit=self.family, user=self.mate, role=Membership.Role.OPERATIVE)
         self.item = ListItem.objects.create(
             task=self.make(type=TaskType.LIST, unit=self.family), name="entry",
         )
@@ -650,6 +650,34 @@ class ShoppingRunTests(TaskTestCase):
         theirs = create_personal_unit(stranger).tasks.get(type=TaskType.GROCERIES)
         GroceryItem.objects.create(task=theirs, name="secret")
         self.assertEqual(self.run_items(), [])
+
+
+class MarkLowTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = get_user_model().objects.create_user("quartermaster", password="x")
+        cls.pantry = create_personal_unit(cls.user).tasks.get(type=TaskType.PANTRY)
+
+    def setUp(self):
+        self.client.force_login(self.user)
+        self.cereal = PantryItem.objects.create(task=self.pantry, name="cereal", quantity=2, threshold=0)
+
+    def mark(self):
+        return self.client.post(reverse("mark-low", args=[self.pantry.pk, self.cereal.pk]))
+
+    def test_puts_a_stocked_item_on_the_list(self):
+        self.mark()
+        self.assertTrue(GroceryItem.objects.filter(pantry_item=self.cereal).exists())
+
+    def test_marking_twice_keeps_one_list_item(self):
+        self.mark()
+        self.mark()
+        self.assertEqual(GroceryItem.objects.filter(pantry_item=self.cereal).count(), 1)
+
+    def test_stock_is_unchanged(self):
+        self.mark()
+        self.cereal.refresh_from_db()
+        self.assertEqual(self.cereal.quantity, 2)
 
 
 class RoomSummaryTests(TestCase):

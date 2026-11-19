@@ -26,7 +26,7 @@ def create_unit(*, name, commander, personal=False):
         Membership.objects.create(
             unit=unit,
             user=commander,
-            role="commander",
+            role=Membership.Role.COMMANDER,
         )
         types = PERSONAL_SINGLETONS if personal else GROUP_SINGLETONS
         Task.objects.bulk_create([
@@ -51,12 +51,17 @@ def active_unit_for(user):
     return user.personal_unit
 
 
+def commanded_by(user):
+    return Unit.objects.filter(
+        memberships__user=user,
+        memberships__role=Membership.Role.COMMANDER,
+    )
+
+
 def blocking_commands(user):
     others = Membership.objects.filter(unit=OuterRef("pk")).exclude(user=user)
-    return Unit.objects.filter(
+    return commanded_by(user).filter(
         personal_for__isnull=True,
-        memberships__user=user,
-        memberships__role="commander",
     ).filter(Exists(others))
 
 

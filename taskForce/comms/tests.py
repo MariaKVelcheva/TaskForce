@@ -19,7 +19,7 @@ class CommsTestCase(TestCase):
         for user in (cls.cmd, cls.mate, cls.outsider):
             create_personal_unit(user)
         cls.family = create_unit(name="Family", commander=cls.cmd)
-        Membership.objects.create(unit=cls.family, user=cls.mate, role="operative")
+        Membership.objects.create(unit=cls.family, user=cls.mate, role=Membership.Role.OPERATIVE)
 
 
 class ConversationAccessTests(CommsTestCase):

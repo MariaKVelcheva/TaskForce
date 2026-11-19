@@ -53,7 +53,7 @@ class CommonTestCase(TestCase):
         for user in (cls.user, cls.mate, cls.stranger):
             create_personal_unit(user)
         cls.family = create_unit(name="Family", commander=cls.user)
-        Membership.objects.create(unit=cls.family, user=cls.mate, role="operative")
+        Membership.objects.create(unit=cls.family, user=cls.mate, role=Membership.Role.OPERATIVE)
 
     def setUp(self):
         self.client.force_login(self.user)

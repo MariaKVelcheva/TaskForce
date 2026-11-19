@@ -437,5 +437,35 @@
     }
 
     .item-add button:hover { background: var(--khaki-dark); }
+
+    .item-stepper { display: flex; align-items: center; gap: 0.25rem; }
+.item-inline-form { display: inline; }
+.item-tag {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--khaki-muted);
+    border: 1px dashed var(--khaki-dark);
+    border-radius: var(--radius-sm);
+    padding: 0.1rem 0.45rem;
+}
+.item-row.low .item-stock { color: var(--rust-light); }
+
+        .item-need-now {
+            background: none;
+            border: 1px solid var(--khaki-dark);
+            border-radius: var(--radius-sm);
+            color: var(--khaki-muted);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.6rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            padding: 0.15rem 0.5rem;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .item-need-now:hover { border-color: var(--khaki); color: var(--cream); }
+        .item-row.resting .item-name { color: var(--muted); }
 </style>
 

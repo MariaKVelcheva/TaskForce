@@ -13,14 +13,14 @@
         });
     }
 
-    async function send(form) {
+    async function send(form, submitter) {
         const block = form.closest(".items-block");
         const key = block.dataset.block;
         const wasAdd = form.classList.contains("item-add");
 
         const response = await fetch(form.action, {
             method: "POST",
-            body: new FormData(form),
+            body: new FormData(form, submitter),
             headers: { "X-Requested-With": "fetch" },
         });
         if (!response.ok) { form.submit(); return; }
@@ -45,7 +45,7 @@
         const form = event.target;
         if (!form.closest(".items-block")) return;
         event.preventDefault();
-        send(form);
+        send(form, submitter);
     });
 
     document.addEventListener("change", (event) => {

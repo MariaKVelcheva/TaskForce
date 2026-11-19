@@ -318,6 +318,18 @@ def adjust_stock(request, task_pk, item_pk):
 
 @login_required
 @require_POST
+def mark_low(request, task_pk, item_pk):
+    task, item_model = get_task_and_item_model(request.user, task_pk)
+    if item_model is not PantryItem:
+        raise Http404
+
+    item = get_object_or_404(PantryItem, pk=item_pk, task=task)
+    item.put_on_list()
+    return _item_response(request, task)
+
+
+@login_required
+@require_POST
 def set_item_amount(request, task_pk, item_pk):
     task, item_model = get_task_and_item_model(request.user, task_pk)
     if item_model is not GroceryItem:

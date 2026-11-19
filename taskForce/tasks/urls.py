@@ -26,6 +26,7 @@ urlpatterns = [
         path("<int:item_pk>/stock/", views.adjust_stock, name="adjust-stock"),
         path("<int:item_pk>/amount/", views.set_item_amount, name="set-item-amount"),
         path("<int:item_pk>/delete/", views.delete_item, name="delete-item"),
+        path("<int:item_pk>/low/", views.mark_low, name="mark-low"),
     ])),
 ]
 
