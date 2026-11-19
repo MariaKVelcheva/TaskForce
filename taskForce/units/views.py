@@ -17,16 +17,9 @@ from taskForce.redirects import get_next
 from taskForce.tasks.models import Task
 from taskForce.units.forms import CreateUnitForm, JoinUnitForm, RenameUnitForm
 from taskForce.units.models import Membership, Unit
-from taskForce.units.services import create_unit
+from taskForce.units.services import create_unit, commanded_by
 
 TaskUser = get_user_model()
-
-
-def _commanded_by(user):
-    return Unit.objects.filter(
-        memberships__user=user,
-        memberships__role=Membership.Role.COMMANDER,
-    )
 
 
 class CreateUnitView(LoginRequiredMixin, CreateView):
@@ -52,7 +45,7 @@ class RenameUnitView(LoginRequiredMixin, UpdateView):
     template_name = "units/rename-unit.html"
 
     def get_queryset(self):
-        return _commanded_by(self.request.user)
+        return commanded_by(self.request.user)
 
     def get_success_url(self):
         return reverse("details-unit", kwargs={"pk": self.object.pk})
@@ -64,7 +57,7 @@ class DeleteUnitView(LoginRequiredMixin, DeleteView):
     success_url = reverse_lazy("index")
 
     def get_queryset(self):
-        return _commanded_by(self.request.user).filter(personal_for__isnull=True)
+        return commanded_by(self.request.user).filter(personal_for__isnull=True)
 
 
 class DetailUnitView(LoginRequiredMixin, DetailView):
@@ -157,7 +150,7 @@ def switch_unit(request, pk):
 @login_required
 @require_POST
 def remove_member(request, pk, membership_pk):
-    unit = get_object_or_404(_commanded_by(request.user), pk=pk)
+    unit = get_object_or_404(commanded_by(request.user), pk=pk)
     membership = get_object_or_404(unit.memberships, pk=membership_pk)
 
     if membership.user_id == request.user.id:
@@ -174,7 +167,7 @@ def remove_member(request, pk, membership_pk):
 @login_required
 @require_POST
 def transfer_command(request, pk, membership_pk):
-    unit = get_object_or_404(_commanded_by(request.user), pk=pk)
+    unit = get_object_or_404(commanded_by(request.user), pk=pk)
     membership = get_object_or_404(unit.memberships, pk=membership_pk)
 
     with transaction.atomic():

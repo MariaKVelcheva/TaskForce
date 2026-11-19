@@ -56,8 +56,10 @@ class DeleteAccountTests(TestCase):
     def setUp(self):
         self.cmd = User.objects.create_user(username="cmd", password=PASSWORD)
         self.op = User.objects.create_user(username="op", password=PASSWORD)
+        self.solo = User.objects.create_user(username="solo", password=PASSWORD)
         create_personal_unit(self.cmd)
         create_personal_unit(self.op)
+        create_personal_unit(self.solo)
         self.family = create_unit(name="Family", commander=self.cmd)
         Membership.objects.create(user=self.op, unit=self.family, role=Membership.Role.OPERATIVE)
 
@@ -69,6 +71,12 @@ class DeleteAccountTests(TestCase):
         self.delete_account(self.cmd)
 
         self.assertTrue(User.objects.filter(pk=self.cmd.pk).exists())
+
+    def test_blocked_deletion_keeps_user_logged_in(self):
+        response = self.delete_account(self.cmd)
+
+        self.assertRedirects(response, reverse("all-units"))
+        self.assertEqual(self.client.get(reverse("all-units")).status_code, 200)
 
     def test_deleting_account_removes_personal_unit(self):
         unit_pk = self.op.personal_unit.pk
@@ -85,3 +93,12 @@ class DeleteAccountTests(TestCase):
 
         self.assertFalse(User.objects.filter(pk=self.cmd.pk).exists())
         self.assertTrue(Unit.objects.filter(pk=self.family.pk).exists())
+
+    def test_solo_unit_is_deleted_with_user(self):
+        unit = create_unit(name="Solo", commander=self.solo)
+
+        self.delete_account(self.solo)
+
+        self.assertFalse(User.objects.filter(pk=self.solo.pk).exists())
+        self.assertFalse(Unit.objects.filter(pk=unit.pk).exists())
+

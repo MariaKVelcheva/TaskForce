@@ -13,6 +13,15 @@
 
     <div class="panel" style="border-color: var(--rust);">
         <div class="panel-header" style="color: var(--rust-light); border-color: rgba(184,92,56,0.3);">// Confirm termination</div>
+    
+    {% if solo_units %}
+  <p>"These units have no other members and will be deleted with your account:"</p>
+  <ul>
+    {% for unit in solo_units %}
+      <li>{{ unit.name }}</li>
+    {% endfor %}
+  </ul>
+{% endif %}
 
         {% if blocking_units %}
         <p style="font-size: 0.92rem; color: var(--cream-dark); line-height: 1.6; margin-bottom: 0.75rem;">

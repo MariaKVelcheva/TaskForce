@@ -12,7 +12,7 @@ from django.utils.translation import gettext_lazy as _
 from taskForce.accounts.forms import RegisterForm, LoginCustomForm, TimeZoneForm
 from taskForce.accounts.models import Avatar
 from taskForce.redirects import get_next
-from taskForce.units.services import create_personal_unit, blocking_commands
+from taskForce.units.services import create_personal_unit, blocking_commands, commanded_by
 
 TaskUser = get_user_model()
 
@@ -49,13 +49,16 @@ class DeleteUserView(LoginRequiredMixin, DeleteView):
 
     def form_valid(self, form):
         user = self.request.user
-        logout(self.request)
 
         if blocking_commands(user).exists():
             messages.error(self.request, _("Transfer command of your units before deleting your account."))
             return redirect("all-units")
 
-        user.delete()
+        with transaction.atomic():
+            commanded_by(user).filter(personal_for__isnull=True).delete()
+            user.delete()
+
+        logout(self.request)
         return HttpResponseRedirect(self.get_success_url())
 
     def get_object(self, queryset=None):
@@ -64,6 +67,7 @@ class DeleteUserView(LoginRequiredMixin, DeleteView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["blocking_units"] = blocking_commands(self.request.user)
+        context["solo_units"] = commanded_by(self.request.user).filter(personal_for__isnull=True)
         return context
 
 
