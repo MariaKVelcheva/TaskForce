@@ -7,7 +7,7 @@ urlpatterns = [
     path("all-units/", views.CatalogueUnitView.as_view(), name="all-units"),
     path("join/", views.JoinUnitView.as_view(), name="join-unit"),
     path("<int:pk>/", include([
-        path("update/", views.RenameUnitView.as_view(), name="update-unit"),
+        path("settings/", views.UnitSettingsView.as_view(), name="unit-settings"),
         path("delete/", views.DeleteUnitView.as_view(), name="delete-unit"),
         path("details/", views.DetailUnitView.as_view(), name="details-unit"),
         path("switch/", views.switch_unit, name="switch-unit"),

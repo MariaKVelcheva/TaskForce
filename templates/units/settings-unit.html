@@ -1,0 +1,64 @@
+{% extends "common/base.html" %}
+{% load i18n %}
+
+{% block content %}
+<section class="unit-settings">
+  <h1>{% translate "Unit settings" %}</h1>
+  <a href="{% url 'details-unit' unit.pk %}">{% translate "Back to unit" %}</a>
+
+  <h2>{% translate "Name" %}</h2>
+  {% if is_commander %}
+    <form method="post">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit">{% translate "Rename" %}</button>
+    </form>
+  {% else %}
+    <p>{{ unit.name }}</p>
+  {% endif %}
+
+  {% if not is_personal %}
+
+    <h2>{% translate "Invite" %}</h2>
+    <p><input type="text" value="{{ invite_url }}" readonly></p>
+    {% if is_commander %}
+      <form method="post" action="{% url 'reset-invite-code' unit.pk %}">
+        {% csrf_token %}
+        <button type="submit">{% translate "Reset invite code" %}</button>
+      </form>
+    {% endif %}
+
+    <h2>{% translate "Members" %}</h2>
+    <ul>
+      {% for m in memberships %}
+        <li>
+          {{ m.user.username }} · {{ m.get_role_display }}
+          {% if is_commander and m.user_id != request.user.id %}
+            <form method="post" action="{% url 'transfer-command' unit.pk m.pk %}">
+              {% csrf_token %}
+              <button type="submit">{% translate "Hand over command" %}</button>
+            </form>
+            <form method="post" action="{% url 'remove-member' unit.pk m.pk %}">
+              {% csrf_token %}
+              <label><input type="checkbox" name="reset_code" checked> {% translate "Also reset invite code" %}</label>
+              <button type="submit">{% translate "Remove" %}</button>
+            </form>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+
+    <h2>{% translate "Danger zone" %}</h2>
+    {% if is_commander %}
+      <a href="{% url 'delete-unit' unit.pk %}">{% translate "Delete unit" %}</a>
+    {% else %}
+      <form method="post" action="{% url 'leave-unit' unit.pk %}">
+        {% csrf_token %}
+        <button type="submit">{% translate "Leave unit" %}</button>
+      </form>
+    {% endif %}
+
+  {% endif %}
+</section>
+{% endblock %}
+

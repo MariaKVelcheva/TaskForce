@@ -39,18 +39,6 @@ class CreateUnitView(LoginRequiredMixin, CreateView):
         return HttpResponseRedirect(self.get_success_url())
 
 
-class RenameUnitView(LoginRequiredMixin, UpdateView):
-    model = Unit
-    form_class = RenameUnitForm
-    template_name = "units/rename-unit.html"
-
-    def get_queryset(self):
-        return commanded_by(self.request.user)
-
-    def get_success_url(self):
-        return reverse("details-unit", kwargs={"pk": self.object.pk})
-
-
 class DeleteUnitView(LoginRequiredMixin, DeleteView):
     model = Unit
     template_name = "units/delete-unit.html"
@@ -155,7 +143,7 @@ def remove_member(request, pk, membership_pk):
 
     if membership.user_id == request.user.id:
         messages.info(request, _("Use Leave to stand down from a unit."))
-        return redirect("details-unit", pk=unit.pk)
+        return redirect("unit-settings", pk=unit.pk)
 
     with transaction.atomic():
         Task.objects.filter(unit=unit, assigned_to=membership.user).update(assigned_to=None)
@@ -164,7 +152,7 @@ def remove_member(request, pk, membership_pk):
             unit.reset_invite_code()
 
     messages.success(request, _("%(name)s has been removed.") % {"name": membership.user.username})
-    return redirect("details-unit", pk=unit.pk)
+    return redirect("unit-settings", pk=unit.pk)
 
 
 @login_required
@@ -178,7 +166,7 @@ def transfer_command(request, pk, membership_pk):
         membership.role = Membership.Role.COMMANDER
         membership.save(update_fields=["role"])
 
-    return redirect("details-unit", pk=unit.pk)
+    return redirect("unit-settings", pk=unit.pk)
 
 
 @login_required
@@ -210,7 +198,41 @@ def reset_invite_code(request, pk):
     unit = get_object_or_404(commanded_by(request.user).filter(personal_for__isnull=True), pk=pk)
     unit.reset_invite_code()
     messages.success(request, _("Invite code reset. Old invite links no longer work."))
-    return redirect("details-unit", pk=unit.pk)
+    return redirect("unit-settings", pk=unit.pk)
+
+
+class UnitSettingsView(LoginRequiredMixin, UpdateView):
+    model = Unit
+    form_class = RenameUnitForm
+    template_name = "units/settings-unit.html"
+    context_object_name = "unit"
+
+    def get_queryset(self):
+        if self.request.method == "POST":
+            return commanded_by(self.request.user)
+        return Unit.objects.filter(memberships__user=self.request.user)
+
+    def get_success_url(self):
+        return reverse("unit-settings", kwargs={"pk": self.object.pk})
+
+    def form_valid(self, form):
+        messages.success(self.request, _("Unit renamed."))
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        unit = self.object
+        is_personal = unit.personal_for_id is not None
+        memberships = unit.memberships.select_related("user").order_by("role", "user__username")
+        is_commander = any(m.is_commander and m.user_id == self.request.user.id for m in memberships)
+
+        context.update({
+            "is_personal": is_personal,
+            "is_commander": is_commander,
+            "memberships": memberships,
+            "invite_url": None if is_personal else unit.get_invite_url(self.request),
+        })
+        return context
 
 
 

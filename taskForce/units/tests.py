@@ -222,3 +222,60 @@ class InviteCodeTests(TestCase):
         self.family.refresh_from_db()
         self.assertFalse(self.family.memberships.filter(user=self.op).exists())
         self.assertEqual(self.family.invite_code, self.old_code)
+
+
+class UnitSettingsTests(TestCase):
+    def setUp(self):
+        self.cmd = User.objects.create_user(username="cmd", password=PASSWORD)
+        self.op = User.objects.create_user(username="op", password=PASSWORD)
+        self.outsider = User.objects.create_user(username="out", password=PASSWORD)
+        for user in (self.cmd, self.op, self.outsider):
+            create_personal_unit(user)
+        self.family = create_unit(name="Family", commander=self.cmd)
+        Membership.objects.create(user=self.op, unit=self.family, role=Membership.Role.OPERATIVE)
+        self.url = reverse("unit-settings", kwargs={"pk": self.family.pk})
+
+    def test_operative_sees_read_only_page(self):
+        self.client.force_login(self.op)
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.context["is_commander"])
+
+    def test_outsider_gets_404(self):
+        self.client.force_login(self.outsider)
+
+        self.assertEqual(self.client.get(self.url).status_code, 404)
+
+    def test_commander_can_rename(self):
+        self.client.force_login(self.cmd)
+        response = self.client.post(self.url, {"name": "Clan"})
+
+        self.assertRedirects(response, self.url)
+        self.family.refresh_from_db()
+        self.assertEqual(self.family.name, "Clan")
+
+    def test_operative_cannot_rename(self):
+        self.client.force_login(self.op)
+        response = self.client.post(self.url, {"name": "Mutiny"})
+
+        self.assertEqual(response.status_code, 404)
+        self.family.refresh_from_db()
+        self.assertEqual(self.family.name, "Family")
+
+    def test_invalid_name_stays_on_settings_page(self):
+        self.client.force_login(self.cmd)
+        response = self.client.post(self.url, {"name": ""})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "units/settings-unit.html")
+
+    def test_personal_unit_can_be_renamed_and_has_no_invite(self):
+        url = reverse("unit-settings", kwargs={"pk": self.cmd.personal_unit.pk})
+        self.client.force_login(self.cmd)
+
+        self.assertIsNone(self.client.get(url).context["invite_url"])
+        self.client.post(url, {"name": "HQ"})
+        self.cmd.personal_unit.refresh_from_db()
+        self.assertEqual(self.cmd.personal_unit.name, "HQ")
+

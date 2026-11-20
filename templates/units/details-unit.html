@@ -312,7 +312,7 @@
         {% if not is_personal %}
         <a href="{% url 'unit-chat' unit.pk %}" class="btn btn-primary" style="font-size: 0.82rem;">Discussion</a>
         {% if is_commander %}
-        <a href="{% url 'update-unit' unit.pk %}" class="btn btn-ghost" style="font-size: 0.82rem;">Rename</a>
+        <a href="{% url 'unit-settings' unit.pk %}" class="btn btn-ghost" style="font-size: 0.82rem;">Rename</a>
         {% endif %}
         {% endif %}
     </div>
