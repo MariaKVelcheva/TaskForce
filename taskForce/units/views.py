@@ -151,7 +151,7 @@ def switch_unit(request, pk):
 @require_POST
 def remove_member(request, pk, membership_pk):
     unit = get_object_or_404(commanded_by(request.user), pk=pk)
-    membership = get_object_or_404(unit.memberships, pk=membership_pk)
+    membership = get_object_or_404(unit.memberships.select_related("user"), pk=membership_pk)
 
     if membership.user_id == request.user.id:
         messages.info(request, _("Use Leave to stand down from a unit."))
@@ -160,7 +160,10 @@ def remove_member(request, pk, membership_pk):
     with transaction.atomic():
         Task.objects.filter(unit=unit, assigned_to=membership.user).update(assigned_to=None)
         membership.delete()
+        if request.POST.get("reset_code"):
+            unit.reset_invite_code()
 
+    messages.success(request, _("%(name)s has been removed.") % {"name": membership.user.username})
     return redirect("details-unit", pk=unit.pk)
 
 
@@ -182,16 +185,32 @@ def transfer_command(request, pk, membership_pk):
 @require_POST
 def leave_unit(request, pk):
     unit = get_object_or_404(
-        Unit.objects.filter(memberships__user=request.user), pk=pk,
+        Unit.objects.filter(memberships__user=request.user, personal_for__isnull=True),
+        pk=pk,
     )
 
     if unit.memberships.filter(user=request.user, role=Membership.Role.COMMANDER).exists():
-        raise PermissionDenied
+        if unit.memberships.count() == 1:
+            messages.error(request, _("You are the last member. Delete the unit instead."))
+        else:
+            messages.error(request, _("Hand over command before leaving."))
+        return redirect("details-unit", pk=unit.pk)
 
     with transaction.atomic():
         Task.objects.filter(unit=unit, assigned_to=request.user).update(assigned_to=None)
         unit.memberships.filter(user=request.user).delete()
 
+    messages.success(request, _("You have left %(name)s.") % {"name": unit.name})
     return redirect("all-units")
+
+
+@login_required
+@require_POST
+def reset_invite_code(request, pk):
+    unit = get_object_or_404(commanded_by(request.user).filter(personal_for__isnull=True), pk=pk)
+    unit.reset_invite_code()
+    messages.success(request, _("Invite code reset. Old invite links no longer work."))
+    return redirect("details-unit", pk=unit.pk)
+
 
 

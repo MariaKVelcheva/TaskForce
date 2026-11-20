@@ -12,6 +12,7 @@ urlpatterns = [
         path("details/", views.DetailUnitView.as_view(), name="details-unit"),
         path("switch/", views.switch_unit, name="switch-unit"),
         path("leave/", views.leave_unit, name="leave-unit"),
+        path("invite/reset/", views.reset_invite_code, name="reset-invite-code"),
         path("members/<int:membership_pk>/transfer/", views.transfer_command, name="transfer-command"),
         path("members/<int:membership_pk>/remove/", views.remove_member, name="remove-member"),
     ])),

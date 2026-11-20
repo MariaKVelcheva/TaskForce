@@ -53,6 +53,10 @@ class Unit(models.Model):
             reverse("join-unit") + f"?code={self.invite_code}"
         )
 
+    def reset_invite_code(self):
+        self.invite_code = uuid.uuid4()
+        self.save(update_fields=["invite_code"])
+
     def __str__(self):
         return self.name
 

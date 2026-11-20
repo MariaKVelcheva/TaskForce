@@ -1,8 +1,10 @@
 from django.contrib.auth import get_user_model
+from django.contrib.messages import get_messages
 from django.db import IntegrityError, transaction
 from django.test import TestCase
 from django.urls import reverse
 
+from taskForce.accounts.tests import PASSWORD
 from taskForce.tasks.models import TaskType
 from taskForce.units.services import create_personal_unit, create_unit
 from taskForce.units.models import Unit, Membership
@@ -55,17 +57,6 @@ class UnitCommandTests(TestCase):
         self.op_membership.refresh_from_db()
         self.assertEqual(self.op_membership.role, "operative")
 
-    def test_commander_cannot_leave(self):
-        self.client.force_login(self.commander)
-        response = self.client.post(
-            reverse("leave-unit", kwargs={"pk": self.unit.pk})
-        )
-
-        self.assertEqual(response.status_code, 403)
-        self.assertTrue(
-            Membership.objects.filter(pk=self.cmd_membership.pk).exists()
-        )
-
     def test_operative_can_leave(self):
         self.client.force_login(self.operative)
         self.client.post(reverse("leave-unit", kwargs={"pk": self.unit.pk}))
@@ -73,6 +64,45 @@ class UnitCommandTests(TestCase):
         self.assertFalse(
             Membership.objects.filter(pk=self.op_membership.pk).exists()
         )
+
+
+class LeaveUnitTests(TestCase):
+    def setUp(self):
+        self.cmd = User.objects.create_user(username="cmd", password=PASSWORD)
+        self.op = User.objects.create_user(username="op", password=PASSWORD)
+        create_personal_unit(self.cmd)
+        create_personal_unit(self.op)
+        self.family = create_unit(name="Family", commander=self.cmd)
+        Membership.objects.create(user=self.op, unit=self.family, role=Membership.Role.OPERATIVE)
+
+    def leave(self, user, unit):
+        self.client.force_login(user)
+        return self.client.post(reverse("leave-unit", kwargs={"pk": unit.pk}))
+
+    def test_operative_can_leave(self):
+        response = self.leave(self.op, self.family)
+
+        self.assertRedirects(response, reverse("all-units"))
+        self.assertFalse(self.family.memberships.filter(user=self.op).exists())
+
+    def test_commander_is_redirected_with_a_message(self):
+        response = self.leave(self.cmd, self.family)
+
+        self.assertRedirects(response, reverse("details-unit", kwargs={"pk": self.family.pk}))
+        self.assertTrue(self.family.memberships.filter(user=self.cmd).exists())
+
+    def test_last_member_is_told_to_delete(self):
+        solo = create_unit(name="Solo", commander=self.cmd)
+
+        response = self.leave(self.cmd, solo)
+
+        messages = [str(m) for m in get_messages(response.wsgi_request)]
+        self.assertIn("You are the last member. Delete the unit instead.", messages)
+
+    def test_cannot_leave_personal_unit(self):
+        response = self.leave(self.op, self.op.personal_unit)
+
+        self.assertEqual(response.status_code, 404)
 
 
 class PersonalUnitTests(TestCase):
@@ -139,3 +169,56 @@ class SwitchUnitTests(TestCase):
         self.assertNotEqual(self.user.avatar.active_unit, other)
 
 
+class InviteCodeTests(TestCase):
+    def setUp(self):
+        self.cmd = User.objects.create_user(username="cmd", password=PASSWORD)
+        self.op = User.objects.create_user(username="op", password=PASSWORD)
+        create_personal_unit(self.cmd)
+        create_personal_unit(self.op)
+        self.family = create_unit(name="Family", commander=self.cmd)
+        self.op_membership = Membership.objects.create(
+            user=self.op, unit=self.family, role=Membership.Role.OPERATIVE,
+        )
+        self.old_code = self.family.invite_code
+
+    def post_as(self, user, name, data=None, **kwargs):
+        self.client.force_login(user)
+        return self.client.post(reverse(name, kwargs=kwargs), data or {})
+
+    def test_commander_can_reset_code(self):
+        self.post_as(self.cmd, "reset-invite-code", pk=self.family.pk)
+
+        self.family.refresh_from_db()
+        self.assertNotEqual(self.family.invite_code, self.old_code)
+
+    def test_operative_cannot_reset_code(self):
+        response = self.post_as(self.op, "reset-invite-code", pk=self.family.pk)
+
+        self.assertEqual(response.status_code, 404)
+        self.family.refresh_from_db()
+        self.assertEqual(self.family.invite_code, self.old_code)
+
+    def test_cannot_reset_personal_unit_code(self):
+        response = self.post_as(self.cmd, "reset-invite-code", pk=self.cmd.personal_unit.pk)
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_remove_with_reset_changes_code(self):
+        self.post_as(
+            self.cmd, "remove-member", {"reset_code": "on"},
+            pk=self.family.pk, membership_pk=self.op_membership.pk,
+        )
+
+        self.family.refresh_from_db()
+        self.assertFalse(self.family.memberships.filter(user=self.op).exists())
+        self.assertNotEqual(self.family.invite_code, self.old_code)
+
+    def test_remove_without_reset_keeps_code(self):
+        self.post_as(
+            self.cmd, "remove-member",
+            pk=self.family.pk, membership_pk=self.op_membership.pk,
+        )
+
+        self.family.refresh_from_db()
+        self.assertFalse(self.family.memberships.filter(user=self.op).exists())
+        self.assertEqual(self.family.invite_code, self.old_code)
