@@ -45,6 +45,14 @@ class Unit(models.Model):
         verbose_name=_("personal unit of"),
     )
 
+    monthly_budget = models.DecimalField(
+        verbose_name=_("monthly budget"),
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
+
     def get_absolute_url(self):
         return reverse("details-unit", kwargs={"pk": self.pk})
 
@@ -64,6 +72,12 @@ class Unit(models.Model):
         verbose_name = _('unit')
         verbose_name_plural = _('units')
         ordering = ("name", )
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(monthly_budget__isnull=True) | models.Q(monthly_budget__gt=0),
+                name="unit_budget_positive",
+            ),
+        ]
 
 
 class Membership(models.Model):

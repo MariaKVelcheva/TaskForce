@@ -5,6 +5,8 @@
 {% block extra_css %}
 {% include "tasks/partials/_items_css.html" %}
 <style>
+    .training-funds { margin-top: 1.5rem; }
+
     .interior-header {
         display: flex;
         align-items: center;
@@ -31,7 +33,6 @@
         margin-left: auto;
     }
 
-    /* ---- The week: seven columns like a school planner ---- */
     .planner {
         display: grid;
         grid-template-columns: repeat(7, minmax(0, 1fr));
@@ -103,7 +104,6 @@
         color: var(--khaki-muted);
     }
 
-    /* Missed: quiet, not alarming. Upcoming: locked until its day. */
     .item-row.is-missed .item-name { color: var(--muted); }
     .item-row.is-missed .item-meta::after { content: " · missed"; color: var(--muted); }
     .item-toggle:disabled { cursor: not-allowed; opacity: 0.4; }
@@ -126,7 +126,6 @@
     .planner .item-add .item-add-reps,
     .planner .item-add .item-add-weight { flex: 1 1 40%; }
 
-    /* ---- Unplanned tray ---- */
     .tray {
         margin-top: 1.5rem;
         background: var(--olive-mid);
@@ -145,7 +144,6 @@
         font-size: 0.8rem;
     }
 
-    /* ---- Narrow screens: days stack, today first ---- */
     @media (max-width: 900px) {
         .planner { grid-template-columns: 1fr; }
         .day.is-today { order: -1; }
@@ -257,6 +255,7 @@
     </div>
 </div>
 {% endif %}
+        {% include "budget/partials/_funds_panel.html" with panel=panel.funds %}
 {% endblock %}
 
 {% block extra_js %}

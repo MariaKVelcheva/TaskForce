@@ -68,6 +68,7 @@
     {% for panel in panels %}
     <section class="interior-panel">
         {% include panel.item_partial with task=panel.task items=panel.items item_form=panel.item_form items_done=panel.items_done items_total=panel.items_total next_url=panel.next_url %}
+        {% include "budget/partials/_funds_panel.html" with panel=panel.funds %}
     </section>
     {% endfor %}
 </div>

@@ -1,0 +1,54 @@
+{% load l10n %}
+<section id="{{ panel.anchor }}" class="funds-panel">
+    <div class="funds-label">// {% if panel.funds.is_unit_fallback %}Funds (unit){% else %}Funds{% endif %}</div>
+
+    {% include "budget/partials/_funds_line.html" with funds=panel.funds %}
+
+    <div class="funds-forms">
+        <form method="post" action="{{ panel.log_url }}" class="funds-form">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.get_full_path }}#{{ panel.anchor }}">
+            <label>€ <input type="number" name="amount" step="0.01" min="0.01" required placeholder="0.00" aria-label="Amount spent"></label>
+            <input type="date" name="spent_on" value="{{ panel.today|date:'Y-m-d' }}" aria-label="Date">
+            <button type="submit" class="btn btn-primary">Log</button>
+        </form>
+
+        <form method="post" action="{{ panel.budget_url }}" class="funds-form">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.get_full_path }}#{{ panel.anchor }}">
+            <label>Monthly budget €
+                <input type="number" name="monthly_budget" step="0.01" min="0.01"
+                       value="{{ panel.budget_value|default_if_none:''|unlocalize }}" placeholder="none">
+            </label>
+            <button type="submit" class="btn btn-ghost">Set</button>
+        </form>
+    </div>
+    {% if panel.task %}
+        <p class="funds-hint">Leave the budget empty to use the unit's funds.</p>
+    {% endif %}
+
+    {% if panel.spendings %}
+    <ul class="funds-entries">
+        {% for s in panel.spendings %}
+        <li class="funds-entry">
+            <span class="funds-entry-date">{{ s.spent_on|date:"j M" }}</span>
+            <span class="funds-entry-what">
+                {% if not panel.task %}{{ s.task.name|default:"General" }}{% endif %}
+                <span class="funds-entry-who">{{ s.added_by.username|default:"former operative" }}</span>
+            </span>
+            <span class="funds-entry-amount">€{{ s.amount|floatformat:"-2g" }}</span>
+            {% if s.can_delete %}
+            <form method="post" action="{% url 'delete-spending' s.pk %}">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.get_full_path }}#{{ panel.anchor }}">
+                <button type="submit" class="funds-delete" aria-label="Delete entry">&times;</button>
+            </form>
+            {% endif %}
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+        <p class="funds-hint">Nothing logged this month.</p>
+    {% endif %}
+</section>
+

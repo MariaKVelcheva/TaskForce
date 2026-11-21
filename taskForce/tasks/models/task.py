@@ -1,9 +1,6 @@
-from django.contrib.auth.models import User
 from django.db import models, transaction
 from django.contrib.auth import get_user_model
-from django.db.models import Value, F, Q
-from django.db.models.functions import Greatest
-from django.utils import timezone
+from django.db.models import F, Q
 from django.utils.translation import gettext_lazy as _
 
 from taskForce.accounts.models import Avatar
@@ -112,6 +109,14 @@ class Task(models.Model):
 
     is_active = models.BooleanField(default=True, verbose_name=_("is_active"),)
 
+    monthly_budget = models.DecimalField(
+        verbose_name=_("monthly budget"),
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
+
     objects = TaskManager()
 
     def accomplish(self, user):
@@ -181,5 +186,9 @@ class Task(models.Model):
             models.CheckConstraint(
                 condition=Q(accomplished_by__isnull=True) | Q(is_accomplished=True),
                 name="accomplished_by_needs_accomplished",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(monthly_budget__isnull=True) | models.Q(monthly_budget__gt=0),
+                name="task_budget_positive",
             ),
         ]

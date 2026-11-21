@@ -10,6 +10,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import ListView, TemplateView
 
+from taskForce.budget.services import unit_funds, funds_panel
 from taskForce.common.deploy_map import BASE
 from taskForce.common.map_context import map_context
 from taskForce.comms.models import Conversation, ConversationRead, Message
@@ -205,6 +206,7 @@ class DeployIndexView(LoginRequiredMixin, TemplateView):
                 BASE, positions["hq"], goal, idle=(hq_col + 2, hq_row), stop_short=1,
             ),
             "unit": unit,
+            "funds": unit_funds(unit),
             "buildings": buildings,
             "objective": objective and {
                 "label": LOCATIONS[objective]["label"],
@@ -252,22 +254,26 @@ class DeployLocationView(LoginRequiredMixin, ListView):
         next_url = request.get_full_path()
 
         if self.location_key == "barracks":
-            context = barracks_context(
-                tasks[TaskType.CHORES], timezone.now(), request.GET.get("room"),
-            )
+            chores = tasks[TaskType.CHORES]
+            context = barracks_context(chores, timezone.now(), request.GET.get("room"))
             context["panel"]["next_url"] = next_url
+            context["funds_panel"] = funds_panel(user=request.user, unit=unit, task=chores)
             return context
 
         if self.location_key == "training":
-            context = planner_context(tasks[TaskType.WORKOUT], request.user)
+            workout = tasks[TaskType.WORKOUT]
+            context = planner_context(workout, request.user)
             context["next_url"] = next_url
+            context["funds_panel"] = funds_panel(user=request.user, unit=unit, task=workout)
             return context
 
         panels = []
         for task_type in self.location["types"]:
             if task_type in tasks:
-                panel = get_item_context(tasks[task_type])
+                task = tasks[task_type]
+                panel = get_item_context(task)
                 panel["next_url"] = next_url
+                panel["funds"] = funds_panel(user=request.user, unit=unit, task=task)
                 panels.append(panel)
         return {"panels": panels}
 

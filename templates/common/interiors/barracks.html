@@ -31,7 +31,6 @@
         margin-left: auto;
     }
 
-    /* Plan on the left (wider), duties on the right; stacked on phones. */
     .barracks {
         display: grid;
         grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
@@ -51,7 +50,6 @@
     .room:focus-visible .room-art { filter: brightness(1.15) drop-shadow(0 0 2px #fff); }
     .room:focus-visible { outline: none; }
 
-    /* No duties set up in this room yet: greyed out, not "clean and done". */
     .room.is-empty .room-art   { filter: grayscale(1) brightness(.8); opacity: .55; }
     .room.is-empty .room-label { opacity: .6; }
 
@@ -136,6 +134,7 @@
     <section class="interior-panel" id="duties">
         <h2 class="panel-room">{{ selected_room.label }}</h2>
         {% include panel.item_partial with task=panel.task items=panel.items item_form=panel.item_form items_done=panel.items_done items_total=panel.items_total next_url=panel.next_url refresh_page=True no_autofocus=True %}
+    {% include "budget/partials/_funds_panel.html" with panel=panel.funds %}
     </section>
 </div>
 {% endblock %}

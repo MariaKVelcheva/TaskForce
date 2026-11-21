@@ -10,6 +10,7 @@ from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 
+from taskForce.budget.services import funds_panel
 from taskForce.redirects import NextMixin, get_next, with_next
 from taskForce.tasks.exercises import find_or_create_exercise
 from taskForce.tasks.forms import CreateTaskForm, UpdateTaskForm
@@ -76,7 +77,7 @@ class DetailTaskView(NextMixin, LoginRequiredMixin, DetailView):
     context_object_name = "task"
 
     def get_queryset(self):
-        return with_urgency(Task.objects.visible_to(self.request.user))
+        return with_urgency(Task.objects.visible_to(self.request.user)).select_related("unit")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -88,8 +89,10 @@ class DetailTaskView(NextMixin, LoginRequiredMixin, DetailView):
                 is_singleton
                 and Membership.objects.filter(user=self.request.user).count() > 1
         )
+        context["funds_panel"] = funds_panel(
+            user=self.request.user, unit=self.object.unit, task=self.object,
+        )
         return context
-
 
 class UpdateTaskView(LoginRequiredMixin, UpdateView):
     model = Task

@@ -13,6 +13,7 @@ from django.views.decorators.http import require_POST
 from django.views.generic import CreateView, DeleteView, DetailView, FormView, ListView, UpdateView
 
 from taskForce.accounts.models import Avatar
+from taskForce.budget.services import funds_panel
 from taskForce.redirects import get_next
 from taskForce.tasks.models import Task
 from taskForce.units.forms import CreateUnitForm, JoinUnitForm, RenameUnitForm
@@ -71,6 +72,7 @@ class DetailUnitView(LoginRequiredMixin, DetailView):
             "memberships": memberships,
             "active_tasks": tasks.filter(is_active=True),
             "inactive_tasks": tasks.filter(is_active=False),
+            "funds_panel": funds_panel(user=self.request.user, unit=unit),
         })
         return context
 

@@ -1,0 +1,13 @@
+<p class="funds-line{% if funds.is_over %} is-over{% endif %}">
+    {% if funds.has_budget %}
+        €{{ funds.spent|floatformat:"-2g" }} of €{{ funds.budget|floatformat:"-2g" }} expended ·
+        {% if funds.is_over %}
+            <strong>€{{ funds.overrun|floatformat:"-2g" }} overrun</strong>
+        {% else %}
+            <strong>€{{ funds.remaining|floatformat:"-2g" }} remaining</strong>
+        {% endif %}
+    {% else %}
+        €{{ funds.spent|floatformat:"-2g" }} expended this month · <span class="funds-muted">no budget set</span>
+    {% endif %}
+</p>
+

@@ -17,6 +17,7 @@ MY_APPS = [
     "taskForce.common.apps.CommonConfig",
     "taskForce.comms.apps.CommsConfig",
     "taskForce.tasks.apps.TasksConfig",
+    "taskForce.budget.apps.BudgetConfig",
 ]
 
 INSTALLED_APPS = [

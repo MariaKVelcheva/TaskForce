@@ -8,5 +8,6 @@ urlpatterns = [
     path('comms/', include('taskForce.comms.urls')),
     path('units/', include('taskForce.units.urls')),
     path('tasks/', include('taskForce.tasks.urls')),
+    path("budget/", include("taskForce.budget.urls")),
 
 ]

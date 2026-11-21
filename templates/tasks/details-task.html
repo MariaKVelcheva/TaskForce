@@ -200,6 +200,8 @@
     {% include item_partial %}
 {% endif %}
 
+{% include "budget/partials/_funds_panel.html" with panel=funds_panel %}
+    
 <div class="detail-grid">
     {% if task.priority < 3 %}
     <div class="detail-field">

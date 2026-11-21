@@ -4,6 +4,13 @@
 
 {% block extra_css %}
 <style>
+.deploy-funds { display: flex; flex-wrap: wrap; align-items: baseline; gap: .5rem .75rem; margin: -.25rem 0 1rem; }
+.deploy-funds .funds-line { margin: 0; font-size: 1rem; }
+.deploy-funds-tag { font-family: 'Share Tech Mono', monospace; font-size: .7rem; letter-spacing: .12em;
+                    text-transform: uppercase; color: var(--khaki-muted); }
+.deploy-funds-link { font-family: 'Share Tech Mono', monospace; font-size: .65rem; letter-spacing: .1em;
+                     text-transform: uppercase; color: var(--muted); text-decoration: none; }
+.deploy-funds-link:hover { color: var(--khaki); }
 .deploy-header { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
 .deploy-base { font-family: 'Barlow Condensed', sans-serif; font-size: 1.4rem; letter-spacing: .08em;
                text-transform: uppercase; color: var(--khaki); }
@@ -24,7 +31,7 @@
 .is-empty .building-art   { filter: grayscale(1) brightness(.8); opacity: .55; }
 .is-empty .building-label { opacity: .6; }
 
-.deploy-map { margin: 0 auto; --deploy-chrome: 12rem; }
+.deploy-map { margin: 0 auto; --deploy-chrome: 14rem; }
 
 .is-off-limits .building-art,
 .is-off-limits:hover .building-art,
@@ -101,6 +108,13 @@
 <p class="objective text-muted">No urgent orders. At ease, operative.</p>
 {% endif %}
 
+    {% if funds.has_budget or funds.spent %}
+<div class="deploy-funds">
+    <span class="deploy-funds-tag">Funds</span>
+    {% include "budget/partials/_funds_line.html" with funds=funds %}
+    <a href="{% url 'details-unit' unit.pk %}#funds" class="deploy-funds-link">Log spending →</a>
+</div>
+{% endif %}
 
 <div class="deploy-map-scroll">
 <div class="deploy-map" style="width: min(100%, calc((100dvh - var(--deploy-chrome)) * {{ map_width }} / {{ map_height }}));">

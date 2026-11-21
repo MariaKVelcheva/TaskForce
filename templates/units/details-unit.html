@@ -5,6 +5,7 @@
 {% block extra_css %}
 <style>
     {% include "units/partials/_unit_css.html" %}
+    {% include "budget/partials/_funds_css.html" %}
 
     .task-preview-list {
         display: flex;
@@ -113,6 +114,7 @@
         <a href="{% url 'unit-settings' unit.pk %}" class="btn btn-ghost" style="font-size: 0.82rem;">Settings</a>
     </div>
 </div>
+            {% include "budget/partials/_funds_panel.html" with panel=funds_panel %}
 
 {% if not is_personal %}
 <div class="section-label">// Operatives</div>
