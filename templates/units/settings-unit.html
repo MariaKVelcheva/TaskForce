@@ -1,47 +1,123 @@
 {% extends "common/base.html" %}
 {% load i18n %}
 
+{% block title %}{% translate "Settings" %} · {% if is_personal %}{% translate "Personal base" %}{% else %}{{ unit.name }}{% endif %} — Task: Force!{% endblock %}
+
+{% block extra_css %}
+<style>
+    {% include "units/partials/_unit_css.html" %}
+
+    .settings-section { margin-bottom: 2rem; }
+
+    .rename-form {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .rename-form .rename-field { flex: 1; min-width: 0; }
+
+    .rename-form .btn { font-size: 0.82rem; }
+
+    .settings-value {
+        font-size: 0.95rem;
+        color: var(--cream);
+    }
+
+    .settings-hint {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.65rem;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+        line-height: 1.5;
+        margin-bottom: 1rem;
+    }
+
+    .clearance-actions {
+        display: flex;
+        gap: 0.5rem;
+        flex-shrink: 0;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<section class="unit-settings">
-  <h1>{% translate "Unit settings" %}</h1>
-  <a href="{% url 'details-unit' unit.pk %}">{% translate "Back to unit" %}</a>
 
-  {# --- Name --- #}
-  <h2>{% translate "Name" %}</h2>
-  {% if is_commander %}
-    <form method="post">
-      {% csrf_token %}
-      {{ form.as_p }}
-      <button type="submit" class="btn btn-primary">{% translate "Rename" %}</button>
-    </form>
-  {% else %}
-    <p>{{ unit.name }}</p>
-  {% endif %}
+<div class="detail-header">
+    <div>
+        <h1 class="detail-title">{% translate "Settings" %}</h1>
+        <p class="detail-subtitle">{% if is_personal %}{% translate "Personal base" %}{% else %}{{ unit.name }}{% endif %}</p>
+    </div>
+    <div class="detail-actions">
+        <a href="{% url 'details-unit' unit.pk %}" class="btn btn-ghost" style="font-size: 0.82rem;">{% translate "Back to unit" %}</a>
+    </div>
+</div>
 
-  {% if not is_personal %}
-
-    {# --- Invite --- #}
-    <h2>{% translate "Invite" %}</h2>
-    <p><input type="text" value="{{ invite_url }}" readonly></p>
+{# --- Designation --- #}
+<section class="settings-section">
+    <div class="section-label">// {% translate "Designation" %}</div>
     {% if is_commander %}
-      <button type="button" class="btn btn-ghost" data-dialog="reset-code" aria-haspopup="dialog">{% translate "Reset invite code" %}</button>
-      {% url 'reset-invite-code' unit.pk as reset_url %}
-      {% translate "Reset the invite code?" as reset_title %}
-      {% translate "Anyone who has the current link won't be able to join with it." as reset_message %}
-      {% translate "Reset" as reset_confirm %}
-      {% include "common/partials/_confirm_dialog.html" with id="reset-code" title=reset_title message=reset_message action=reset_url confirm=reset_confirm %}
+    <form method="post" class="rename-form">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        <div class="rename-field">
+            {{ form.name }}
+            {{ form.name.errors }}
+        </div>
+        <button type="submit" class="btn btn-primary">{% translate "Rename" %}</button>
+    </form>
+    {% else %}
+    <p class="settings-value">{{ unit.name }}</p>
     {% endif %}
+</section>
 
-    {# --- Members --- #}
-    <h2>{% translate "Members" %}</h2>
-    <ul>
-      {% for m in memberships %}
-        <li>
-          {{ m.user.username }} · {{ m.get_role_display }}
-          {% if is_commander and m.user_id != request.user.id %}
-            <button type="button" class="btn btn-ghost" data-dialog="transfer-{{ m.pk }}" aria-haspopup="dialog">{% translate "Hand over command" %}</button>
-            <button type="button" class="btn btn-danger" data-dialog="remove-{{ m.pk }}" aria-haspopup="dialog">{% translate "Remove" %}</button>
+{% if not is_personal %}
 
+{# --- Clearance code --- #}
+<section class="settings-section">
+    <div class="section-label">// {% translate "Clearance code" %}</div>
+    <div class="clearance-box">
+        <div style="min-width: 0;">
+            <div class="clearance-label">{% translate "Share this link to recruit operatives" %}</div>
+            <div class="clearance-code">{{ invite_url }}</div>
+        </div>
+        <div class="clearance-actions">
+            <button type="button" class="copy-btn" data-copy="{{ invite_url }}">{% translate "Copy" %}</button>
+            {% if is_commander %}
+            <button type="button" class="copy-btn" data-dialog="reset-code" aria-haspopup="dialog">{% translate "Reset" %}</button>
+            {% endif %}
+        </div>
+    </div>
+    {% if is_commander %}
+        {% url 'reset-invite-code' unit.pk as reset_url %}
+        {% translate "Reset the invite code?" as reset_title %}
+        {% translate "Anyone who has the current link won't be able to join with it." as reset_message %}
+        {% translate "Reset" as reset_confirm %}
+        {% include "common/partials/_confirm_dialog.html" with id="reset-code" title=reset_title message=reset_message action=reset_url confirm=reset_confirm %}
+    {% endif %}
+</section>
+
+{# --- Operatives --- #}
+<section class="settings-section">
+    <div class="section-label">// {% translate "Operatives" %}</div>
+    <div class="member-list">
+        {% for m in memberships %}
+        <div class="member-row">
+            <span class="member-name">
+                {{ m.user.username }}
+                {% if m.user_id == request.user.id %}<span class="member-you">{% translate "you" %}</span>{% endif %}
+            </span>
+            <div class="member-controls">
+                <span class="member-role {{ m.role }}">{{ m.get_role_display }}</span>
+                {% if is_commander and m.user_id != request.user.id %}
+                <button type="button" class="member-btn" data-dialog="transfer-{{ m.pk }}" aria-haspopup="dialog">{% translate "Hand over command" %}</button>
+                <button type="button" class="member-btn danger" data-dialog="remove-{{ m.pk }}" aria-haspopup="dialog"
+                        title="{% translate 'Remove from unit' %}" aria-label="{% blocktranslate with name=m.user.username %}Remove {{ name }}{% endblocktranslate %}">&times;</button>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if is_commander and m.user_id != request.user.id %}
             {% url 'transfer-command' unit.pk m.pk as transfer_url %}
             {% blocktranslate with name=m.user.username asvar transfer_title %}Hand over command to {{ name }}?{% endblocktranslate %}
             {% translate "You will become an operative. Only the new commander can give command back." as transfer_message %}
@@ -53,30 +129,49 @@
             {% translate "Their assigned missions will become unassigned." as remove_message %}
             {% translate "Remove" as remove_confirm %}
             {% include "common/partials/_confirm_dialog.html" with id="remove-" id_suffix=m.pk title=remove_title message=remove_message action=remove_url confirm=remove_confirm reset_checkbox=True %}
-          {% endif %}
-        </li>
-      {% endfor %}
-    </ul>
-
-    {# --- Danger zone --- #}
-    <h2>{% translate "Danger zone" %}</h2>
-    {% if is_commander %}
-      <button type="button" class="btn btn-danger" data-dialog="delete-unit" aria-haspopup="dialog">{% translate "Delete unit" %}</button>
-      {% url 'delete-unit' unit.pk as delete_url %}
-      {% blocktranslate with name=unit.name asvar delete_title %}Delete {{ name }}?{% endblocktranslate %}
-      {% translate "All its missions and lists will be deleted for every member. This can't be undone." as delete_message %}
-      {% translate "Delete" as delete_confirm %}
-      {% include "common/partials/_confirm_dialog.html" with id="delete-unit" title=delete_title message=delete_message action=delete_url confirm=delete_confirm %}
-    {% else %}
-      <button type="button" class="btn btn-danger" data-dialog="leave-unit" aria-haspopup="dialog">{% translate "Leave unit" %}</button>
-      {% url 'leave-unit' unit.pk as leave_url %}
-      {% blocktranslate with name=unit.name asvar leave_title %}Leave {{ name }}?{% endblocktranslate %}
-      {% translate "You'll need a new invite to come back." as leave_message %}
-      {% translate "Leave" as leave_confirm %}
-      {% include "common/partials/_confirm_dialog.html" with id="leave-unit" title=leave_title message=leave_message action=leave_url confirm=leave_confirm %}
-    {% endif %}
-
-  {% endif %}
+        {% endif %}
+        {% endfor %}
+    </div>
 </section>
+
+{# --- Danger zone --- #}
+<div class="danger-zone">
+    <div class="danger-zone-label">{% translate "Danger zone" %}</div>
+    {% if is_commander %}
+        {% if memberships|length > 1 %}
+        <p class="settings-hint">{% translate "To leave this unit, hand over command to another operative first." %}</p>
+        {% endif %}
+        <button type="button" class="btn btn-danger" style="font-size: 0.82rem;" data-dialog="delete-unit" aria-haspopup="dialog">{% translate "Dissolve unit" %}</button>
+        {% url 'delete-unit' unit.pk as delete_url %}
+        {% blocktranslate with name=unit.name asvar delete_title %}Dissolve {{ name }}?{% endblocktranslate %}
+        {% translate "All its missions and lists will be deleted for every member. This can't be undone." as delete_message %}
+        {% translate "Dissolve" as delete_confirm %}
+        {% include "common/partials/_confirm_dialog.html" with id="delete-unit" title=delete_title message=delete_message action=delete_url confirm=delete_confirm %}
+    {% else %}
+        <button type="button" class="btn btn-danger" style="font-size: 0.82rem;" data-dialog="leave-unit" aria-haspopup="dialog">{% translate "Leave unit" %}</button>
+        {% url 'leave-unit' unit.pk as leave_url %}
+        {% blocktranslate with name=unit.name asvar leave_title %}Leave {{ name }}?{% endblocktranslate %}
+        {% translate "You'll need a new invite to come back." as leave_message %}
+        {% translate "Leave" as leave_confirm %}
+        {% include "common/partials/_confirm_dialog.html" with id="leave-unit" title=leave_title message=leave_message action=leave_url confirm=leave_confirm %}
+    {% endif %}
+</div>
+
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("click", (event) => {
+        const button = event.target.closest("[data-copy]");
+        if (!button) return;
+        button.dataset.label ??= button.textContent;
+        navigator.clipboard.writeText(button.dataset.copy).then(() => {
+            button.textContent = "{% translate 'Copied' %}";
+            setTimeout(() => (button.textContent = button.dataset.label), 2000);
+        });
+    });
+</script>
 {% endblock %}
 

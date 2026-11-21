@@ -68,8 +68,6 @@ class DetailUnitView(LoginRequiredMixin, DetailView):
 
         context.update({
             "is_personal": unit.personal_for_id is not None,
-            "is_commander": is_commander,
-            "can_leave": not is_commander,
             "memberships": memberships,
             "active_tasks": tasks.filter(is_active=True),
             "inactive_tasks": tasks.filter(is_active=False),
