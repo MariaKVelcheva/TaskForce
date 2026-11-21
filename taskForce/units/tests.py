@@ -279,3 +279,44 @@ class UnitSettingsTests(TestCase):
         self.cmd.personal_unit.refresh_from_db()
         self.assertEqual(self.cmd.personal_unit.name, "HQ")
 
+
+class SettingsDialogTests(TestCase):
+    def setUp(self):
+        self.cmd = User.objects.create_user(username="cmd", password=PASSWORD)
+        self.op = User.objects.create_user(username="op", password=PASSWORD)
+        create_personal_unit(self.cmd)
+        create_personal_unit(self.op)
+        self.family = create_unit(name="Family", commander=self.cmd)
+        self.op_membership = Membership.objects.create(
+            user=self.op, unit=self.family, role=Membership.Role.OPERATIVE,
+        )
+        self.url = reverse("unit-settings", kwargs={"pk": self.family.pk})
+
+    def test_commander_page_has_member_dialogs(self):
+        self.client.force_login(self.cmd)
+        response = self.client.get(self.url)
+
+        self.assertContains(response, f'id="remove-{self.op_membership.pk}"')
+        self.assertContains(response, f'id="transfer-{self.op_membership.pk}"')
+        self.assertContains(response, 'id="delete-unit"')
+        self.assertNotContains(response, 'id="leave-unit"')
+
+    def test_operative_page_has_only_leave_dialog(self):
+        self.client.force_login(self.op)
+        response = self.client.get(self.url)
+
+        self.assertContains(response, 'id="leave-unit"')
+        self.assertNotContains(response, 'id="delete-unit"')
+        self.assertNotContains(response, "<dialog id=\"remove-")
+
+    def test_delete_unit_refuses_get(self):
+        self.client.force_login(self.cmd)
+        response = self.client.get(reverse("delete-unit", kwargs={"pk": self.family.pk}))
+
+        self.assertEqual(response.status_code, 405)
+
+    def test_delete_unit_by_post(self):
+        self.client.force_login(self.cmd)
+        self.client.post(reverse("delete-unit", kwargs={"pk": self.family.pk}))
+
+        self.assertFalse(Unit.objects.filter(pk=self.family.pk).exists())

@@ -6,12 +6,13 @@
   <h1>{% translate "Unit settings" %}</h1>
   <a href="{% url 'details-unit' unit.pk %}">{% translate "Back to unit" %}</a>
 
+  {# --- Name --- #}
   <h2>{% translate "Name" %}</h2>
   {% if is_commander %}
     <form method="post">
       {% csrf_token %}
       {{ form.as_p }}
-      <button type="submit">{% translate "Rename" %}</button>
+      <button type="submit" class="btn btn-primary">{% translate "Rename" %}</button>
     </form>
   {% else %}
     <p>{{ unit.name }}</p>
@@ -19,43 +20,60 @@
 
   {% if not is_personal %}
 
+    {# --- Invite --- #}
     <h2>{% translate "Invite" %}</h2>
     <p><input type="text" value="{{ invite_url }}" readonly></p>
     {% if is_commander %}
-      <form method="post" action="{% url 'reset-invite-code' unit.pk %}">
-        {% csrf_token %}
-        <button type="submit">{% translate "Reset invite code" %}</button>
-      </form>
+      <button type="button" class="btn btn-ghost" data-dialog="reset-code" aria-haspopup="dialog">{% translate "Reset invite code" %}</button>
+      {% url 'reset-invite-code' unit.pk as reset_url %}
+      {% translate "Reset the invite code?" as reset_title %}
+      {% translate "Anyone who has the current link won't be able to join with it." as reset_message %}
+      {% translate "Reset" as reset_confirm %}
+      {% include "common/partials/_confirm_dialog.html" with id="reset-code" title=reset_title message=reset_message action=reset_url confirm=reset_confirm %}
     {% endif %}
 
+    {# --- Members --- #}
     <h2>{% translate "Members" %}</h2>
     <ul>
       {% for m in memberships %}
         <li>
           {{ m.user.username }} · {{ m.get_role_display }}
           {% if is_commander and m.user_id != request.user.id %}
-            <form method="post" action="{% url 'transfer-command' unit.pk m.pk %}">
-              {% csrf_token %}
-              <button type="submit">{% translate "Hand over command" %}</button>
-            </form>
-            <form method="post" action="{% url 'remove-member' unit.pk m.pk %}">
-              {% csrf_token %}
-              <label><input type="checkbox" name="reset_code" checked> {% translate "Also reset invite code" %}</label>
-              <button type="submit">{% translate "Remove" %}</button>
-            </form>
+            <button type="button" class="btn btn-ghost" data-dialog="transfer-{{ m.pk }}" aria-haspopup="dialog">{% translate "Hand over command" %}</button>
+            <button type="button" class="btn btn-danger" data-dialog="remove-{{ m.pk }}" aria-haspopup="dialog">{% translate "Remove" %}</button>
+
+            {% url 'transfer-command' unit.pk m.pk as transfer_url %}
+            {% blocktranslate with name=m.user.username asvar transfer_title %}Hand over command to {{ name }}?{% endblocktranslate %}
+            {% translate "You will become an operative. Only the new commander can give command back." as transfer_message %}
+            {% translate "Hand over" as transfer_confirm %}
+            {% include "common/partials/_confirm_dialog.html" with id="transfer-" id_suffix=m.pk title=transfer_title message=transfer_message action=transfer_url confirm=transfer_confirm %}
+
+            {% url 'remove-member' unit.pk m.pk as remove_url %}
+            {% blocktranslate with name=m.user.username asvar remove_title %}Remove {{ name }}?{% endblocktranslate %}
+            {% translate "Their assigned missions will become unassigned." as remove_message %}
+            {% translate "Remove" as remove_confirm %}
+            {% include "common/partials/_confirm_dialog.html" with id="remove-" id_suffix=m.pk title=remove_title message=remove_message action=remove_url confirm=remove_confirm reset_checkbox=True %}
           {% endif %}
         </li>
       {% endfor %}
     </ul>
 
+    {# --- Danger zone --- #}
     <h2>{% translate "Danger zone" %}</h2>
     {% if is_commander %}
-      <a href="{% url 'delete-unit' unit.pk %}">{% translate "Delete unit" %}</a>
+      <button type="button" class="btn btn-danger" data-dialog="delete-unit" aria-haspopup="dialog">{% translate "Delete unit" %}</button>
+      {% url 'delete-unit' unit.pk as delete_url %}
+      {% blocktranslate with name=unit.name asvar delete_title %}Delete {{ name }}?{% endblocktranslate %}
+      {% translate "All its missions and lists will be deleted for every member. This can't be undone." as delete_message %}
+      {% translate "Delete" as delete_confirm %}
+      {% include "common/partials/_confirm_dialog.html" with id="delete-unit" title=delete_title message=delete_message action=delete_url confirm=delete_confirm %}
     {% else %}
-      <form method="post" action="{% url 'leave-unit' unit.pk %}">
-        {% csrf_token %}
-        <button type="submit">{% translate "Leave unit" %}</button>
-      </form>
+      <button type="button" class="btn btn-danger" data-dialog="leave-unit" aria-haspopup="dialog">{% translate "Leave unit" %}</button>
+      {% url 'leave-unit' unit.pk as leave_url %}
+      {% blocktranslate with name=unit.name asvar leave_title %}Leave {{ name }}?{% endblocktranslate %}
+      {% translate "You'll need a new invite to come back." as leave_message %}
+      {% translate "Leave" as leave_confirm %}
+      {% include "common/partials/_confirm_dialog.html" with id="leave-unit" title=leave_title message=leave_message action=leave_url confirm=leave_confirm %}
     {% endif %}
 
   {% endif %}

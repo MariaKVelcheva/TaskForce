@@ -1,0 +1,13 @@
+<script>
+  document.addEventListener("click", (event) => {
+    const opener = event.target.closest("[data-dialog]");
+    if (opener) {
+      document.getElementById(opener.dataset.dialog)?.showModal();
+      return;
+    }
+    if (event.target instanceof HTMLDialogElement) {
+      event.target.close();
+    }
+  });
+</script>
+

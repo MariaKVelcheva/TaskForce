@@ -41,7 +41,7 @@ class CreateUnitView(LoginRequiredMixin, CreateView):
 
 class DeleteUnitView(LoginRequiredMixin, DeleteView):
     model = Unit
-    template_name = "units/delete-unit.html"
+    http_method_names = ["post"]
     success_url = reverse_lazy("index")
 
     def get_queryset(self):
