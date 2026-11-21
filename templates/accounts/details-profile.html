@@ -1,4 +1,5 @@
 {% extends 'common/base.html' %}
+{% load i18n %}
 
 {% block title %}Operative file — Task: Force!{% endblock %}
 
@@ -68,8 +69,6 @@
 
     .unit-list {
         list-style: none;
-        padding: 0;
-        margin: 0;
     }
 
     .unit-list a {
@@ -92,6 +91,13 @@
         text-transform: uppercase;
         color: var(--muted);
         margin-bottom: 1rem;
+    }
+
+    .danger-note {
+        font-size: 0.92rem;
+        color: var(--cream-dark);
+        line-height: 1.6;
+        margin-bottom: 0.75rem;
     }
 
     @media (max-width: 520px) {
@@ -124,7 +130,7 @@
 
             <div>
                 <div class="detail-label">Intel points</div>
-                <div class="detail-value">{{ points }}</div>
+                <div class="detail-value">{{ avatar.points }}</div>
             </div>
 
             {% if request.user.email %}
@@ -136,13 +142,13 @@
 
             <div>
                 <div class="detail-label">Time zone</div>
-                <div class="detail-value small">{{ request.user.avatar.time_zone }}</div>
+                <div class="detail-value small">{{ avatar.time_zone }}</div>
             </div>
 
             <div class="detail-full">
                 <div class="detail-label">Bases</div>
                 <ul class="unit-list">
-                    {% for unit in request.user.units.all %}
+                    {% for unit in units %}
                     <li class="detail-value small">
                         <a href="{% url 'details-unit' unit.pk %}">
                             {% if unit.personal_for_id %}Personal base{% else %}{{ unit.name }}{% endif %}
@@ -158,7 +164,28 @@
 
     <div class="danger-zone">
         <div class="danger-zone-label">Danger zone</div>
-        <a href="{% url 'delete-user' %}" class="btn btn-danger" style="font-size: 0.82rem;">Terminate account</a>
+
+        {% if blocking_units %}
+            <p class="danger-note">
+                You still command units with other operatives in them. Hand over command, or dissolve them, before terminating your account:
+            </p>
+            <ul class="unit-list">
+                {% for unit in blocking_units %}
+                <li class="detail-value small">
+                    <a href="{% url 'unit-settings' unit.pk %}">{{ unit.name }} →</a>
+                </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <button type="button" class="btn btn-danger" style="font-size: 0.82rem;" data-dialog="delete-account" aria-haspopup="dialog">Terminate account</button>
+
+            {% url 'delete-user' as delete_url %}
+            {% blocktranslate with name=request.user.username asvar delete_title %}Terminate operative {{ name }}?{% endblocktranslate %}
+            {% translate "Your personal base and everything in it, and your intel points, will be deleted. Missions and comms you shared with other units stay with them. This can't be undone." as delete_message %}
+            {% translate "These units have no other members and will be dissolved too:" as delete_items_intro %}
+            {% translate "Terminate" as delete_confirm %}
+            {% include "common/partials/_confirm_dialog.html" with id="delete-account" title=delete_title message=delete_message items=solo_units items_intro=delete_items_intro action=delete_url confirm=delete_confirm %}
+        {% endif %}
     </div>
 
 </div>

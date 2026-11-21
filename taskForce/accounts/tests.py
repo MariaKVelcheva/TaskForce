@@ -52,6 +52,19 @@ class RegisterTests(TestCase):
                 self.assertRedirects(response, reverse("index"), fetch_redirect_response=False)
 
 
+class UpdateProfileTests(TestCase):
+    def test_saving_time_zone_redirects_to_profile(self):
+        user = User.objects.create_user(username="tz", password=PASSWORD)
+        create_personal_unit(user)
+        self.client.force_login(user)
+
+        response = self.client.post(reverse("update-profile"), {"time_zone": "Europe/Paris"})
+
+        self.assertRedirects(response, reverse("details-profile"))
+        user.avatar.refresh_from_db()
+        self.assertEqual(user.avatar.time_zone, "Europe/Paris")
+
+
 class DeleteAccountTests(TestCase):
     def setUp(self):
         self.cmd = User.objects.create_user(username="cmd", password=PASSWORD)
@@ -69,13 +82,32 @@ class DeleteAccountTests(TestCase):
 
     def test_commander_of_populated_unit_cannot_delete_account(self):
         self.delete_account(self.cmd)
-
         self.assertTrue(User.objects.filter(pk=self.cmd.pk).exists())
+
+    def test_delete_refuses_get(self):
+        self.client.force_login(self.solo)
+
+        self.assertEqual(self.client.get(reverse("delete-user")).status_code, 405)
+
+    def test_profile_lists_blocking_units_without_delete_button(self):
+        self.client.force_login(self.cmd)
+        response = self.client.get(reverse("details-profile"))
+
+        self.assertContains(response, reverse("unit-settings", kwargs={"pk": self.family.pk}))
+        self.assertNotContains(response, 'id="delete-account"')
+
+    def test_profile_dialog_lists_solo_units(self):
+        create_unit(name="Solo squad", commander=self.solo)
+        self.client.force_login(self.solo)
+        response = self.client.get(reverse("details-profile"))
+
+        self.assertContains(response, 'id="delete-account"')
+        self.assertContains(response, "Solo squad")
 
     def test_blocked_deletion_keeps_user_logged_in(self):
         response = self.delete_account(self.cmd)
 
-        self.assertRedirects(response, reverse("all-units"))
+        self.assertRedirects(response, reverse("details-profile"))
         self.assertEqual(self.client.get(reverse("all-units")).status_code, 200)
 
     def test_deleting_account_removes_personal_unit(self):

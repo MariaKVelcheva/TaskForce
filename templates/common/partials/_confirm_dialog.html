@@ -1,14 +1,15 @@
 {% load i18n %}
-{% comment %}
-  Usage:
-    {% include "common/partials/_confirm_dialog.html" with id="remove-" id_suffix=m.pk title=... message=... action=remove_url confirm=... %}
-  id_suffix is optional (for one dialog per row). reset_checkbox=True adds the invite-code checkbox.
-{% endcomment %}
 <dialog id="{{ id }}{{ id_suffix }}" class="confirm-dialog" aria-labelledby="{{ id }}{{ id_suffix }}-title">
   <form method="post" action="{{ action }}" class="confirm-dialog__body">
     {% csrf_token %}
     <h2 id="{{ id }}{{ id_suffix }}-title">{{ title }}</h2>
     <p>{{ message }}</p>
+      {% if items %}
+      <p>{{ items_intro }}</p>
+      <ul class="confirm-dialog__list">
+        {% for item in items %}<li>{{ item }}</li>{% endfor %}
+      </ul>
+    {% endif %}
     {% if reset_checkbox %}
       <label>
         <input type="checkbox" name="reset_code" checked>
