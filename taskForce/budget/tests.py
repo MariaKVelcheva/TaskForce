@@ -324,6 +324,12 @@ class MapFundsTests(TestCase):
 
         self.assertTrue(response.context["funds_panel"]["funds"].is_unit_fallback)
 
+    def test_supply_shows_funds_for_groceries_only(self):
+        response = self.client.get(reverse("deploy-location", args=["supply"]))
+        funds = {p["task"].type: p.get("funds") for p in response.context["panels"]}
+        self.assertIsNotNone(funds[TaskType.GROCERIES])
+        self.assertIsNone(funds[TaskType.PANTRY])
+
     def test_training_has_funds_panel(self):
         response = self.location("training")
 

@@ -19,6 +19,7 @@ LOCATIONS = {
     "supply": {
         "label": _("Supply"),
         "types": (TaskType.PANTRY, TaskType.GROCERIES),
+        "funds_types": (TaskType.GROCERIES,),
         "creates": None,
         "interior": "common/interiors/supply.html",
     },

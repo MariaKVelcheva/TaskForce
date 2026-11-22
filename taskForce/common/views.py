@@ -273,7 +273,8 @@ class DeployLocationView(LoginRequiredMixin, ListView):
                 task = tasks[task_type]
                 panel = get_item_context(task)
                 panel["next_url"] = next_url
-                panel["funds"] = funds_panel(user=request.user, unit=unit, task=task)
+                if task_type in self.location.get("funds_types", ()):
+                    panel["funds"] = funds_panel(user=request.user, unit=unit, task=task)
                 panels.append(panel)
         return {"panels": panels}
 

@@ -50,9 +50,18 @@
         border-top: none;
         padding: 1rem 0 1.1rem;
     }
+    
+        .interior-panel .items-block > .item-list {
+        max-height: min(22rem, 55vh);
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        scrollbar-color: var(--khaki-dark) transparent;
+        padding-right: 0.4rem;
+    }
 
     @media (max-width: 720px) {
         .interior-panels { grid-template-columns: 1fr; }
+                .interior-panel .items-block > .item-list { max-height: none; overflow: visible; }
     }
 </style>
 {% endblock %}
@@ -68,7 +77,9 @@
     {% for panel in panels %}
     <section class="interior-panel">
         {% include panel.item_partial with task=panel.task items=panel.items item_form=panel.item_form items_done=panel.items_done items_total=panel.items_total next_url=panel.next_url %}
-        {% include "budget/partials/_funds_panel.html" with panel=panel.funds %}
+        {% if panel.funds %}
+            {% include "budget/partials/_funds_panel.html" with panel=panel.funds %}
+        {% endif %}
     </section>
     {% endfor %}
 </div>

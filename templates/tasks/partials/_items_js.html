@@ -2,6 +2,40 @@
 (function () {
     if (window.itemBlocksBound) return;
     window.itemBlocksBound = true;
+    
+        function normalise(text) {
+        return text.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase().trim();
+    }
+
+    function applySearch(input) {
+        const block = input.closest(".items-block");
+        const query = normalise(input.value);
+        let shown = 0;
+        block.querySelectorAll(".item-list .item-row").forEach((row) => {
+            const name = normalise(row.querySelector(".item-name")?.textContent ?? "");
+            row.hidden = query !== "" && !name.includes(query);
+            if (!row.hidden) shown += 1;
+        });
+        const empty = block.querySelector("[data-search-empty]");
+        if (empty) empty.hidden = shown > 0;
+    }
+
+    function replaceBlock(current, fresh) {
+        const search = current.querySelector("[data-search-list]");
+        const query = search ? search.value : "";
+        const list = current.querySelector(".item-list");
+        const scroll = list ? list.scrollTop : 0;
+
+        current.replaceWith(fresh);
+
+        const freshSearch = fresh.querySelector("[data-search-list]");
+        if (freshSearch && query) {
+            freshSearch.value = query;
+            applySearch(freshSearch);
+        }
+        const freshList = fresh.querySelector(".item-list");
+        if (freshList) freshList.scrollTop = scroll;
+    }
 
     async function refreshAllBlocks() {
         const response = await fetch(window.location.href);
@@ -9,7 +43,7 @@
         const page = new DOMParser().parseFromString(await response.text(), "text/html");
                 page.querySelectorAll("[data-block]").forEach((fresh) => {
             const current = document.querySelector(`[data-block="${fresh.dataset.block}"]`);
-            if (current) current.replaceWith(document.adoptNode(fresh));
+            if (current) replaceBlock(current, document.adoptNode(fresh));
         });
     }
 
@@ -30,7 +64,7 @@
         } else {
             const holder = document.createElement("div");
             holder.innerHTML = await response.text();
-            block.replaceWith(holder.querySelector(".items-block"));
+            replaceBlock(block, holder.querySelector(".items-block"));
         }
 
         if (wasAdd) {
@@ -45,13 +79,17 @@
         const form = event.target;
         if (!form.closest(".items-block")) return;
         event.preventDefault();
-        send(form, submitter);
+        send(form, event.submitter);
     });
 
     document.addEventListener("change", (event) => {
         if (event.target.matches(".item-amount-input")) {
             event.target.form.requestSubmit();
         }
+    });
+    
+        document.addEventListener("input", (event) => {
+        if (event.target.matches("[data-search-list]")) applySearch(event.target);
     });
 })();
 </script>

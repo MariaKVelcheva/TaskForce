@@ -213,7 +213,7 @@
                 {% csrf_token %}
                 <input type="hidden" name="next" value="{{ next_url }}">
                 <input type="hidden" name="weekday" value="{{ d.weekday }}">
-                <input type="text" name="name" class="item-add-name" list="exercise-library"
+                <input type="text" name="name" class="item-add-name" list="exercise-library" autocomplete="off"
                        placeholder="Exercise..." maxlength="50" required
                        aria-label="Exercise for {{ d.label }}">
                 <input type="text" name="reps" class="item-add-reps" placeholder="Reps" maxlength="50">

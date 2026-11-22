@@ -3,6 +3,13 @@
         <span class="items-title">// Shelves</span>
         <span class="items-progress">{{ items_total }} product{{ items_total|pluralize }}</span>
     </div>
+{% if items %}
+<div class="items-search">
+    <label for="id_pantry_search_{{ task.pk }}" class="visually-hidden">Search the shelves</label>
+    <input type="search" id="id_pantry_search_{{ task.pk }}" class="items-search-input"
+           placeholder="Search shelves..." autocomplete="off" data-search-list>
+</div>
+{% endif %}
 
     {% if items %}
     <ul class="item-list">
@@ -11,18 +18,16 @@
         <li class="item-row{% if item.is_low %} low{% endif %}">
             <span class="item-name">{{ item.name }}</span>
 
-            {# One status slot: already on the list, or a button to put it there. #}
             {% if on_list and not on_list.is_done %}
             <span class="item-tag">on list</span>
             {% else %}
             <form method="post" action="{% url 'mark-low' task.pk item.pk %}" class="item-inline-form">
                 {% csrf_token %}
                 {% if next_url %}<input type="hidden" name="next" value="{{ next_url }}">{% endif %}
-                <button type="submit" class="item-need-now" title="Put {{ item.name }} on the shopping list">Low</button>
+                <button type="submit" class="item-need-now" title="Put {{ item.name }} on the shopping list">Add to shopping list</button>
             </form>
             {% endif %}
 
-            {# One form, two buttons: the clicked button sends its own delta. #}
             <form method="post" action="{% url 'adjust-stock' task.pk item.pk %}" class="item-stepper">
                 {% csrf_token %}
                 {% if next_url %}<input type="hidden" name="next" value="{{ next_url }}">{% endif %}
@@ -44,6 +49,7 @@
         {% endwith %}
         {% endfor %}
     </ul>
+        <p class="items-empty" data-search-empty hidden>No match on the shelves</p>
     {% else %}
     <div class="items-empty">Shelves empty</div>
     {% endif %}
@@ -55,7 +61,7 @@
         <input type="text" name="name" class="item-add-name"
                placeholder="Add product..." maxlength="50" required>
         <input type="number" name="quantity" class="item-add-num"
-               value="0" min="0" aria-label="Quantity in stock" title="In stock">
+               value="1" min="0" aria-label="Quantity in stock" title="In stock">
         <input type="number" name="threshold" class="item-add-num"
                placeholder="Low at" min="0" aria-label="Low at (optional)" title="Low at (optional)">
         <button type="submit">Add</button>
