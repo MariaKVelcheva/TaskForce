@@ -187,6 +187,22 @@ class PantryItemForm(forms.ModelForm):
     def clean_threshold(self):
         return self.cleaned_data.get("threshold") or 0
 
+    def clean_name(self):
+        name = self.cleaned_data["name"]
+        existing = (
+            PantryItem.objects
+            .filter(task_id=self.instance.task_id, name__iexact=name)
+            .exclude(pk=self.instance.pk)
+            .first()
+        )
+        if existing:
+            raise forms.ValidationError(
+                _("%(name)s is already on the shelves (%(quantity)s in stock)."),
+                params={"name": existing.name, "quantity": existing.quantity},
+                code="duplicate",
+            )
+        return name
+
     class Meta:
         model = PantryItem
         fields = ("name", "quantity", "threshold")

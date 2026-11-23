@@ -8,11 +8,14 @@ from taskForce.tasks.models import TaskItem
 
 
 class GroceryItem(RecurringItem, CheckableItem, TaskItem):
+    MAX_AMOUNT = 999
+
     quantity = models.CharField(
         max_length=50,
         blank=True,
         verbose_name=_("quantity"),
     )
+
     pantry_item = models.OneToOneField(
         to="tasks.PantryItem",
         on_delete=models.SET_NULL,
@@ -21,6 +24,7 @@ class GroceryItem(RecurringItem, CheckableItem, TaskItem):
         related_name="grocery_item",
         verbose_name=_("shelf product"),
     )
+
     amount = models.PositiveSmallIntegerField(
         null=True,
         blank=True,
@@ -31,16 +35,53 @@ class GroceryItem(RecurringItem, CheckableItem, TaskItem):
     def is_linked(self):
         return self.pantry_item_id is not None
 
+    @property
+    def amount_from_quantity(self):
+        text = self.quantity.strip()
+        if text.isdecimal():
+            return min(max(int(text), 1), self.MAX_AMOUNT)
+        return 1
+
+    def shelve(self):
+        from taskForce.tasks.models import PantryItem, TaskType
+
+        if self.is_recurring:
+            return False
+
+        pantry = self.task.unit.tasks.get(type=TaskType.PANTRY)
+        name = self.name.strip()
+        amount = self.amount_from_quantity
+
+        product, created = PantryItem.objects.get_or_create(
+            task=pantry,
+            name__iexact=name,
+            defaults={"name": name, "quantity": amount, "threshold": 0},
+        )
+        if not created:
+            if GroceryItem.objects.filter(pantry_item=product).exists():
+                return False
+            PantryItem.objects.filter(pk=product.pk).update(quantity=F("quantity") + amount)
+
+        GroceryItem.objects.filter(pk=self.pk).update(pantry_item=product, amount=amount)
+        self.pantry_item = product
+        self.amount = amount
+        return True
+
     def tick(self, user):
         with transaction.atomic():
             done = super().tick(user)
-            if done and self.is_linked and self.amount:
-                from taskForce.tasks.models import PantryItem
+            if not done:
+                return False
+            if self.is_linked:
+                if self.amount:
+                    from taskForce.tasks.models import PantryItem
 
-                PantryItem.objects.filter(pk=self.pantry_item_id).update(
-                    quantity=F("quantity") + self.amount
-                )
-        return done
+                    PantryItem.objects.filter(pk=self.pantry_item_id).update(
+                        quantity=F("quantity") + self.amount
+                    )
+            elif self.task.restocks_pantry:
+                self.shelve()
+        return True
 
     def untick(self):
         with transaction.atomic():

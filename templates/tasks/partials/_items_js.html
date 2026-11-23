@@ -83,7 +83,7 @@
     });
 
     document.addEventListener("change", (event) => {
-        if (event.target.matches(".item-amount-input")) {
+        if (event.target.matches(".item-amount-input, [data-autosubmit]")) {
             event.target.form.requestSubmit();
         }
     });

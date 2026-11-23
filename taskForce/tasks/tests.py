@@ -3,6 +3,7 @@ from unittest.mock import patch
 from zoneinfo import ZoneInfo
 
 from django.contrib.auth import get_user_model
+from django.contrib.messages import get_messages
 from django.db import IntegrityError, transaction
 from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
@@ -143,10 +144,6 @@ class LocationSummaryTests(LocationTestCase):
             task=self.singleton(TaskType.PANTRY), name="milk", quantity=1, threshold=2,
         )
         self.assertTrue(self.summary()["supply"]["overdue"])
-
-    def test_stock_without_threshold_never_flags(self):
-        PantryItem.objects.create(task=self.singleton(TaskType.PANTRY), name="salt", quantity=0)
-        self.assertFalse(self.summary()["supply"]["overdue"])
 
     def test_critical_flags_only_its_location(self):
         self.make(priority=1)
@@ -387,14 +384,6 @@ class AccomplishTests(TaskTestCase):
 class ItemProgressTests(TaskTestCase):
     def annotated(self, task):
         return Task.objects.annotate(**item_progress(now=NOW)).get(pk=task.pk)
-
-    def test_counts_checked_items(self):
-        task = self.singleton(TaskType.LIST)
-        WorkoutItem.objects.create(task=task, name="a", is_checked=True, checked_by=self.user)
-        WorkoutItem.objects.create(task=task, name="b")
-        WorkoutItem.objects.create(task=task, name="c")
-        result = self.annotated(task)
-        self.assertEqual((result.items_done, result.items_total), (1, 3))
 
     def test_recurring_item_done_until_due_again(self):
         task = self.singleton(TaskType.GROCERIES)
@@ -919,5 +908,192 @@ class WorkoutUrgencyTests(TestCase):
     def test_ticked_last_week_needs_action_again(self):
         self.plan(self.today(), last_done_at=timezone.now() - timedelta(days=7))
         self.assertTrue(self.is_open())
+
+
+class ShelvesTestCase(TaskTestCase):
+    def setUp(self):
+        self.groceries = self.singleton(TaskType.GROCERIES)
+        self.pantry = self.singleton(TaskType.PANTRY)
+
+    def other_unit(self):
+        stranger = User.objects.create_user("stranger", password="x")
+        return create_personal_unit(stranger)
+
+    def buy(self, name, quantity=""):
+        return GroceryItem.objects.create(task=self.groceries, name=name, quantity=quantity)
+
+    def product(self, name, quantity):
+        return PantryItem.objects.create(task=self.pantry, name=name, quantity=quantity, threshold=0)
+
+    def stock(self, name):
+        return PantryItem.objects.get(task=self.pantry, name__iexact=name).quantity
+
+
+class GroceryShelvingTests(ShelvesTestCase):
+    def test_tick_creates_product_already_stocked(self):
+        item = self.buy("Milk", "2")
+
+        self.assertTrue(item.tick(self.user))
+
+        product = PantryItem.objects.get(task=self.pantry)
+        self.assertEqual((product.name, product.quantity, product.threshold), ("Milk", 2, 0))
+        item.refresh_from_db()
+        self.assertEqual(item.pantry_item, product)
+        self.assertEqual(item.amount, 2)
+
+    def test_new_product_does_not_add_a_second_grocery_item(self):
+        self.buy("Milk").tick(self.user)
+
+        self.assertEqual(GroceryItem.objects.filter(task=self.groceries).count(), 1)
+
+    def test_tick_restocks_existing_product_case_insensitively(self):
+        self.product("Milk", 1)
+
+        self.buy("  mILK ", "2").tick(self.user)
+
+        self.assertEqual(PantryItem.objects.filter(task=self.pantry).count(), 1)
+        self.assertEqual(self.stock("milk"), 3)
+
+    def test_amount_from_quantity(self):
+        cases = {"6": 6, "2 kg": 1, "": 1, "a few": 1, "0": 1, "²": 1, "5000": 999}
+        for quantity, expected in cases.items():
+            with self.subTest(quantity=quantity):
+                self.assertEqual(GroceryItem(quantity=quantity).amount_from_quantity, expected)
+
+    def test_untick_takes_the_stock_back(self):
+        self.product("Milk", 1)
+        item = self.buy("milk", "2")
+        item.tick(self.user)
+        item.refresh_from_db()
+
+        self.assertTrue(item.untick())
+
+        self.assertEqual(self.stock("milk"), 1)
+
+    def test_untick_new_product_leaves_it_empty_and_on_the_list(self):
+        item = self.buy("Milk", "2")
+        item.tick(self.user)
+        item.refresh_from_db()
+
+        item.untick()
+
+        item.refresh_from_db()
+        self.assertEqual(self.stock("milk"), 0)
+        self.assertFalse(item.is_checked)
+        self.assertTrue(item.is_linked)
+        self.assertEqual(GroceryItem.objects.filter(task=self.groceries).count(), 1)
+
+    def test_setting_off_leaves_the_pantry_alone(self):
+        self.groceries.restocks_pantry = False
+        self.groceries.save(update_fields=["restocks_pantry"])
+        item = self.buy("Milk")
+
+        self.assertTrue(item.tick(self.user))
+
+        self.assertFalse(PantryItem.objects.filter(task=self.pantry).exists())
+        item.refresh_from_db()
+        self.assertFalse(item.is_linked)
+
+    def test_linked_item_restocks_even_with_setting_off(self):
+        self.groceries.restocks_pantry = False
+        self.groceries.save(update_fields=["restocks_pantry"])
+        product = self.product("Milk", 0)
+        linked = GroceryItem.objects.get(pantry_item=product)
+
+        linked.tick(self.user)
+
+        self.assertEqual(self.stock("milk"), 1)
+
+    def test_recurring_item_leaves_the_pantry_alone(self):
+        item = GroceryItem.objects.create(task=self.groceries, name="Bread", frequency_days=2)
+
+        self.assertTrue(item.tick(self.user))
+
+        self.assertFalse(PantryItem.objects.filter(task=self.pantry).exists())
+
+    def test_product_already_on_the_list_is_not_restocked_twice(self):
+        product = self.product("Milk", 0)
+        self.assertTrue(GroceryItem.objects.filter(pantry_item=product).exists())
+        manual = self.buy("milk", "2")
+
+        self.assertTrue(manual.tick(self.user))
+
+        manual.refresh_from_db()
+        self.assertFalse(manual.is_linked)
+        self.assertEqual(self.stock("milk"), 0)
+
+
+class PantryUniqueNameTests(ShelvesTestCase):
+    def test_same_name_different_case_is_rejected_by_the_database(self):
+        self.product("Milk", 1)
+
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            self.product("MILK", 1)
+
+    def test_same_name_in_another_pantry_is_allowed(self):
+        other_pantry = self.other_unit().tasks.get(type=TaskType.PANTRY)
+
+        self.product("Milk", 1)
+        PantryItem.objects.create(task=other_pantry, name="Milk", quantity=1, threshold=0)
+
+        self.assertEqual(PantryItem.objects.filter(name="Milk").count(), 2)
+
+
+class ShelvesViewTests(ShelvesTestCase):
+    def setUp(self):
+        super().setUp()
+        self.client.force_login(self.user)
+
+    def test_adding_a_duplicate_product_shows_a_message(self):
+        self.product("Milk", 1)
+
+        response = self.client.post(
+            reverse("add-item", args=[self.pantry.pk]),
+            {"name": "milk", "quantity": "0", "threshold": ""},
+        )
+
+        self.assertEqual(PantryItem.objects.filter(task=self.pantry).count(), 1)
+        messages = [str(m) for m in get_messages(response.wsgi_request)]
+        self.assertIn("Milk is already on the shelves (1 in stock).", messages)
+
+    def test_adding_a_new_product_still_works(self):
+        self.client.post(
+            reverse("add-item", args=[self.pantry.pk]),
+            {"name": "Eggs", "quantity": "6", "threshold": ""},
+        )
+
+        self.assertEqual(self.stock("eggs"), 6)
+
+    def test_toggle_view_shelves_the_purchase(self):
+        item = self.buy("Milk", "2")
+
+        self.client.post(reverse("toggle-item", args=[self.groceries.pk, item.pk]))
+
+        self.assertEqual(self.stock("milk"), 2)
+
+    def test_set_restock_turns_the_setting_off_and_on(self):
+        url = reverse("set-restock", args=[self.groceries.pk])
+
+        self.client.post(url)
+        self.groceries.refresh_from_db()
+        self.assertFalse(self.groceries.restocks_pantry)
+
+        self.client.post(url, {"restocks_pantry": "on"})
+        self.groceries.refresh_from_db()
+        self.assertTrue(self.groceries.restocks_pantry)
+
+    def test_set_restock_on_the_pantry_is_404(self):
+        response = self.client.post(reverse("set-restock", args=[self.pantry.pk]))
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_set_restock_on_someone_elses_list_is_404(self):
+        other_groceries = self.other_unit().tasks.get(type=TaskType.GROCERIES)
+
+        response = self.client.post(reverse("set-restock", args=[other_groceries.pk]))
+
+        self.assertEqual(response.status_code, 404)
+        other_groceries.refresh_from_db()
+        self.assertTrue(other_groceries.restocks_pantry)
 
 

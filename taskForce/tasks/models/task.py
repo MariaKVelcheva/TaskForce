@@ -109,6 +109,11 @@ class Task(models.Model):
 
     is_active = models.BooleanField(default=True, verbose_name=_("is_active"),)
 
+    restocks_pantry = models.BooleanField(
+        default=True,
+        verbose_name=_("checked groceries go to the shelves"),
+    )
+
     monthly_budget = models.DecimalField(
         verbose_name=_("monthly budget"),
         max_digits=10,

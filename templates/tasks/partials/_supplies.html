@@ -16,6 +16,15 @@
                     <span class="item-box{% if item.is_done %} checked{% endif %}"></span>
                 </button>
             </form>
+            <form method="post" action="{% url 'set-restock' task.pk %}" class="items-setting">
+        {% csrf_token %}
+        {% if next_url %}<input type="hidden" name="next" value="{{ next_url }}">{% endif %}
+        <label class="items-setting-label">
+            <input type="checkbox" name="restocks_pantry" data-autosubmit
+                   {% if task.restocks_pantry %}checked{% endif %}>
+            Checked products go to the shelves
+        </label>
+    </form>
 
             <span class="item-name">{{ item.name }}</span>
 

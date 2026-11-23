@@ -1,4 +1,6 @@
 from django.db import models, transaction
+from django.db.models import F
+from django.db.models.functions import Lower
 from django.utils.translation import gettext_lazy as _
 
 from taskForce.tasks.managers import PantryItemManager
@@ -64,5 +66,12 @@ class PantryItem(TaskItem):
             )
 
     class Meta(TaskItem.Meta):
-        pass
+        constraints = [
+            models.UniqueConstraint(
+                F("task"),
+                Lower("name"),
+                name="pantryitem_unique_name_per_task",
+            ),
+        ]
+
 

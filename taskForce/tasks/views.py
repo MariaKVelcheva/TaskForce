@@ -225,9 +225,9 @@ class CatalogueTaskView(LoginRequiredMixin, ListView):
 @login_required
 @require_POST
 def add_item(request, task_pk):
-    task, _item_model = get_task_and_item_model(request.user, task_pk)
+    task, item_model = get_task_and_item_model(request.user, task_pk)
+    form = ITEM_FORMS[task.type](request.POST, instance=item_model(task=task))
 
-    form = ITEM_FORMS[task.type](request.POST)
     if form.is_valid():
         item = form.save(commit=False)
         item.task = task
@@ -255,6 +255,18 @@ def toggle_item(request, task_pk, item_pk):
     else:
         item.tick(request.user)
 
+    return _item_response(request, task)
+
+
+@login_required
+@require_POST
+def set_restock(request, task_pk):
+    task, _item_model = get_task_and_item_model(request.user, task_pk)
+    if task.type != TaskType.GROCERIES:
+        raise Http404
+
+    task.restocks_pantry = "restocks_pantry" in request.POST
+    task.save(update_fields=["restocks_pantry"])
     return _item_response(request, task)
 
 

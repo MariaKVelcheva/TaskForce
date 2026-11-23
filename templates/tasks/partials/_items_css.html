@@ -144,8 +144,6 @@
     }
 
     .item-delete:hover { color: var(--rust-light); }
-
-    /* Resting recurring items */
     .items-resting { margin-top: 0.9rem; }
     .items-resting:not(:has(li)) { display: none; }
 
@@ -242,8 +240,7 @@
     }
 
     .items-action-btn:hover { border-color: var(--khaki); color: var(--cream); }
-
-    /* Pantry shelves */
+    
     .item-stock-btn {
         width: 1.5rem;
         height: 1.5rem;
@@ -297,7 +294,6 @@
         flex-shrink: 0;
     }
 
-    /* Add forms */
     .item-add {
         display: flex;
         align-items: center;
@@ -485,5 +481,17 @@
 .items-search-input:focus { border-color: var(--khaki); }
 
 .item-row[hidden] { display: none; }
+
+.items-setting { margin-top: 0.6rem; }
+
+.items-setting-label {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin: 0;
+    cursor: pointer;
+}
+
+.items-setting-label input { accent-color: var(--khaki); }
 </style>
 
