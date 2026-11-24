@@ -72,6 +72,7 @@
   .quick-add:has(input[value="pick"]:checked) .pick-date { display: block; }
 }
 
+/* TODO: move to base.html once (also defined in _items_css). */
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 </style>
 {% endblock %}
@@ -129,7 +130,7 @@
                 {% if key == "overdue" %}
                     {% if m.has_due_chores %}Duties waiting
                     {% elif m.has_low_stock %}Stock low
-                        {% elif m.has_open_workout %}Drills today
+                    {% elif m.has_open_workout %}Drills today
                     {% elif m.due_date %}{{ m.due_date|late_by }} late
                     {% endif %}
                 {% elif key == "today" %}{{ m.due_date|date:"H:i" }}
@@ -155,10 +156,6 @@
                 <input type="hidden" name="next" value="{{ request.get_full_path }}">
                 <button type="submit" class="btn btn-primary">Accomplish · +1</button>
             </form>
-            {% else %}
-            <div class="card-action">
-                <a href="{% url 'details-task' m.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-ghost">Open</a>
-            </div>
             {% endif %}
         </article>
         {% endfor %}
