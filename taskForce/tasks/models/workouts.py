@@ -67,6 +67,10 @@ class WorkoutItem(WeeklyItem, CheckableItem, TaskItem):
     duration = models.DurationField(null=True, blank=True, verbose_name=_("duration"))
     weight = models.CharField(max_length=100, blank=True, verbose_name=_("weight"))
 
+    @property
+    def minutes(self):
+        return int(self.duration.total_seconds() // 60) if self.duration else None
+
     class Meta(TaskItem.Meta):
         constraints = weekly_checkable_constraints("workoutitem")
 

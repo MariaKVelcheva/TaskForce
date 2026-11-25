@@ -1097,3 +1097,21 @@ class ShelvesViewTests(ShelvesTestCase):
         self.assertTrue(other_groceries.restocks_pantry)
 
 
+class WorkoutFormTests(TaskTestCase):
+    def setUp(self):
+        self.client.force_login(self.user)
+        self.workout = self.singleton(TaskType.WORKOUT)
+
+    def add(self, **data):
+        data.setdefault("name", "Test plank")
+        return self.client.post(reverse("add-item", args=[self.workout.pk]), data)
+
+    def test_minutes_become_a_duration(self):
+        self.add(minutes="20")
+        item = WorkoutItem.objects.get(task=self.workout)
+        self.assertEqual(item.duration, timedelta(minutes=20))
+        self.assertEqual(item.minutes, 20)
+
+    def test_minutes_are_optional(self):
+        self.add(reps="3 × 10")
+        self.assertIsNone(WorkoutItem.objects.get(task=self.workout).duration)

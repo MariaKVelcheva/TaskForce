@@ -222,19 +222,34 @@ class PantryItemForm(forms.ModelForm):
 
 
 class WorkoutItemForm(forms.ModelForm):
+    minutes = forms.IntegerField(
+        required=False,
+        min_value=1,
+        max_value=600,
+        label=_("Minutes"),
+        widget=forms.NumberInput(attrs={"placeholder": _("Min")}),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance.duration:
+            self.fields["minutes"].initial = self.instance.minutes
+
+    def save(self, commit=True):
+        minutes = self.cleaned_data.get("minutes")
+        self.instance.duration = timedelta(minutes=minutes) if minutes else None
+        return super().save(commit)
+
     class Meta:
         model = WorkoutItem
-        fields = ("name", "reps", "duration", "weight", "weekday")
+        fields = ("name", "reps", "weekday")
         labels = {
             "name": _("Workout name"),
             "reps": _("Reps"),
-            "duration": _("Duration"),
-            "weight": _("Weight"),
         }
         widgets = {
             "name": forms.TextInput(attrs={"placeholder": _("Add workout...")}),
-            "reps": forms.TextInput(attrs={"placeholder": _("8 reps")}),
-            "weight": forms.TextInput(attrs={"placeholder": _("10 kgs")}),
+            "reps": forms.TextInput(attrs={"placeholder": _("3 × 10")}),
         }
 
 

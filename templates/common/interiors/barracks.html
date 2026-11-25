@@ -31,6 +31,7 @@
         margin-left: auto;
     }
 
+    /* Layout: floor plan on the left, duties and funds stacked on the right. */
     .barracks {
         display: grid;
         grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
@@ -38,10 +39,25 @@
         align-items: start;
     }
 
-    .barracks-plan svg { display: block; width: 100%; height: auto; border-radius: var(--radius); }
+    .barracks-side {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        min-width: 0;
+    }
 
-    .room-label { font: 600 8px "Barlow Condensed", sans-serif; text-anchor: middle; fill: #f2ead0; }
-    .label-halo { stroke: #2b2d1c; stroke-width: 2.5px; stroke-linejoin: round; }
+    /* Floor plan */
+    .barracks-plan svg {
+        display: block;
+        width: 100%;
+        height: auto;
+        border: 1px solid var(--khaki-dark);
+        border-radius: var(--radius);
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+    }
+
+    .room-label { font: 600 8px "Barlow Condensed", sans-serif; text-anchor: middle; fill: #f2ead0;
+                  stroke: #2b2d1c; stroke-width: 2.5px; stroke-linejoin: round; paint-order: stroke; }
     .badge      { fill: var(--rust-light); }
     .badge-num  { font: 8px "Share Tech Mono", monospace; fill: #fff;
                   text-anchor: middle; dominant-baseline: central; }
@@ -59,6 +75,7 @@
              stroke-linecap: round; opacity: .85; animation: march 1s linear infinite; }
     @keyframes march { to { stroke-dashoffset: -8; } }
 
+    /* Side panels */
     .interior-panel {
         background: var(--olive-mid);
         border: 1px solid var(--khaki-dark);
@@ -71,6 +88,11 @@
         margin: 0;
         border-top: none;
         padding: 1rem 0 1.1rem;
+    }
+
+    .interior-panel > .funds-panel {
+        margin: 0;
+        padding: 1rem 0 0.6rem;
     }
 
     .panel-room {
@@ -95,7 +117,7 @@
     <a href="{% url 'deploy' %}" class="btn btn-ghost" style="font-size: 0.82rem;">← Map</a>
     <h1 class="interior-title">{{ location_label }}</h1>
     <a href="{% url 'details-task' panel.task.pk %}?next={{ request.get_full_path|urlencode }}"
-       class="btn btn-ghost" style="font-size: 0.82rem;">List view</a>
+       class="btn btn-ghost" style="font-size: 0.82rem;">All duties</a>
     <span class="interior-unit">{% if unit.personal_for_id %}Personal base{% else %}{{ unit.name }}{% endif %}</span>
 </div>
 
@@ -124,22 +146,25 @@
                 <circle class="badge" cx="28" cy="-12" r="7"/>
                 <text class="badge-num" x="28" y="-12">{{ r.due }}</text>
                 {% endif %}
-                <text class="room-label label-halo" x="16" y="42">{{ r.label }}</text>
                 <text class="room-label" x="16" y="42">{{ r.label }}</text>
             </a>
             {% endfor %}
         </svg>
     </div>
 
-    <section class="interior-panel" id="duties">
-        <h2 class="panel-room">{{ selected_room.label }}</h2>
-        {% include panel.item_partial with task=panel.task items=panel.items item_form=panel.item_form items_done=panel.items_done items_total=panel.items_total next_url=panel.next_url refresh_page=True no_autofocus=True %}
-    {% include "budget/partials/_funds_panel.html" with panel=panel.funds %}
-    </section>
+    <div class="barracks-side">
+        <section class="interior-panel" id="duties">
+            <h2 class="panel-room">{{ selected_room.label }}</h2>
+            {% include panel.item_partial with task=panel.task items=panel.items item_form=panel.item_form items_done=panel.items_done items_total=panel.items_total next_url=panel.next_url refresh_page=True no_autofocus=True %}
+        </section>
+
+        <div class="interior-panel">
+            {% include "budget/partials/_funds_panel.html" with panel=funds_panel %}
+        </div>
+    </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 {% include "tasks/partials/_items_js.html" %}
 {% endblock %}
-
