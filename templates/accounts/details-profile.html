@@ -78,13 +78,14 @@
 
     .unit-list a:hover { color: var(--cream); }
 
-    .danger-zone {
+    /* Sections under the panel: Security, then Danger zone. */
+    .profile-section {
         margin-top: 2.5rem;
         padding-top: 1.5rem;
         border-top: 1px solid var(--olive-mid);
     }
 
-    .danger-zone-label {
+    .section-label {
         font-family: 'Share Tech Mono', monospace;
         font-size: 0.68rem;
         letter-spacing: 0.12em;
@@ -93,7 +94,7 @@
         margin-bottom: 1rem;
     }
 
-    .danger-note {
+    .section-note {
         font-size: 0.92rem;
         color: var(--cream-dark);
         line-height: 1.6;
@@ -162,11 +163,19 @@
         </div>
     </div>
 
-    <div class="danger-zone">
-        <div class="danger-zone-label">Danger zone</div>
+    <div class="profile-section">
+        <div class="section-label">Security</div>
+        {% if not request.user.email %}
+        <p class="section-note">No email on file: you won't be able to reset a forgotten password.</p>
+        {% endif %}
+        <a href="{% url 'password-change' %}" class="btn btn-ghost" style="font-size: 0.82rem;">Change password</a>
+    </div>
+
+    <div class="profile-section">
+        <div class="section-label">Danger zone</div>
 
         {% if blocking_units %}
-            <p class="danger-note">
+            <p class="section-note">
                 You still command units with other operatives in them. Hand over command, or dissolve them, before terminating your account:
             </p>
             <ul class="unit-list">

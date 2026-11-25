@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.auth.views import LoginView, LogoutView
+from django.contrib.auth.views import LoginView, LogoutView, PasswordChangeView
+from django.contrib.messages.views import SuccessMessageMixin
 from django.db import transaction
 from django.db.models import F
 from django.http import HttpResponseRedirect
@@ -89,4 +90,12 @@ class ProfileDetailsView(LoginRequiredMixin, TemplateView):
             "solo_units": commanded_by(user).filter(personal_for__isnull=True),
         })
         return context
+
+
+class ChangePasswordView(SuccessMessageMixin, PasswordChangeView):
+    template_name = "accounts/password_change.html"
+    success_url = reverse_lazy("details-profile")
+    success_message = _("Password changed, operative.")
+
+
 

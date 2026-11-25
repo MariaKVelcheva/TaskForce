@@ -483,11 +483,10 @@
                    {% endif %}
                 </a>
             </li>
-            <li><span class="nav-badge">{{ user.username }}</span></li>
             <li>
                 <a href="{% url 'details-profile' %}"
-                   class="{% if url_name == 'details-profile' %}active{% endif %}">
-                   Profile
+                   class="{% if url_name == 'details-profile' %}active{% endif %}" style="border-bottom: none;">
+                   <span class="nav-badge">{{ user.username }}</span>
                 </a>
             </li>
             <li>

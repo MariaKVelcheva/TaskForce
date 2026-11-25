@@ -1,6 +1,8 @@
+import re
 from urllib.parse import urlencode
 
 from django.contrib.auth import get_user_model
+from django.core import mail
 from django.test import TestCase
 from django.urls import reverse
 
@@ -133,4 +135,62 @@ class DeleteAccountTests(TestCase):
 
         self.assertFalse(User.objects.filter(pk=self.solo.pk).exists())
         self.assertFalse(Unit.objects.filter(pk=unit.pk).exists())
+
+
+class PasswordTests(TestCase):
+    OLD = "Old-pass-123!"
+    NEW = "New-pass-456!"
+
+    def setUp(self):
+        self.user = User.objects.create_user("operative", email="op@example.com", password=self.OLD)
+        create_personal_unit(self.user)
+
+    def change(self, old=OLD):
+        return self.client.post(reverse("password-change"), {
+            "old_password": old, "new_password1": self.NEW, "new_password2": self.NEW,
+        })
+
+    def reset_link(self, email="op@example.com"):
+        self.client.post(reverse("password-reset"), {"email": email})
+        self.assertEqual(len(mail.outbox), 1)
+        return re.search(r"https?://\S+", mail.outbox[0].body).group()
+
+    def test_change_needs_login(self):
+        response = self.client.get(reverse("password-change"))
+        self.assertEqual(response.status_code, 302)
+
+    def test_change_keeps_you_logged_in(self):
+        self.client.force_login(self.user)
+        response = self.change()
+        self.assertRedirects(response, reverse("details-profile"))
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password(self.NEW))
+
+    def test_change_refuses_a_wrong_old_password(self):
+        self.client.force_login(self.user)
+        self.change(old="nope")
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password(self.OLD))
+
+    def test_reset_link_sets_a_new_password(self):
+        response = self.client.get(self.reset_link(email="OP@example.com"), follow=True)
+        set_password_url = response.redirect_chain[-1][0]
+        self.client.post(set_password_url, {"new_password1": self.NEW, "new_password2": self.NEW})
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password(self.NEW))
+
+    def test_reset_link_works_only_once(self):
+        link = self.reset_link()
+        response = self.client.get(link, follow=True)
+        self.client.post(response.redirect_chain[-1][0], {"new_password1": self.NEW, "new_password2": self.NEW})
+        response = self.client.get(link, follow=True)
+        self.assertFalse(response.context["validlink"])
+
+    def test_unknown_email_sends_nothing_and_looks_the_same(self):
+        response = self.client.post(reverse("password-reset"), {"email": "nobody@example.com"})
+        self.assertRedirects(response, reverse("password-reset-done"))
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_login_page_links_to_reset(self):
+        self.assertContains(self.client.get(reverse("login")), reverse("password-reset"))
 
