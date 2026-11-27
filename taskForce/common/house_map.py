@@ -64,3 +64,24 @@ BARRACKS = GridMap(
     tile=TILE,
 )
 
+"""
+basic room bedroom in barracks sprites:
+  <symbol id="room-bedroom" viewBox="0 0 32 48">
+    <ellipse class="hb-shadow" cx="16" cy="44" rx="15" ry="3"/>
+    <rect x="3" y="10" width="2" height="34" fill="#545846" class="hb-line"/>
+    <rect x="27" y="10" width="2" height="34" fill="#545846" class="hb-line"/>
+
+    <rect x="5" y="12.5" width="22" height="4" rx="1" fill="url(#hb-olive)" class="hb-line"/>
+    <rect x="6" y="11.5" width="6" height="3" rx="1.2" fill="#e8dcb8" class="hb-line"/>
+    <rect x="4" y="16" width="24" height="3" fill="url(#hb-steel)" class="hb-line"/>
+
+    <rect x="5" y="30.5" width="22" height="4" rx="1" fill="url(#hb-olive)" class="hb-line"/>
+    <rect x="6" y="29.5" width="6" height="3" rx="1.2" fill="#e8dcb8" class="hb-line"/>
+    <rect x="4" y="34" width="24" height="3" fill="url(#hb-steel)" class="hb-line"/>
+
+    <path d="M22 19v11.5M25 19v11.5M22 22.5h3M22 26.5h3" stroke="#373b2c" stroke-width=".7"/>
+
+    <rect x="9" y="38" width="14" height="5.5" rx=".8" fill="url(#hb-wood)" class="hb-line"/>
+    <path d="M12 38v5.5M20 38v5.5" stroke="#4d5549" stroke-width="1"/>
+  </symbol>
+  """

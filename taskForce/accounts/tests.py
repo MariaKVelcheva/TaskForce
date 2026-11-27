@@ -1,5 +1,5 @@
 import re
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlparse
 
 from django.contrib.auth import get_user_model
 from django.core import mail
@@ -172,18 +172,25 @@ class PasswordTests(TestCase):
         self.user.refresh_from_db()
         self.assertTrue(self.user.check_password(self.OLD))
 
+    def open_reset_link(self, link):
+        response = self.client.get(urlparse(link).path)
+        self.assertEqual(response.status_code, 302, "the reset link did not redirect")
+        return response["Location"]
+
+    def set_new_password(self, url):
+        return self.client.post(url, {"new_password1": self.NEW, "new_password2": self.NEW})
+
     def test_reset_link_sets_a_new_password(self):
-        response = self.client.get(self.reset_link(email="OP@example.com"), follow=True)
-        set_password_url = response.redirect_chain[-1][0]
-        self.client.post(set_password_url, {"new_password1": self.NEW, "new_password2": self.NEW})
+        url = self.open_reset_link(self.reset_link(email="OP@example.com"))
+        self.set_new_password(url)
         self.user.refresh_from_db()
         self.assertTrue(self.user.check_password(self.NEW))
 
     def test_reset_link_works_only_once(self):
         link = self.reset_link()
-        response = self.client.get(link, follow=True)
-        self.client.post(response.redirect_chain[-1][0], {"new_password1": self.NEW, "new_password2": self.NEW})
-        response = self.client.get(link, follow=True)
+        self.set_new_password(self.open_reset_link(link))
+        response = self.client.get(urlparse(link).path)
+        self.assertEqual(response.status_code, 200)
         self.assertFalse(response.context["validlink"])
 
     def test_unknown_email_sends_nothing_and_looks_the_same(self):
