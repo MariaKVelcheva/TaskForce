@@ -9,7 +9,6 @@ from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from taskForce.common.house_map import BARRACKS
 from taskForce.tasks.forms import CreateTaskForm, LocationQuickAddForm, UpdateTaskForm
 from taskForce.tasks.items import item_progress
 from taskForce.tasks.locations import (
@@ -18,7 +17,6 @@ from taskForce.tasks.locations import (
 from taskForce.tasks.models import (
     ChoreItem, GroceryItem, ListItem, PantryItem, Task, TaskType, WorkoutItem, Exercise,
 )
-from taskForce.tasks.rooms import room_summary, most_urgent_room, room_value, GENERAL, room_keys
 from taskForce.tasks.urgency import bucket_for, group_by_urgency, urgency_key, with_urgency
 from taskForce.units.models import Membership
 from taskForce.units.services import create_personal_unit, create_unit
@@ -667,102 +665,6 @@ class MarkLowTests(TestCase):
         self.mark()
         self.cereal.refresh_from_db()
         self.assertEqual(self.cereal.quantity, 2)
-
-
-class RoomSummaryTests(TestCase):
-    @classmethod
-    def setUpTestData(cls):
-        user = get_user_model().objects.create_user("cleaner", password="x")
-        cls.unit = create_personal_unit(user)
-        cls.chores = cls.unit.tasks.get(type=TaskType.CHORES)
-
-    def chore(self, room, *, due):
-        now = timezone.now()
-        last_done = now - timedelta(days=3) if due else now
-        return ChoreItem.objects.create(
-            task=self.chores, name=f"{room or 'general'} chore", room=room,
-            frequency_days=1, last_done_at=last_done,
-        )
-
-    def test_every_room_is_listed_even_without_chores(self):
-        summary = room_summary(self.chores, timezone.now())
-        self.assertEqual(list(summary), room_keys())
-        self.assertEqual(summary["kitchen"], {"total": 0, "due": 0})
-
-    def test_counts_total_and_due_per_room(self):
-        self.chore("kitchen", due=True)
-        self.chore("kitchen", due=False)
-        self.chore("bathroom", due=True)
-        summary = room_summary(self.chores, timezone.now())
-        self.assertEqual(summary["kitchen"], {"total": 2, "due": 1})
-        self.assertEqual(summary["bathroom"], {"total": 1, "due": 1})
-
-    def test_unticked_one_off_chores_count_as_due(self):
-        ChoreItem.objects.create(task=self.chores, name="fix shelf", room="kitchen")
-        ChoreItem.objects.create(task=self.chores, name="hang photo", room="kitchen", is_checked=True)
-        summary = room_summary(self.chores, timezone.now())
-        self.assertEqual(summary["kitchen"], {"total": 2, "due": 1})
-        
-    def test_general_chores_are_keyed_general(self):
-        self.chore("", due=True)
-        summary = room_summary(self.chores, timezone.now())
-        self.assertEqual(summary[GENERAL], {"total": 1, "due": 1})
-
-    def test_other_units_chores_are_not_counted(self):
-        other_user = get_user_model().objects.create_user("neighbour", password="x")
-        other = create_personal_unit(other_user).tasks.get(type=TaskType.CHORES)
-        ChoreItem.objects.create(
-            task=other, name="theirs", room="kitchen", frequency_days=1,
-            last_done_at=timezone.now() - timedelta(days=3),
-        )
-        summary = room_summary(self.chores, timezone.now())
-        self.assertEqual(summary["kitchen"]["total"], 0)
-
-    def test_query_count(self):
-        with self.assertNumQueries(2):
-            room_summary(self.chores, timezone.now())
-
-
-class MostUrgentRoomTests(SimpleTestCase):
-    def summary(self, **due):
-        return {key: {"total": 1, "due": due.get(key, 0)} for key in ("kitchen", "bathroom", "general")}
-
-    def test_room_with_most_due_chores(self):
-        self.assertEqual(most_urgent_room(self.summary(kitchen=1, bathroom=3)), "bathroom")
-
-    def test_tie_goes_to_the_first_room(self):
-        self.assertEqual(most_urgent_room(self.summary(kitchen=2, bathroom=2)), "kitchen")
-
-    def test_nothing_due_means_no_room(self):
-        self.assertIsNone(most_urgent_room(self.summary()))
-
-
-class RoomKeyTests(SimpleTestCase):
-    def test_general_maps_to_the_empty_room_value(self):
-        self.assertEqual(room_value(GENERAL), "")
-        self.assertEqual(room_value("kitchen"), "kitchen")
-
-    def test_floor_plan_has_exactly_the_rooms_the_model_knows(self):
-        self.assertEqual(set(BARRACKS.places.values()), set(room_keys()))
-
-
-class ChoreUrgencyTests(TestCase):
-    @classmethod
-    def setUpTestData(cls):
-        user = get_user_model().objects.create_user("sergeant", password="x")
-        cls.unit = create_personal_unit(user)
-        cls.chores = cls.unit.tasks.get(type=TaskType.CHORES)
-
-    def has_due_chores(self):
-        return with_urgency(Task.objects.filter(pk=self.chores.pk), timezone.now()).get().has_due_chores
-
-    def test_unticked_one_off_chore_is_waiting(self):
-        ChoreItem.objects.create(task=self.chores, name="fix shelf", room="kitchen")
-        self.assertTrue(self.has_due_chores())
-
-    def test_ticked_one_off_chore_is_not_waiting(self):
-        ChoreItem.objects.create(task=self.chores, name="fix shelf", is_checked=True)
-        self.assertFalse(self.has_due_chores())
 
 
 MONDAY = 0

@@ -2,8 +2,8 @@
 (function () {
     if (window.itemBlocksBound) return;
     window.itemBlocksBound = true;
-    
-        function normalise(text) {
+
+    function normalise(text) {
         return text.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase().trim();
     }
 
@@ -20,14 +20,20 @@
         if (empty) empty.hidden = shown > 0;
     }
 
+    // Swap a block for its fresh version, keeping the search text, the scroll
+    // position and which <details> were open (an "+ Add" form stays unfolded).
     function replaceBlock(current, fresh) {
         const search = current.querySelector("[data-search-list]");
         const query = search ? search.value : "";
         const list = current.querySelector(".item-list");
         const scroll = list ? list.scrollTop : 0;
+        const open = [...current.querySelectorAll("details")].map((details) => details.open);
 
         current.replaceWith(fresh);
 
+        fresh.querySelectorAll("details").forEach((details, index) => {
+            if (open[index]) details.open = true;
+        });
         const freshSearch = fresh.querySelector("[data-search-list]");
         if (freshSearch && query) {
             freshSearch.value = query;
@@ -41,7 +47,7 @@
         const response = await fetch(window.location.href);
         if (!response.ok) { window.location.reload(); return; }
         const page = new DOMParser().parseFromString(await response.text(), "text/html");
-                page.querySelectorAll("[data-block]").forEach((fresh) => {
+        page.querySelectorAll("[data-block]").forEach((fresh) => {
             const current = document.querySelector(`[data-block="${fresh.dataset.block}"]`);
             if (current) replaceBlock(current, document.adoptNode(fresh));
         });
@@ -49,7 +55,8 @@
 
     async function send(form, submitter) {
         const block = form.closest(".items-block");
-        const key = block.dataset.block;
+        // The nearest refreshable container: the block itself, or a card around it (Barracks rooms).
+        const key = form.closest("[data-block]")?.dataset.block;
         const wasAdd = form.classList.contains("item-add");
 
         const response = await fetch(form.action, {
@@ -59,7 +66,7 @@
         });
         if (!response.ok) { form.submit(); return; }
 
-                if (block.dataset.refresh === "page" || document.querySelectorAll(".items-block").length > 1) {
+        if (block.dataset.refresh === "page" || document.querySelectorAll(".items-block").length > 1) {
             await refreshAllBlocks();
         } else {
             const holder = document.createElement("div");
@@ -68,7 +75,7 @@
         }
 
         if (wasAdd) {
-            const fresh = document.querySelector(`.items-block[data-block="${key}"]`)
+            const fresh = (key && document.querySelector(`[data-block="${key}"]`))
                 || document.querySelector(".items-block");
             const input = fresh && fresh.querySelector(".item-add-name");
             if (input) input.focus();
@@ -87,10 +94,9 @@
             event.target.form.requestSubmit();
         }
     });
-    
-        document.addEventListener("input", (event) => {
+
+    document.addEventListener("input", (event) => {
         if (event.target.matches("[data-search-list]")) applySearch(event.target);
     });
 })();
 </script>
-

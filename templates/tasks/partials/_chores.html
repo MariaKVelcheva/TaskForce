@@ -1,34 +1,4 @@
-s<div class="items-block" data-block="chores"{% if refresh_page %} data-refresh="page"{% endif %}>
-    <style>
-        .items-resting { margin-top: 0.9rem; }
-        .items-resting:not(:has(li)) { display: none; }
-        .items-resting summary {
-            cursor: pointer;
-            font-family: 'Share Tech Mono', monospace;
-            font-size: 0.65rem;
-            letter-spacing: 0.14em;
-            text-transform: uppercase;
-            color: var(--muted);
-            padding: 0.3rem 0;
-        }
-        .items-resting summary:hover { color: var(--khaki); }
-        .item-need-now {
-            background: none;
-            border: 1px solid var(--khaki-dark);
-            border-radius: var(--radius-sm);
-            color: var(--khaki-muted);
-            font-family: 'Share Tech Mono', monospace;
-            font-size: 0.6rem;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            padding: 0.15rem 0.5rem;
-            cursor: pointer;
-            flex-shrink: 0;
-        }
-        .item-need-now:hover { border-color: var(--khaki); color: var(--cream); }
-        .item-row.resting .item-name { color: var(--muted); }
-    </style>
-
+<div class="items-block" data-block="chores"{% if refresh_page %} data-refresh="page"{% endif %}>
     <div class="items-header">
         <span class="items-title">// Duties</span>
         <span class="items-progress">{{ items_done }}/{{ items_total }}</span>
@@ -49,7 +19,7 @@ s<div class="items-block" data-block="chores"{% if refresh_page %} data-refresh=
 
             <span class="item-name">{{ item.name }}</span>
 
-            {% if item.room %}<span class="item-room">{{ item.get_room_display }}</span>{% endif %}
+            <span class="item-room">{% if item.room %}{{ item.room.name }}{% else %}General{% endif %}</span>
             {% if item.minutes %}<span class="item-qty">{{ item.minutes }}m</span>{% endif %}
             {% if item.is_recurring %}
             <span class="item-cycle due" title="Every {{ item.frequency_days }} days">due</span>
@@ -80,7 +50,7 @@ s<div class="items-block" data-block="chores"{% if refresh_page %} data-refresh=
                 </form>
 
                 <span class="item-name">{{ item.name }}</span>
-                {% if item.room %}<span class="item-room">{{ item.get_room_display }}</span>{% endif %}
+                <span class="item-room">{% if item.room %}{{ item.room.name }}{% else %}General{% endif %}</span>
                 {% if item.last_done_at %}
                 <span class="item-cycle" title="Every {{ item.frequency_days }} days">done {{ item.last_done_at|timesince }} ago</span>
                 {% endif %}
@@ -111,24 +81,24 @@ s<div class="items-block" data-block="chores"{% if refresh_page %} data-refresh=
         <div class="item-add-line">
             <span class="item-add-box"></span>
             <input type="text" name="name" class="item-add-name"
-                                      placeholder="Add duty..." maxlength="50" required{% if not no_autofocus %} autofocus{% endif %}>
+                   placeholder="Add duty..." maxlength="50" required{% if not no_autofocus %} autofocus{% endif %}>
             <button type="submit">Add</button>
         </div>
         <div class="item-add-line secondary">
             <span class="item-add-unit">
-                <label for="id_chore_minutes">takes</label>
-                <input type="number" name="minutes" id="id_chore_minutes" class="item-add-num"
+                <label for="id_chore_minutes_{{ task.pk }}">takes</label>
+                <input type="number" name="minutes" id="id_chore_minutes_{{ task.pk }}" class="item-add-num"
                        placeholder="—" min="1" max="480" aria-label="Minutes the duty takes">
-                <label for="id_chore_minutes">mins</label>
+                <label for="id_chore_minutes_{{ task.pk }}">mins</label>
             </span>
 
             <span class="item-add-sep">·</span>
 
             <span class="item-add-unit">
-                <label for="id_chore_frequency">repeat every</label>
-                <input type="number" name="frequency_days" id="id_chore_frequency" class="item-add-num"
+                <label for="id_chore_frequency_{{ task.pk }}">repeat every</label>
+                <input type="number" name="frequency_days" id="id_chore_frequency_{{ task.pk }}" class="item-add-num"
                        placeholder="—" min="1" max="365" aria-label="Repeat frequency in days">
-                <label for="id_chore_frequency">days</label>
+                <label for="id_chore_frequency_{{ task.pk }}">days</label>
             </span>
 
             <span class="item-add-sep">·</span>

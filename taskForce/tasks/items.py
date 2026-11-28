@@ -39,12 +39,15 @@ def get_item_context(task):
     if item_model is None:
         return {"items": None}
 
-    items = list(item_model.objects.filter(task=task))
+    queryset = item_model.objects.filter(task=task)
+    if task.type == TaskType.CHORES:
+        queryset = queryset.select_related("room")
+    items = list(queryset)
     checkable = issubclass(item_model, CheckableItem)
 
     return {
         "items": items,
-        "item_form": ITEM_FORMS[task.type](),
+        "item_form": ITEM_FORMS[task.type](instance=item_model(task=task)),
         "items_done": sum(1 for item in items if item.is_done) if checkable else None,
         "items_total": len(items),
         "item_partial": ITEM_PARTIALS[task.type],

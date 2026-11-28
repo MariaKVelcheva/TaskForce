@@ -1,4 +1,5 @@
 {% extends "common/base.html" %}
+{% load i18n %}
 
 {% block title %}{{ location_label }} — Task: Force!{% endblock %}
 
@@ -22,92 +23,169 @@
         color: var(--khaki);
     }
 
-    .interior-unit {
+    .interior-unit,
+    .barracks-summary {
         font-family: 'Share Tech Mono', monospace;
         font-size: 0.65rem;
         letter-spacing: 0.12em;
         text-transform: uppercase;
         color: var(--muted);
-        margin-left: auto;
     }
 
-    /* Layout: floor plan on the left, duties and funds stacked on the right. */
-    .barracks {
+    .barracks-summary { margin-left: auto; }
+    .barracks-summary.is-due { color: var(--rust-light); }
+
+    .room-grid {
         display: grid;
-        grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
-        gap: 1.5rem;
+        grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+        gap: 0.75rem;
         align-items: start;
     }
 
-    .barracks-side {
-        display: flex;
-        flex-direction: column;
-        gap: 1.5rem;
+    .room-card {
+        background: var(--olive-mid);
+        border: 1px solid var(--olive);
+        border-radius: var(--radius);
+        padding: 0.75rem 0.9rem 0.8rem;
         min-width: 0;
     }
 
-    
-    .barracks-plan svg {
-        display: block;
-        width: 100%;
-        height: auto;
-        border: 1px solid var(--khaki-dark);
-        border-radius: var(--radius);
-        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+    .room-card.is-due {
+        border-color: var(--rust);
+        border-left: 4px solid var(--rust-light);
     }
 
-    .room-label { font: 600 8px "Barlow Condensed", sans-serif; text-anchor: middle; fill: #f2ead0;
-                  stroke: #2b2d1c; stroke-width: 2.5px; stroke-linejoin: round; paint-order: stroke; }
-    .badge      { fill: var(--rust-light); }
-    .badge-num  { font: 8px "Share Tech Mono", monospace; fill: #fff;
-                  text-anchor: middle; dominant-baseline: central; }
+    .room-card.is-empty {
+        background: transparent;
+        border: 1px dashed var(--khaki-dark);
+    }
 
-    .room:hover .room-art,
-    .room:focus-visible .room-art { filter: brightness(1.15) drop-shadow(0 0 2px #fff); }
-    .room:focus-visible { outline: none; }
+    .room-head {
+        display: flex;
+        align-items: baseline;
+        gap: 0.5rem;
+        border-bottom: 1px solid var(--olive);
+        padding-bottom: 0.45rem;
+        margin-bottom: 0.4rem;
+    }
 
-    .room.is-empty .room-art   { filter: grayscale(1) brightness(.8); opacity: .55; }
-    .room.is-empty .room-label { opacity: .6; }
+    .room-card.is-empty .room-head { border-bottom-style: dashed; border-bottom-color: var(--khaki-dark); }
 
-    .room-selected { fill: none; stroke: #f2ead0; stroke-width: 1.5; stroke-dasharray: 3 2; }
+    .room-code {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.62rem;
+        letter-spacing: 0.1em;
+        color: var(--muted);
+    }
 
-    .route { fill: none; stroke: #f2ead0; stroke-width: 2.5; stroke-dasharray: 2 6;
-             stroke-linecap: round; opacity: .85; animation: march 1s linear infinite; }
-    @keyframes march { to { stroke-dashoffset: -8; } }
+    .room-name {
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 1.1rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--cream);
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
 
-    /* Side panels */
+    .room-state {
+        margin-left: auto;
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.62rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--muted);
+        white-space: nowrap;
+    }
+
+    .room-card.is-due .room-state { color: var(--rust-light); }
+
+    .room-edit summary,
+    .room-add summary {
+        cursor: pointer;
+        list-style: none;
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.6rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--muted);
+    }
+
+    .room-edit summary::-webkit-details-marker,
+    .room-add summary::-webkit-details-marker { display: none; }
+
+    .room-edit summary:hover,
+    .room-add summary:hover { color: var(--khaki); }
+
+    .room-edit { margin-bottom: 0.4rem; }
+
+    .room-edit-form,
+    .room-new-form {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.4rem;
+        margin-top: 0.4rem;
+    }
+
+    .room-edit-form input[type="text"],
+    .room-new-form input[type="text"] {
+        flex: 1 1 8rem;
+        min-width: 0;
+        width: auto;
+        padding: 0.35rem 0.6rem;
+        font-size: 0.85rem;
+    }
+
+    .room-delete { border-color: var(--rust); color: var(--rust-light); }
+    .room-delete:hover { background: var(--rust); color: var(--cream); }
+
+    /* The duties inside a card */
+    .room-card .items-block {
+        margin: 0;
+        padding: 0;
+        border-top: none;
+    }
+
+    .room-card .item-row { padding: 0.3rem 0; }
+
+    .room-empty {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.62rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--muted);
+        padding: 0.3rem 0;
+    }
+
+    .room-add { margin-top: 0.5rem; }
+    .room-add[open] summary { margin-bottom: 0.4rem; }
+
+    .room-card .item-add { flex-wrap: wrap; gap: 0.45rem 0.5rem; padding: 0.55rem 0.6rem; margin-top: 0; }
+    .room-card .item-add input { border-bottom: 1px solid var(--olive); padding-bottom: 0.15rem; }
+    .room-card .item-add input:focus { border-bottom-color: var(--khaki); }
+    .room-card .item-add .item-add-name { flex: 1 1 100%; }
+    .room-card .item-add .item-add-num { flex: 1 1 0; }
+
+    /* New room */
+    .room-card-new {
+        background: transparent;
+        border: 1px dashed var(--khaki-dark);
+    }
+
+    .room-funds { margin-top: 1.5rem; }
+
     .interior-panel {
         background: var(--olive-mid);
         border: 1px solid var(--khaki-dark);
         border-radius: var(--radius);
         padding: 0 1.1rem;
-        scroll-margin-top: 1rem;
-    }
-
-    .interior-panel .items-block {
-        margin: 0;
-        border-top: none;
-        padding: 1rem 0 1.1rem;
     }
 
     .interior-panel > .funds-panel {
         margin: 0;
         padding: 1rem 0 0.6rem;
-    }
-
-    .panel-room {
-        font-family: 'Barlow Condensed', sans-serif;
-        font-size: 1.35rem;
-        color: var(--cream);
-        padding-top: 1rem;
-    }
-
-    @media (max-width: 720px) {
-        .barracks { grid-template-columns: 1fr; }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-        .route { animation: none; }
     }
 </style>
 {% endblock %}
@@ -116,52 +194,125 @@
 <div class="interior-header">
     <a href="{% url 'deploy' %}" class="btn btn-ghost" style="font-size: 0.82rem;">← Map</a>
     <h1 class="interior-title">{{ location_label }}</h1>
-    <a href="{% url 'details-task' panel.task.pk %}?next={{ request.get_full_path|urlencode }}"
-       class="btn btn-ghost" style="font-size: 0.82rem;">All duties</a>
+    <span class="barracks-summary{% if due_total %} is-due{% endif %}" data-block="summary">
+        {% if due_total %}
+            {{ due_total }} dut{{ due_total|pluralize:"y,ies" }} due · {{ due_rooms }} room{{ due_rooms|pluralize }}
+        {% else %}
+            All rooms clear
+        {% endif %}
+    </span>
     <span class="interior-unit">{% if unit.personal_for_id %}Personal base{% else %}{{ unit.name }}{% endif %}</span>
 </div>
 
-<div class="barracks">
-    <div class="barracks-plan" data-block="plan">
-        {% include "tasks/partials/_barracks_sprites.html" %}
-        <svg viewBox="0 0 {{ map_width }} {{ map_height }}" aria-label="Barracks floor plan">
-            <g aria-hidden="true">
-                {% for t in tiles %}<use href="#tile-{{ t.kind }}" x="{{ t.x }}" y="{{ t.y }}" width="32" height="32"/>{% endfor %}
-            </g>
+<div class="room-grid">
+    {% for card in cards %}
+    <section class="room-card{% if card.due %} is-due{% elif not card.total %} is-empty{% endif %}"
+             data-block="room-{{ card.key }}" aria-labelledby="room-name-{{ card.key }}">
 
-            {% if route %}
-            <polyline class="route" points="{{ route }}" aria-hidden="true"/>
+        <div class="room-head">
+            <span class="room-code">{{ card.code }}</span>
+            <h2 class="room-name" id="room-name-{{ card.key }}">{{ card.label }}</h2>
+            <span class="room-state">
+                {% if card.due %}{{ card.due }} due{% elif card.total %}clear{% else %}no duties{% endif %}
+            </span>
+        </div>
+
+        {# Outside .items-block on purpose: these forms submit normally and redirect, not by fetch. #}
+        {% if card.room %}
+        <details class="room-edit">
+            <summary>Edit room</summary>
+            <form method="post" action="{% url 'rename-room' chores.pk card.room.pk %}" class="room-edit-form">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ next_url }}">
+                <input type="text" name="name" value="{{ card.room.name }}" maxlength="40" required
+                       aria-label="New name for {{ card.room.name }}">
+                <button type="submit" class="items-action-btn">Rename</button>
+                <button type="button" class="items-action-btn room-delete"
+                        data-dialog="delete-room-{{ card.room.pk }}" aria-haspopup="dialog">Delete</button>
+            </form>
+        </details>
+
+        {% url 'delete-room' chores.pk card.room.pk as delete_url %}
+        {% blocktranslate with name=card.room.name asvar delete_title %}Delete {{ name }}?{% endblocktranslate %}
+        {% translate "The room disappears. Its duties are kept and move to General." as delete_message %}
+        {% translate "Delete room" as delete_confirm %}
+        {% include "common/partials/_confirm_dialog.html" with id="delete-room" id_suffix=card.room.pk title=delete_title message=delete_message action=delete_url confirm=delete_confirm %}
+        {% endif %}
+
+        <div class="items-block">
+            {% if card.duties %}
+            <ul class="item-list">
+                {% for item in card.duties %}
+                <li class="item-row{% if item.is_done %}{% if item.is_recurring %} resting{% else %} done{% endif %}{% else %} due{% endif %}">
+                    <form method="post" action="{% url 'toggle-item' chores.pk item.pk %}" class="item-toggle-form">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{{ next_url }}">
+                        <button type="submit" class="item-toggle" title="{% if item.is_done %}Undo{% else %}Done{% endif %}">
+                            <span class="item-box{% if item.is_done %} checked{% endif %}"></span>
+                        </button>
+                    </form>
+
+                    <span class="item-name">{{ item.name }}</span>
+
+                    {% if item.minutes %}<span class="item-qty">{{ item.minutes }}m</span>{% endif %}
+
+                    {% if item.is_recurring %}
+                        {% if item.due_in_days %}
+                        <span class="item-cycle" title="Every {{ item.frequency_days }} days">in {{ item.due_in_days }}d</span>
+                        <form method="post" action="{% url 'need-item-now' chores.pk item.pk %}" class="item-toggle-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{{ next_url }}">
+                            <button type="submit" class="item-need-now" title="Make it due again now">Now</button>
+                        </form>
+                        {% elif not item.is_done %}
+                        <span class="item-cycle due" title="Every {{ item.frequency_days }} days">due</span>
+                        {% endif %}
+                    {% endif %}
+
+                    <form method="post" action="{% url 'delete-item' chores.pk item.pk %}" class="item-delete-form">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{{ next_url }}">
+                        <button type="submit" class="item-delete" title="Remove">&times;</button>
+                    </form>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="room-empty">No duties here</p>
             {% endif %}
 
-            <use class="avatar" href="#avatar" x="{{ avatar_x }}" y="{{ avatar_y }}" width="32" height="48" aria-hidden="true"/>
-
-            {% for r in rooms %}
-            <a href="{{ r.url }}" class="room{% if not r.total %} is-empty{% endif %}"
-               {% if r.selected %}aria-current="true"{% endif %}
-               transform="translate({{ r.x }},{{ r.y }})">
-                <title>{{ r.label }}: {% if r.total %}{{ r.due }} of {{ r.total }} dut{{ r.total|pluralize:"y,ies" }} due{% else %}no duties set up{% endif %}</title>
-                {% if r.selected %}<rect class="room-selected" x="-4" y="-20" width="40" height="66" rx="4" aria-hidden="true"/>{% endif %}
-                <use class="room-art" href="#room-{{ r.key }}" y="-16" width="32" height="48"/>
-                {% if r.due %}
-                <circle class="badge" cx="28" cy="-12" r="7"/>
-                <text class="badge-num" x="28" y="-12">{{ r.due }}</text>
-                {% endif %}
-                <text class="room-label" x="16" y="42">{{ r.label }}</text>
-            </a>
-            {% endfor %}
-        </svg>
-    </div>
-
-    <div class="barracks-side">
-        <section class="interior-panel" id="duties">
-            <h2 class="panel-room">{{ selected_room.label }}</h2>
-            {% include panel.item_partial with task=panel.task items=panel.items item_form=panel.item_form items_done=panel.items_done items_total=panel.items_total next_url=panel.next_url refresh_page=True no_autofocus=True %}
-        </section>
-
-        <div class="interior-panel">
-            {% include "budget/partials/_funds_panel.html" with panel=funds_panel %}
+            <details class="room-add">
+                <summary>+ Add duty</summary>
+                <form method="post" action="{% url 'add-item' chores.pk %}" class="item-add">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ next_url }}">
+                    <input type="hidden" name="room" value="{% if card.room %}{{ card.room.pk }}{% endif %}">
+                    <input type="text" name="name" class="item-add-name" placeholder="Duty..." maxlength="50" required
+                           aria-label="Duty for {{ card.label }}">
+                    <input type="number" name="minutes" class="item-add-num" placeholder="mins" min="1" max="480"
+                           aria-label="Minutes it takes (optional)">
+                    <input type="number" name="frequency_days" class="item-add-num" placeholder="every…d" min="1" max="365"
+                           aria-label="Repeat every N days (optional)">
+                    <button type="submit">Add</button>
+                </form>
+            </details>
         </div>
-    </div>
+    </section>
+    {% endfor %}
+
+    <section class="room-card room-card-new" aria-label="Add a room">
+        <form method="post" action="{% url 'add-room' chores.pk %}" class="room-new-form">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ next_url }}">
+            <label for="id_new_room" class="room-code" style="flex-basis: 100%; margin: 0;">+ New room</label>
+            <input type="text" name="name" id="id_new_room" maxlength="40" required placeholder="Mom's office">
+            <button type="submit" class="items-action-btn">Add room</button>
+        </form>
+    </section>
+</div>
+
+<div class="interior-panel room-funds">
+    {% include "budget/partials/_funds_panel.html" with panel=funds_panel %}
 </div>
 {% endblock %}
 

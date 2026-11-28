@@ -1,6 +1,6 @@
 from django.urls import path, include
 
-from taskForce.tasks import views
+from taskForce.tasks import views, room_views
 
 urlpatterns = [
     path("add/", views.CreateTaskView.as_view(), name="add-task"),
@@ -29,5 +29,9 @@ urlpatterns = [
         path("<int:item_pk>/low/", views.mark_low, name="mark-low"),
         path("restock/", views.set_restock, name="set-restock"),
     ])),
+
+    path("<int:task_pk>/rooms/add/", room_views.add_room, name="add-room"),
+    path("<int:task_pk>/rooms/<int:room_pk>/rename/", room_views.rename_room, name="rename-room"),
+    path("<int:task_pk>/rooms/<int:room_pk>/delete/", room_views.delete_room, name="delete-room"),
 ]
 

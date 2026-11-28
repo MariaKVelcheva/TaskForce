@@ -6,7 +6,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from taskForce.tasks.models import (
-    SINGLETON_TYPES, ChoreItem, GroceryItem, ListItem, PantryItem, Task, TaskType, WorkoutItem,
+    SINGLETON_TYPES, ChoreItem, GroceryItem, ListItem, PantryItem, Task, TaskType, WorkoutItem, Room,
 )
 from taskForce.units.models import Unit
 
@@ -254,6 +254,12 @@ class WorkoutItemForm(forms.ModelForm):
 
 
 class ChoreItemForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        room = self.fields["room"]
+        room.queryset = Room.objects.filter(task_id=self.instance.task_id)
+        room.empty_label = _("General")
+
     class Meta:
         model = ChoreItem
         fields = ("name", "minutes", "frequency_days", "room")

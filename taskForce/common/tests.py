@@ -6,7 +6,6 @@ from django.urls import reverse
 from django.utils import timezone
 
 from taskForce.common.grid_map import GridMap
-from taskForce.common.house_map import BARRACKS, ENTRANCE
 from taskForce.common.map_context import map_context
 from taskForce.tasks.locations import LOCATIONS
 from taskForce.tasks.models import ChoreItem, PantryItem, Task, TaskType, Exercise, WorkoutItem

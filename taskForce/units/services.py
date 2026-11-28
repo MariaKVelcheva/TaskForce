@@ -3,6 +3,7 @@ from django.db.models import OuterRef, Exists
 from django.utils.translation import gettext_lazy as _
 
 from taskForce.tasks.models import Task, TaskType
+from taskForce.tasks.rooms import create_default_rooms
 from taskForce.units.models import Membership, Unit
 
 SINGLETON_NAMES = {
@@ -29,10 +30,12 @@ def create_unit(*, name, commander, personal=False):
             role=Membership.Role.COMMANDER,
         )
         types = PERSONAL_SINGLETONS if personal else GROUP_SINGLETONS
-        Task.objects.bulk_create([
+        tasks = Task.objects.bulk_create([
             Task(unit=unit, type=t, name=SINGLETON_NAMES[t], user=commander)
             for t in types
         ])
+        chores = next(task for task in tasks if task.type == TaskType.CHORES)
+        create_default_rooms(chores)
     return unit
 
 
@@ -63,5 +66,4 @@ def blocking_commands(user):
     return commanded_by(user).filter(
         personal_for__isnull=True,
     ).filter(Exists(others))
-
 

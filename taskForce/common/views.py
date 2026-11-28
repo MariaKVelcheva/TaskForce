@@ -255,8 +255,8 @@ class DeployLocationView(LoginRequiredMixin, ListView):
 
         if self.location_key == "barracks":
             chores = tasks[TaskType.CHORES]
-            context = barracks_context(chores, timezone.now(), request.GET.get("room"))
-            context["panel"]["next_url"] = next_url
+            context = barracks_context(chores, timezone.now())
+            context["next_url"] = next_url
             context["funds_panel"] = funds_panel(user=request.user, unit=unit, task=chores)
             return context
 
